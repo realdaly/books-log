@@ -4,20 +4,31 @@ import { getDb } from "../../lib/db";
 import { normalizeArabic } from "../../lib/utils";
 import { Card, Button, Input, Textarea } from "../../components/ui/Base";
 import { Modal } from "../../components/ui/Modal";
-import { Loader2, Plus, Trash2, Edit2, Eye, Image as ImageIcon } from "lucide-react";
+import { Loader2, Plus, Trash2, Edit2, Eye, Image as ImageIcon, Tag, Filter, Settings } from "lucide-react";
 import html2canvas from "html2canvas";
 import { save, message, ask } from '@tauri-apps/plugin-dialog';
 import { writeFile } from '@tauri-apps/plugin-fs';
 
 export default function PartiesPage() {
     const [parties, setParties] = useState([]);
+    const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
 
     // CRUD State
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [formData, setFormData] = useState({ name: "", phone: "", address: "", notes: "" });
+    const [formCategoryIds, setFormCategoryIds] = useState([]);
+    const [newCategoryName, setNewCategoryName] = useState("");
+
+    // Category Management
+    const [manageCategoriesOpen, setManageCategoriesOpen] = useState(false);
+    const [editingCategory, setEditingCategory] = useState(null);
+
     const [editId, setEditId] = useState(null);
     const [selectedIds, setSelectedIds] = useState([]);
+
+    // Filters
+    const [filterCategoryIds, setFilterCategoryIds] = useState([]);
 
     // Details State
     const [detailsOpen, setDetailsOpen] = useState(false);
@@ -28,8 +39,27 @@ export default function PartiesPage() {
     const fetchData = useCallback(async () => {
         try {
             const db = await getDb();
-            const rows = await db.select("SELECT * FROM party ORDER BY id DESC");
-            setParties(rows);
+            // Fetch Parties with their Category IDs
+            const partiesRows = await db.select(`
+                SELECT p.*, GROUP_CONCAT(pcl.category_id) as cat_ids 
+                FROM party p 
+                LEFT JOIN party_category_link pcl ON p.id = pcl.party_id 
+                GROUP BY p.id 
+                ORDER BY p.id DESC
+            `);
+
+            // Normalize cat_ids to array
+            const partiesWithCats = partiesRows.map(p => ({
+                ...p,
+                categoryIds: p.cat_ids ? String(p.cat_ids).split(',').map(Number) : []
+            }));
+
+            setParties(partiesWithCats);
+
+            // Fetch All Categories
+            const catRows = await db.select("SELECT * FROM party_category ORDER BY name ASC");
+            setCategories(catRows);
+
         } catch (err) {
             console.error(err);
         } finally {
@@ -41,24 +71,67 @@ export default function PartiesPage() {
         fetchData();
     }, [fetchData]);
 
+    const handleAddCategory = async (e) => {
+        e.preventDefault();
+        if (!newCategoryName.trim()) return;
+        try {
+            const db = await getDb();
+            await db.execute("INSERT INTO party_category (name) VALUES ($1)", [newCategoryName.trim()]);
+            setNewCategoryName("");
+
+            // Refresh categories only
+            const catRows = await db.select("SELECT * FROM party_category ORDER BY name ASC");
+            setCategories(catRows);
+        } catch (e) {
+            alert("خطأ: ربما التصنيف موجود مسبقاً");
+        }
+    };
+
+    const toggleFormCategory = (catId) => {
+        setFormCategoryIds(prev =>
+            prev.includes(catId) ? prev.filter(id => id !== catId) : [...prev, catId]
+        );
+    };
+
+    const toggleFilterCategory = (catId) => {
+        setFilterCategoryIds(prev =>
+            prev.includes(catId) ? prev.filter(id => id !== catId) : [...prev, catId]
+        );
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
             const db = await getDb();
+            let pId = editId;
+
             if (editId) {
                 await db.execute(
                     "UPDATE party SET name=$1, phone=$2, address=$3, notes=$4 WHERE id=$5",
                     [formData.name, formData.phone, formData.address, formData.notes, editId]
                 );
             } else {
-                await db.execute(
+                const res = await db.execute(
                     "INSERT INTO party (name, phone, address, notes) VALUES ($1, $2, $3, $4)",
                     [formData.name, formData.phone, formData.address, formData.notes]
                 );
+                pId = res.lastInsertId;
             }
+
+            // Update Categories
+            // First delete all
+            if (pId) {
+                await db.execute("DELETE FROM party_category_link WHERE party_id=$1", [pId]);
+                // Insert new
+                for (const cId of formCategoryIds) {
+                    await db.execute("INSERT INTO party_category_link (party_id, category_id) VALUES ($1, $2)", [pId, cId]);
+                }
+            }
+
             setIsModalOpen(false);
             setEditId(null);
             setFormData({ name: "", phone: "", address: "", notes: "" });
+            setFormCategoryIds([]);
             fetchData();
         } catch (err) {
             alert("Error saving: " + err.message);
@@ -123,6 +196,7 @@ export default function PartiesPage() {
             address: p.address || "",
             notes: p.notes || ""
         });
+        setFormCategoryIds(p.categoryIds || []);
         setEditId(p.id);
         setIsModalOpen(true);
     };
@@ -230,36 +304,114 @@ export default function PartiesPage() {
 
     const [searchTerm, setSearchTerm] = useState("");
 
-    const filteredParties = parties.filter(p =>
-        normalizeArabic(p.name).includes(normalizeArabic(searchTerm))
-    );
+    const filteredParties = parties.filter(p => {
+        const searchOk = normalizeArabic(p.name).includes(normalizeArabic(searchTerm));
+        if (filterCategoryIds.length === 0) return searchOk;
 
-    if (loading && !detailsOpen) return <Loader2 className="animate-spin" />;
+        // AND logic (must have ALL selected categories)
+        // User requested: "I want the item to never show if I picked a category in the filter that it doesn't have."
+        const catOk = p.categoryIds && filterCategoryIds.every(fid => p.categoryIds.includes(fid));
+
+        return searchOk && catOk;
+    });
+
+    const handleUpdateCategory = async (e) => {
+        e.preventDefault();
+        if (!editingCategory || !editingCategory.name.trim()) return;
+        try {
+            const db = await getDb();
+            await db.execute("UPDATE party_category SET name=$1 WHERE id=$2", [editingCategory.name.trim(), editingCategory.id]);
+            setEditingCategory(null);
+
+            // Refresh
+            const catRows = await db.select("SELECT * FROM party_category ORDER BY name ASC");
+            setCategories(catRows);
+        } catch (e) {
+            alert("خطأ في التعديل: " + e.message);
+        }
+    };
+
+    const handleDeleteCategory = async (id) => {
+        const confirmed = await ask("هل أنت متأكد من حذف هذا التصنيف؟ سيتم إزالته من جميع الجهات المرتبطة به.", { title: 'تأكيد الحذف', kind: 'warning' });
+        if (!confirmed) return;
+        try {
+            const db = await getDb();
+            await db.execute("DELETE FROM party_category WHERE id=$1", [id]);
+            // Refresh
+            const catRows = await db.select("SELECT * FROM party_category ORDER BY name ASC");
+            setCategories(catRows);
+        } catch (e) {
+            alert("خطأ في الحذف: " + e.message);
+        }
+    };
+
+    if (loading && !detailsOpen) return <div className="flex justify-center items-center h-full"><Loader2 className="animate-spin text-primary" size={48} /></div>;
 
     return (
         <div className="space-y-6 h-full flex flex-col">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div className="flex items-center gap-4">
-                    <h1 className="text-3xl font-bold text-primary">الجهات</h1>
-                    {selectedIds.length > 0 && (
-                        <Button variant="destructive" size="sm" onClick={handleBulkDelete} className="animate-in fade-in slide-in-from-left-2">
-                            <Trash2 className="ml-2" size={16} />
-                            حذف المحدد ({selectedIds.length})
+            <div className="flex flex-col gap-4">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div className="flex items-center gap-4">
+                        <h1 className="text-3xl font-bold text-primary">الجهات</h1>
+                        {selectedIds.length > 0 && (
+                            <Button variant="destructive" size="sm" onClick={handleBulkDelete} className="animate-in fade-in slide-in-from-left-2">
+                                <Trash2 className="ml-2" size={16} />
+                                حذف المحدد ({selectedIds.length})
+                            </Button>
+                        )}
+                    </div>
+
+                    <div className="flex gap-3 w-full md:w-auto">
+                        <Input
+                            placeholder="بحث عن جهة..."
+                            value={searchTerm}
+                            onChange={e => setSearchTerm(e.target.value)}
+                            className="w-full md:w-64"
+                        />
+                        <Button onClick={() => { setEditId(null); setFormData({ name: "", phone: "", address: "", notes: "" }); setFormCategoryIds([]); setIsModalOpen(true); }}>
+                            <Plus className="ml-2" size={18} /> إضافة جهة
                         </Button>
-                    )}
+                    </div>
                 </div>
 
-                <div className="flex gap-3 w-full md:w-auto">
-                    <Input
-                        placeholder="بحث عن جهة..."
-                        value={searchTerm}
-                        onChange={e => setSearchTerm(e.target.value)}
-                        className="w-full md:w-64"
-                    />
-                    <Button onClick={() => { setEditId(null); setFormData({ name: "", phone: "", address: "", notes: "" }); setIsModalOpen(true); }}>
-                        <Plus className="ml-2" size={18} /> إضافة جهة
-                    </Button>
-                </div>
+                {/* Categories Filter Bar */}
+                {categories.length > 0 && (
+                    <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                        <div className="flex items-center gap-2 py-1.5 px-3 bg-gray-50 rounded-lg border">
+                            <Filter size={16} className="text-gray-400" />
+                            <span className="text-xs font-bold text-gray-500 whitespace-nowrap">تصفية حسب التصنيف:</span>
+                        </div>
+                        <div className="flex gap-2">
+                            {categories.map(cat => (
+                                <button
+                                    key={cat.id}
+                                    onClick={() => toggleFilterCategory(cat.id)}
+                                    className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${filterCategoryIds.includes(cat.id)
+                                        ? "bg-primary text-white border-primary shadow-sm"
+                                        : "bg-white text-gray-600 border-gray-200 hover:border-primary/50"
+                                        }`}
+                                >
+                                    {cat.name}
+                                </button>
+                            ))}
+                            {filterCategoryIds.length > 0 && (
+                                <button
+                                    onClick={() => setFilterCategoryIds([])}
+                                    className="px-2 py-1 text-xs text-red-500 hover:text-red-700 font-bold"
+                                >
+                                    مسح
+                                </button>
+                            )}
+                        </div>
+                        <button
+                            onClick={() => setManageCategoriesOpen(true)}
+                            className="mr-auto p-1.5 text-gray-400 hover:text-primary hover:bg-gray-100 rounded-full transition-colors"
+                            title="إدارة التصنيفات"
+                        >
+                            <Settings size={16} />
+                        </button>
+                    </div>
+                )}
             </div>
 
             <Card className="flex-1 p-0 overflow-hidden border-0 shadow-lg bg-white/40">
@@ -279,7 +431,7 @@ export default function PartiesPage() {
                                 <th className="p-4 border-l border-primary-foreground/10">الهاتف</th>
                                 <th className="p-4 border-l border-primary-foreground/10">العنوان</th>
                                 <th className="p-4 border-l border-primary-foreground/10">ملاحظات</th>
-                                <th className="p-4 text-center">اجراءات</th>
+                                <th className="p-4 border-l border-primary-foreground/10 text-center">اجراءات</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border bg-white">
@@ -293,10 +445,26 @@ export default function PartiesPage() {
                                             onChange={() => toggleSelect(p.id)}
                                         />
                                     </td>
-                                    <td className="p-4 font-bold text-foreground border-l border-border/50">{p.name}</td>
+                                    <td className="p-4 font-bold text-foreground border-l border-border/50">
+                                        <div>{p.name}</div>
+                                        {/* Show Categories Here */}
+                                        {p.categoryIds && p.categoryIds.length > 0 && (
+                                            <div className="flex flex-wrap gap-1 mt-1">
+                                                {p.categoryIds.map(cId => {
+                                                    const cat = categories.find(c => c.id === cId);
+                                                    if (!cat) return null;
+                                                    return (
+                                                        <span key={cId} className="px-1.5 py-0.5 bg-gray-100 text-gray-500 text-[10px] rounded-sm border border-gray-200">
+                                                            {cat.name}
+                                                        </span>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                    </td>
                                     <td className="p-4 text-muted-foreground border-l border-border/50">{p.phone}</td>
                                     <td className="p-4 text-muted-foreground border-l border-border/50">{p.address}</td>
-                                    <td className="p-4 text-muted-foreground border-l border-border/50">{p.notes}</td>
+                                    <td className="p-4 text-muted-foreground border-l border-border/50 max-w-xs truncate">{p.notes}</td>
                                     <td className="p-4 flex justify-center gap-2">
                                         <button onClick={() => viewDetails(p)} className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors" title="تفاصيل"><Eye size={18} /></button>
                                         <button onClick={() => openEdit(p)} className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"><Edit2 size={18} /></button>
@@ -335,7 +503,51 @@ export default function PartiesPage() {
                         <label className="block text-sm mb-1">ملاحظات</label>
                         <Textarea rows={3} value={formData.notes} onChange={e => setFormData({ ...formData, notes: e.target.value })} />
                     </div>
-                    <Button type="submit" className="w-full">حفظ</Button>
+
+                    {/* Category Management */}
+                    <div className="pt-2 border-t mt-4">
+                        <label className="block text-sm font-bold mb-2 flex items-center gap-2">
+                            <Tag size={16} /> التصنيفات
+                        </label>
+
+                        {/* New Category Input */}
+                        <div className="flex items-center gap-2 mb-3">
+                            <Input
+                                placeholder="إضافة تصنيف جديد..."
+                                value={newCategoryName}
+                                onChange={e => setNewCategoryName(e.target.value)}
+                                className="h-8 py-4 text-sm"
+                            />
+                            <Button
+                                type="button"
+                                onClick={handleAddCategory}
+                                className="h-8 px-3 text-xs"
+                            >
+                                <Plus size={14} className="ml-1" /> إضافة
+                            </Button>
+                        </div>
+
+                        {/* Category List */}
+                        <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-2 bg-gray-50 rounded border">
+                            {categories.length === 0 && <span className="text-xs text-gray-400">لا توجد تصنيفات</span>}
+                            {categories.map(cat => (
+                                <button
+                                    key={cat.id}
+                                    type="button"
+                                    onClick={() => toggleFormCategory(cat.id)}
+                                    className={`px-2 py-1 rounded-md text-xs font-bold transition-all border ${formCategoryIds.includes(cat.id)
+                                        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                        : "bg-white text-gray-500 border-gray-200 hover:border-gray-300"
+                                        }`}
+                                >
+                                    {cat.name}
+                                    {formCategoryIds.includes(cat.id) && " ✓"}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <Button type="submit" className="w-full mt-4">حفظ</Button>
                 </form>
             </Modal>
 
@@ -413,6 +625,57 @@ export default function PartiesPage() {
                     </div>
                 </div>
             </Modal>
-        </div>
+
+            {/* Category Management Modal */}
+            <Modal isOpen={manageCategoriesOpen} onClose={() => { setManageCategoriesOpen(false); setEditingCategory(null); }} title="إدارة التصنيفات">
+                <div className="space-y-4">
+                    {/* New Category Input */}
+                    {/* New Category Input */}
+                    <form onSubmit={handleAddCategory} className="flex items-center gap-2">
+                        <Input
+                            placeholder="إضافة تصنيف جديد..."
+                            value={newCategoryName}
+                            onChange={e => setNewCategoryName(e.target.value)}
+                            className="h-10 text-sm"
+                        />
+                        <Button
+                            type="submit"
+                            className="h-10 px-4 text-sm"
+                        >
+                            <Plus size={16} className="ml-1" /> إضافة
+                        </Button>
+                    </form>
+
+                    <div className="bg-gray-50 p-4 rounded-xl border">
+                        <h3 className="font-bold text-sm text-gray-700 mb-3">تعديل المسميات</h3>
+                        <div className="space-y-2 max-h-[60vh] overflow-y-auto">
+                            {categories.map(cat => (
+                                <div key={cat.id} className="flex items-center gap-2 bg-white p-2 rounded-lg border shadow-sm">
+                                    {editingCategory?.id === cat.id ? (
+                                        <form onSubmit={handleUpdateCategory} className="flex-1 flex gap-2">
+                                            <Input
+                                                autoFocus
+                                                value={editingCategory.name}
+                                                onChange={e => setEditingCategory({ ...editingCategory, name: e.target.value })}
+                                                className="h-8 text-sm"
+                                            />
+                                            <Button size="sm" type="submit" className="h-8 bg-emerald-600 hover:bg-emerald-700">حفظ</Button>
+                                            <Button size="sm" type="button" variant="ghost" onClick={() => setEditingCategory(null)} className="h-8">إلغاء</Button>
+                                        </form>
+                                    ) : (
+                                        <>
+                                            <span className="flex-1 text-sm font-bold text-gray-700">{cat.name}</span>
+                                            <button onClick={() => setEditingCategory(cat)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded"><Edit2 size={16} /></button>
+                                            <button onClick={() => handleDeleteCategory(cat.id)} className="p-1.5 text-red-600 hover:bg-red-50 rounded"><Trash2 size={16} /></button>
+                                        </>
+                                    )}
+                                </div>
+                            ))}
+                            {categories.length === 0 && <p className="text-gray-400 text-center text-sm py-4">لا توجد تصنيفات</p>}
+                        </div>
+                    </div>
+                </div>
+            </Modal >
+        </div >
     );
 }

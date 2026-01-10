@@ -339,7 +339,7 @@ export default function BooksPage() {
             ) : (
                 /* Book List View */
                 <div className="flex-1 overflow-y-auto px-4 pb-7">
-                    <Card className="overflow-hidden border-0 shadow-xl bg-white/50">
+                    <Card className="overflow-hidden border-0 shadow-lg bg-white/50">
                         <table className="w-full text-right border-collapse">
                             <thead className="bg-primary text-primary-foreground sticky top-0 z-10">
                                 <tr>

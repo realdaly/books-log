@@ -22,12 +22,12 @@ import { useEffect } from "react";
 
 const navItems = [
     { name: "جرد المؤسسة", href: "/inventory", icon: LayoutDashboard },
-    { name: "سجل الاهداء", href: "/gifts", icon: Gift },
+    { name: "سجل الإهداء", href: "/gifts", icon: Gift },
     { name: "سجل الاستعارة", href: "/loans", icon: BookOpen },
     { name: "سجل البيع", href: "/sales", icon: ShoppingCart },
     { name: "الجهات", href: "/parties", icon: Users },
     { name: "الكتب", href: "/books", icon: Library },
-    { name: "الاعدادات", href: "/settings", icon: Settings },
+    { name: "الإعدادات", href: "/settings", icon: Settings },
 ];
 
 export default function Sidebar() {

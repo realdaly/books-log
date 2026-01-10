@@ -62,6 +62,27 @@ export default async function initDatabase(db) {
   `);
 
   // =========================
+  // Party Categories
+  // =========================
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS "party_category" (
+      "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+      "name" VARCHAR(255) NOT NULL,
+      UNIQUE("name")
+    );
+  `);
+
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS "party_category_link" (
+      "party_id" INTEGER NOT NULL,
+      "category_id" INTEGER NOT NULL,
+      PRIMARY KEY ("party_id", "category_id"),
+      FOREIGN KEY ("party_id") REFERENCES "party" ("id") ON DELETE CASCADE,
+      FOREIGN KEY ("category_id") REFERENCES "party_category" ("id") ON DELETE CASCADE
+    );
+  `);
+
+  // =========================
   // Branch Table
   // =========================
   await db.execute(`

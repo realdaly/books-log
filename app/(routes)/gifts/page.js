@@ -242,7 +242,7 @@ export default function GiftsPage() {
         <div className="space-y-6 h-full flex flex-col">
             <div className="flex justify-between items-center">
                 <div className="flex items-center gap-4">
-                    <h1 className="text-3xl font-bold text-primary">سجل اهداء الاصدارت</h1>
+                    <h1 className="text-3xl font-bold text-primary">سجل إهداء الإصدارات</h1>
                     {selectedIds.length > 0 && (
                         <Button variant="destructive" size="sm" onClick={handleBulkDelete} className="animate-in fade-in slide-in-from-left-2">
                             <Trash2 className="ml-2" size={16} />
@@ -251,7 +251,7 @@ export default function GiftsPage() {
                     )}
                 </div>
                 <Button onClick={() => { resetForm(); setEditId(null); setIsModalOpen(true); }}>
-                    <Plus className="ml-2" size={18} /> إضافة اهداء
+                    <Plus className="ml-2" size={18} /> إضافة إهداء
                 </Button>
             </div>
 
@@ -269,7 +269,7 @@ export default function GiftsPage() {
                                     />
                                 </th>
                                 <th className="p-4 border-l border-primary-foreground/10">ت</th>
-                                <th className="p-4 border-l border-primary-foreground/10">عدد الاهداء</th>
+                                <th className="p-4 border-l border-primary-foreground/10">عدد الإهداء</th>
                                 <th className="p-4 border-l border-primary-foreground/10">الجهة المستلمة</th>
                                 <th className="p-4 border-l border-primary-foreground/10">التاريخ</th>
                                 <th className="p-4 border-l border-primary-foreground/10">اسم الكتاب</th>
@@ -317,7 +317,7 @@ export default function GiftsPage() {
             <Modal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                title={editId ? "تعديل اهداء" : (isMultiMode ? "إضافة اهداءات متعددة" : "إضافة اهداء جديد")}
+                title={editId ? "تعديل إهداء" : (isMultiMode ? "إضافة إهداءات متعددة" : "إضافة إهداء جديد")}
                 maxWidth={isMultiMode ? "max-w-4xl" : "max-w-lg"}
             >
                 <form onSubmit={handleSubmit} className="space-y-4">
