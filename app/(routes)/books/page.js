@@ -4,7 +4,7 @@ import { getDb } from "../../lib/db";
 import { normalizeArabic } from "../../lib/utils";
 import { Card, Button, Input, Textarea } from "../../components/ui/Base";
 import { Modal } from "../../components/ui/Modal";
-import { Loader2, Plus, Trash2, Edit2, Image as ImageIcon, BarChart3, HelpCircle, AlertCircle } from "lucide-react";
+import { Loader2, Plus, Trash2, Edit2, Image as ImageIcon, BarChart3, BookOpenText, LayoutGrid, List } from "lucide-react";
 import { ask, open } from '@tauri-apps/plugin-dialog';
 import { readFile } from '@tauri-apps/plugin-fs';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, Legend } from 'recharts';
@@ -18,6 +18,7 @@ export default function BooksPage() {
     const [detailsLoading, setDetailsLoading] = useState(false);
     const [detailsBook, setDetailsBook] = useState(null);
     const [bookStats, setBookStats] = useState(null);
+    const [viewMode, setViewMode] = useState("list"); // "grid" | "list"
 
     const [query, setQuery] = useState("");
 
@@ -102,14 +103,18 @@ export default function BooksPage() {
             const sales = await db.select("SELECT SUM(qty) as total FROM `transaction` WHERE book_id=$1 AND type='sale'", [book.id]);
             const gifts = await db.select("SELECT SUM(qty) as total FROM `transaction` WHERE book_id=$1 AND type='gift'", [book.id]);
             const loans = await db.select("SELECT SUM(qty) as total FROM `transaction` WHERE book_id=$1 AND type='loan'", [book.id]);
+            const loss = await db.select("SELECT SUM(qty) as total FROM `transaction` WHERE book_id=$1 AND type='loss'", [book.id]);
+            const pending = await db.select("SELECT SUM(qty) as total FROM `transaction` WHERE book_id=$1 AND type='pending'", [book.id]);
 
             const realSold = sales[0].total || 0;
             const realGifted = gifts[0].total || 0;
             const realLoaned = loans[0].total || 0;
+            const realLoss = loss[0].total || 0;
+            const realPending = pending[0].total || 0;
 
             const manualSold = book.qom_sold_manual || 0;
             const manualGifted = book.qom_gifted_manual || 0;
-            const manualPending = book.qom_pending_manual || 0; // "In Progress" - usually counts as sold or pending stock? Let's treat as separate category or 'Pending'
+            const manualPending = book.qom_pending_manual || 0;
             const manualLoss = book.loss_manual || 0;
             const sentInst = book.sent_to_institution || 0;
 
@@ -118,18 +123,20 @@ export default function BooksPage() {
             // aggregated
             const totalSold = realSold + manualSold;
             const totalGifted = realGifted + manualGifted;
-            const totalUsed = totalSold + totalGifted + manualLoss + sentInst;
 
-            // Stock logic: Printed - (Sold + Gifted + Loss + SentInst)
-            // Note: 'Pending' might be physically out but not paid. Usually considered 'out of stock' for availability.
-            // Let's subtract Pending too from available stock.
-            const currentStock = Math.max(0, totalPrinted - (totalUsed + manualPending));
+            // "Total Remaining" Logic (Matches Inventory Page):
+            // Total Printed - (All Real Outflows + All Manual Outflows)
+            const totalOutflows =
+                realSold + realGifted + realLoaned + realLoss + realPending +
+                manualSold + manualGifted + manualPending + manualLoss;
+
+            const currentStock = Math.max(0, totalPrinted - totalOutflows);
 
             setBookStats({
                 totalPrinted,
                 totalSold,
                 totalGifted,
-                realLoaned, // Loans don't necessarily reduce printed stock permanently if returned, but usually for "consumption" stats we track them.
+                realLoaned,
                 manualPending,
                 manualLoss,
                 sentInst,
@@ -220,11 +227,11 @@ export default function BooksPage() {
     const chartData = useMemo(() => {
         if (!bookStats) return [];
         return [
-            { name: 'المخزون الحالي', value: bookStats.currentStock },
+            { name: 'مجموع المتبقي', value: bookStats.currentStock },
             { name: 'مباع', value: bookStats.totalSold },
             { name: 'اهداء', value: bookStats.totalGifted },
             { name: 'تالف/مفقود', value: bookStats.manualLoss },
-            { name: 'مؤسسة/أخرى', value: bookStats.sentInst + bookStats.manualPending }, // Grouping smaller categories
+            { name: 'في المؤسسة', value: bookStats.sentInst + bookStats.manualPending }, // Grouping smaller categories
         ].filter(d => d.value > 0);
     }, [bookStats]);
 
@@ -235,6 +242,22 @@ export default function BooksPage() {
             <div className="flex justify-between items-center px-2 flex-wrap gap-4">
                 <h1 className="text-4xl font-black text-primary drop-shadow-sm">مكتبة الكتب</h1>
                 <div className="flex items-center gap-4 flex-1 justify-end">
+                    {/* View Toggle */}
+                    <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-lg">
+                        <button
+                            onClick={() => setViewMode("list")}
+                            className={`p-2 rounded-md transition-all ${viewMode === "list" ? "bg-white shadow text-primary" : "text-gray-400 hover:text-gray-600"}`}
+                        >
+                            <List className="rotate-180" size={20} />
+                        </button>
+                        <button
+                            onClick={() => setViewMode("grid")}
+                            className={`p-2 rounded-md transition-all ${viewMode === "grid" ? "bg-white shadow text-primary" : "text-gray-400 hover:text-gray-600"}`}
+                        >
+                            <LayoutGrid size={20} />
+                        </button>
+                    </div>
+
                     <Input
                         placeholder="بحث عن كتاب..."
                         className="max-w-xs bg-white shadow-sm border-gray-200"
@@ -247,71 +270,142 @@ export default function BooksPage() {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 overflow-y-auto pr-2 pb-20">
-                {filteredBooks.map(book => (
-                    <div key={book.id} className="group relative bg-white rounded-3xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 overflow-hidden flex flex-col h-[500px]">
-                        {/* Cover Image Area */}
-                        <div className="h-[320px] w-full bg-gray-50 relative overflow-hidden group-hover:h-[300px] transition-all duration-300">
-                            {book.cover_image ? (
-                                <img src={book.cover_image} alt={book.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                            ) : (
-                                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5 text-primary/30">
-                                    <ImageIcon size={64} />
+            {viewMode === "grid" ? (
+                /* Book Grid - Optimized for Vertical Book Covers */
+                <div className="flex-1 overflow-y-auto grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-8 pb-20 px-4 content-start">
+                    {filteredBooks.map(book => (
+                        <div key={book.id} className="group relative perspective-1000">
+                            <div className="relative w-full aspect-[2/3] transition-all duration-300 transform group-hover:-translate-y-2 group-hover:shadow-2xl rounded-lg overflow-hidden bg-white shadow-lg border border-gray-200">
+
+                                {/* Book Cover */}
+                                <div className="absolute inset-0 bg-gray-100 flex items-center justify-center overflow-hidden">
+                                    {book.cover_image ? (
+                                        <img
+                                            src={book.cover_image}
+                                            alt={book.title}
+                                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                        />
+                                    ) : (
+                                        <div className="flex flex-col items-center justify-center text-gray-400 p-4 text-center">
+                                            <BookOpenText size={48} className="mb-2" />
+                                            <span className="text-xs font-medium line-clamp-2">{book.title}</span>
+                                        </div>
+                                    )}
+
+                                    {/* Overlay Gradient & Actions */}
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
+                                        <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+                                            <h3 className="text-white font-bold text-lg leading-tight mb-1 line-clamp-2 drop-shadow-md">{book.title}</h3>
+                                            <p className="text-gray-300 text-xs mb-3">مطبوع: {book.total_printed}</p>
+
+                                            <div className="flex gap-2 justify-between items-center">
+                                                <Button size="sm" variant="secondary" className="h-8 text-xs flex-1 bg-white/90 hover:bg-white text-black border-0" onClick={() => openDetails(book)}>
+                                                    <BarChart3 size={14} className="ml-1" /> التفاصيل
+                                                </Button>
+                                                <div className="flex gap-2">
+                                                    <button onClick={(e) => { e.stopPropagation(); openEdit(book); }} className="bg-white/20 hover:bg-white p-1.5 rounded-full text-white hover:text-blue-600 transition-colors backdrop-blur-sm"><Edit2 size={16} /></button>
+                                                    <button onClick={(e) => { e.stopPropagation(); handleDelete(book.id); }} className="bg-white/20 hover:bg-white p-1.5 rounded-full text-white hover:text-red-600 transition-colors backdrop-blur-sm"><Trash2 size={16} /></button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
                                 </div>
-                            )}
-                            <div className="absolute top-2 left-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                <button onClick={(e) => { e.stopPropagation(); openEdit(book); }} className="bg-white/90 p-2 rounded-full text-blue-600 hover:text-blue-700 shadow-sm"><Edit2 size={16} /></button>
-                                <button onClick={(e) => { e.stopPropagation(); handleDelete(book.id); }} className="bg-white/90 p-2 rounded-full text-red-500 hover:text-red-700 shadow-sm"><Trash2 size={16} /></button>
+
+                                {/* Price Tag (Always Visible) */}
+                                {Number(book.unit_price) > 0 && (
+                                    <div className="absolute top-3 right-3 bg-emerald-500/80 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-1 rounded-md shadow-sm z-10">
+                                        {Number(book.unit_price).toLocaleString()}
+                                    </div>
+                                )}
                             </div>
+
+                            {/* Shelf Shadow Effect */}
+                            <div className="absolute -bottom-4 left-4 right-4 h-4 bg-black/20 blur-xl rounded-[100%] opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                         </div>
+                    ))}
 
-                        {/* Content */}
-                        <div className="p-5 flex-1 flex flex-col justify-between relative bg-white">
-                            {/* Floating Price Badge */}
-                            <div className="absolute -top-4 right-4 bg-emerald-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-md z-10">
-                                {Number(book.unit_price).toLocaleString()} دينار
-                            </div>
-
-                            <div className="space-y-2">
-                                <h3 className="font-bold text-xl text-gray-800 line-clamp-2 leading-tight min-h-[3rem]" title={book.title}>
-                                    {book.title}
-                                </h3>
-                                <div className="flex items-center gap-2 text-sm text-gray-500">
-                                    <span className="bg-gray-100 px-2 py-0.5 rounded text-xs font-medium">مطبوع: {book.total_printed}</span>
-                                </div>
-                            </div>
-
-                            <Button variant="outline" className="w-full mt-4 border-2 border-primary/10 hover:bg-primary hover:text-white transition-colors" onClick={() => openDetails(book)}>
-                                <BarChart3 className="ml-2 w-4 h-4" />
-                                التفاصيل والإحصائيات
-                            </Button>
+                    {/* Add New Book Card */}
+                    <button
+                        onClick={() => { setEditId(null); resetForm(); setIsModalOpen(true); }}
+                        className="group relative w-full aspect-[2/3] rounded-xl border-2 border-dashed border-gray-300 hover:border-primary hover:bg-primary/5 flex flex-col items-center justify-center gap-3 transition-all duration-300"
+                    >
+                        <div className="w-16 h-16 rounded-full bg-gray-100 group-hover:bg-white flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform text-gray-400 group-hover:text-primary">
+                            <Plus size={32} />
                         </div>
-                    </div>
-                ))}
-
-                {/* Add New Placeholder Card */}
-                <button
-                    onClick={() => { setEditId(null); resetForm(); setIsModalOpen(true); }}
-                    className="group border-2 border-dashed border-gray-300 rounded-3xl h-[500px] flex flex-col items-center justify-center gap-4 hover:border-primary hover:bg-primary/5 transition-all duration-300 text-gray-400 hover:text-primary"
-                >
-                    <div className="w-20 h-20 rounded-full bg-gray-50 group-hover:bg-white flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
-                        <Plus size={40} />
-                    </div>
-                    <span className="font-bold text-lg">إضافة كتاب جديد</span>
-                </button>
-            </div>
+                        <span className="font-bold text-gray-400 group-hover:text-primary text-sm">إضافة كتاب جديد</span>
+                    </button>
+                </div>
+            ) : (
+                /* Book List View */
+                <div className="flex-1 overflow-y-auto px-4 pb-7">
+                    <Card className="overflow-hidden border-0 shadow-xl bg-white/50">
+                        <table className="w-full text-right border-collapse">
+                            <thead className="bg-primary text-primary-foreground sticky top-0 z-10">
+                                <tr>
+                                    <th className="p-4 border-l border-primary-foreground/10 w-16 text-center">#</th>
+                                    <th className="p-4 border-l border-primary-foreground/10">عنوان الكتاب</th>
+                                    <th className="p-4 border-l border-primary-foreground/10 text-center">العدد المطبوع</th>
+                                    <th className="p-4 border-l border-primary-foreground/10 text-center">سعر النسخة</th>
+                                    <th className="p-4 border-l border-primary-foreground/10 text-center w-40">خيارات</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                                {filteredBooks.map((book) => (
+                                    <tr key={book.id} className="group hover:bg-white hover:shadow-sm transition-all duration-200">
+                                        <td className="p-3 text-center">
+                                            <div className="w-10 h-14 bg-gray-100 rounded overflow-hidden relative mx-auto border border-gray-200">
+                                                {book.cover_image ? (
+                                                    <img src={book.cover_image} alt="" className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center text-gray-300">
+                                                        <BookOpenText size={16} />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </td>
+                                        <td className="p-3 font-bold text-gray-800">{book.title}</td>
+                                        <td className="p-3 text-center text-gray-600">{book.total_printed}</td>
+                                        <td className="p-3 text-center font-bold text-emerald-600">{Number(book.unit_price).toLocaleString()}</td>
+                                        <td className="p-3">
+                                            <div className="flex items-center justify-center gap-2">
+                                                <Button size="icon" variant="ghost" className="h-8 w-8 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-full" onClick={() => openEdit(book)}>
+                                                    <Edit2 size={14} />
+                                                </Button>
+                                                <Button size="icon" variant="ghost" className="h-8 w-8 text-red-600 bg-red-50 hover:bg-red-100 rounded-full" onClick={() => handleDelete(book.id)}>
+                                                    <Trash2 size={14} />
+                                                </Button>
+                                                <Button size="sm" variant="outline" className="h-8 text-xs border-primary/20 hover:bg-primary hover:text-white" onClick={() => openDetails(book)}>
+                                                    <BarChart3 size={14} className="ml-1" /> التفاصيل
+                                                </Button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                                {filteredBooks.length === 0 && (
+                                    <tr>
+                                        <td colSpan="5" className="p-8 text-center text-gray-400">
+                                            لا توجد نتائج بحث
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </Card>
+                </div>
+            )}
 
             {/* --- Stats Detail Modal --- */}
             {detailsBook && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-                    <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col md:flex-row animate-in zoom-in-95 duration-200 relative">
+                <div onClick={() => setDetailsBook(null)} className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200 cursor-pointer">
+                    <div onClick={(e) => e.stopPropagation()} className="cursor-default bg-white rounded-[2rem] shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col md:flex-row animate-in zoom-in-95 duration-200 relative">
                         <button onClick={() => setDetailsBook(null)} className="absolute top-4 left-4 z-10 bg-white/80 p-2 rounded-full hover:bg-white shadow-sm transition-all md:text-gray-500 hover:text-black">
                             ✕
                         </button>
 
                         {/* Left Side: Image & Key Info */}
                         <div className="w-full md:w-1/3 bg-gray-50 p-6 flex flex-col items-center justify-center text-center border-l border-gray-100 overflow-y-auto">
-                            <div className="w-56 aspect-[9/16] rounded-xl shadow-lg run-in mb-6 bg-white relative group overflow-hidden">
+                            <div className="w-56 min-h-80 rounded-xl shadow-lg run-in mb-6 bg-white relative group overflow-hidden">
                                 {detailsBook.cover_image ? (
                                     <img src={detailsBook.cover_image} alt="Cover" className="w-full h-full object-cover" />
                                 ) : (
@@ -349,7 +443,7 @@ export default function BooksPage() {
                                     {/* Summary Grid */}
                                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                                         <div className="p-4 rounded-2xl bg-emerald-50 text-emerald-900">
-                                            <div className="text-sm font-bold opacity-70">المخزون الحالي</div>
+                                            <div className="text-sm font-bold opacity-70">مجموع المتبقي</div>
                                             <div className="text-3xl font-black mt-1">{bookStats.currentStock}</div>
                                         </div>
                                         <div className="p-4 rounded-2xl bg-blue-50 text-blue-900">
@@ -369,7 +463,7 @@ export default function BooksPage() {
                                     {/* Chart Area */}
                                     <div className="bg-white rounded-2xl border p-6 shadow-sm">
                                         <h4 className="font-bold text-gray-600 mb-4 text-sm">توزيع النسخ المطبوعة</h4>
-                                        <div className="h-64 h-full w-full">
+                                        <div className="h-64 w-full">
                                             <ResponsiveContainer width="100%" height="100%">
                                                 <PieChart>
                                                     <Pie
