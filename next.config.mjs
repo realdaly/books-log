@@ -12,8 +12,10 @@ const nextConfig = {
     images: {
         unoptimized: true,
     },
-    // Configure assetPrefix or else the server won't properly resolve your assets.
-    assetPrefix: isProd ? undefined : `http://${internalHost}:3000`,
+    // Required for Tauri to handle sub-routes correctly in static export
+    trailingSlash: false,
+    // Ensure relative paths for assets in production build
+    assetPrefix: undefined,
 };
 
 export default nextConfig;

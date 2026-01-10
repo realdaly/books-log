@@ -2,9 +2,81 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "Capability for the main window",
-  "windows": ["main"],
+  "windows": [
+    "main"
+  ],
   "permissions": [
     "core:default",
-    "opener:default"
+    "opener:default",
+    {
+      "identifier": "fs:allow-remove",
+      "allow": [
+        {
+          "path": "**"
+        }
+      ]
+    },
+    {
+      "identifier": "sql:allow-load",
+      "allow": [
+        {
+          "name": "sqlite:publishing.db",
+          "request": "*"
+        }
+      ]
+    },
+    {
+      "identifier": "sql:allow-execute",
+      "allow": [
+        {
+          "name": "sqlite:publishing.db",
+          "request": "*"
+        }
+      ]
+    },
+    {
+      "identifier": "sql:allow-select",
+      "allow": [
+        {
+          "name": "sqlite:publishing.db",
+          "request": "*"
+        }
+      ]
+    },
+    "dialog:default",
+    "dialog:allow-message",
+    {
+      "identifier": "fs:allow-write-file",
+      "allow": [
+        {
+          "path": "**"
+        }
+      ]
+    },
+    {
+      "identifier": "fs:allow-read-file",
+      "allow": [
+        {
+          "path": "**"
+        }
+      ]
+    },
+    {
+      "identifier": "fs:allow-copy-file",
+      "allow": [
+        {
+          "path": "**"
+        }
+      ]
+    },
+    {
+      "identifier": "fs:allow-exists",
+      "allow": [
+        {
+          "path": "**"
+        }
+      ]
+    },
+    "process:default"
   ]
 }

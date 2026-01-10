@@ -1,0 +1,80 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Teal / Cream Theme Mapped to HSL */
+    /* Primary (Teal): #02343F -> HSL(191, 94%, 13%) */
+    /* Background (Cream): #F0EDCC -> HSL(55, 55%, 87%) - Adjusted slightly for better contrast as background */
+    /* But stick close to original request */
+
+    --background: 55 55% 94%;
+    /* Very light cream for main bg */
+    --foreground: 191 94% 13%;
+    /* Teal for text */
+
+    --card: 0 0% 100%;
+    /* White cards */
+    --card-foreground: 191 94% 13%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 191 94% 13%;
+
+    --primary: 191 94% 13%;
+    /* Teal */
+    --primary-foreground: 55 55% 87%;
+    /* Cream text on teal */
+
+    --secondary: 191 20% 90%;
+    /* Light teal-gray for secondary buttons */
+    --secondary-foreground: 191 94% 13%;
+
+    --muted: 191 10% 90%;
+    --muted-foreground: 191 40% 40%;
+
+    --accent: 55 55% 87%;
+    --accent-foreground: 191 94% 13%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 191 20% 85%;
+    --input: 191 20% 85%;
+    --ring: 191 94% 13%;
+
+    --radius: 0.75rem;
+  }
+}
+
+@layer base {
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-primary/20 rounded-full hover:bg-primary/40 transition-colors;
+}
+
+.pdf-only {
+  display: none !important;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  @apply bg-primary/20 rounded-full hover:bg-primary/30;
+}

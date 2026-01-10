@@ -9,6 +9,7 @@ lerna-debug.log*
 
 node_modules
 .next
+.vscode
 dist
 dist-ssr
 *.local
