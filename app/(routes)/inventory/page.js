@@ -22,7 +22,6 @@ export default function InventoryPage() {
         sent_to_institution: "0",
         qom_sold_manual: "0",
         qom_gifted_manual: "0",
-        qom_pending_manual: "0",
         loss_manual: "0",
         unit_price: "0"
     });
@@ -46,7 +45,6 @@ export default function InventoryPage() {
           COALESCE(b.sent_to_institution, 0) as sent_to_institution,
           COALESCE(b.qom_sold_manual, 0) as qom_sold_manual,
           COALESCE(b.qom_gifted_manual, 0) as qom_gifted_manual,
-          COALESCE(b.qom_pending_manual, 0) as qom_pending_manual,
           COALESCE(b.loss_manual, 0) as loss_manual,
 
           -- Institution Aggregates (Transactions)
@@ -81,13 +79,12 @@ export default function InventoryPage() {
         e.preventDefault();
         try {
             const db = await getDb();
-            const { title, notes, total_printed, sent_to_institution, qom_sold_manual, qom_gifted_manual, qom_pending_manual, loss_manual, unit_price } = formData;
+            const { title, notes, total_printed, sent_to_institution, qom_sold_manual, qom_gifted_manual, loss_manual, unit_price } = formData;
 
             const nTotal = Number(total_printed) || 0;
             const nSent = Number(sent_to_institution) || 0;
             const nQomSold = Number(qom_sold_manual) || 0;
             const nQomGifted = Number(qom_gifted_manual) || 0;
-            const nQomPending = Number(qom_pending_manual) || 0;
             const nLoss = Number(loss_manual) || 0;
             const nPrice = Number(unit_price) || 0;
 
@@ -95,11 +92,11 @@ export default function InventoryPage() {
 
             for (const t of titles) {
                 await db.execute(`
-                    INSERT INTO book (title, notes, total_printed, sent_to_institution, qom_sold_manual, qom_gifted_manual, qom_pending_manual, loss_manual, unit_price) 
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                    INSERT INTO book (title, notes, total_printed, sent_to_institution, qom_sold_manual, qom_gifted_manual, loss_manual, unit_price) 
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
                 `, [
                     t, notes,
-                    nTotal, nSent, nQomSold, nQomGifted, nQomPending, nLoss, nPrice
+                    nTotal, nSent, nQomSold, nQomGifted, nLoss, nPrice
                 ]);
             }
 
@@ -116,7 +113,7 @@ export default function InventoryPage() {
         setFormData({
             title: "", notes: "",
             total_printed: "0",
-            sent_to_institution: "0", qom_sold_manual: "0", qom_gifted_manual: "0", qom_pending_manual: "0",
+            sent_to_institution: "0", qom_sold_manual: "0", qom_gifted_manual: "0",
             loss_manual: "0",
             unit_price: "0"
         });
@@ -183,7 +180,6 @@ export default function InventoryPage() {
                                 <th className="p-4 text-center w-28 border-r border-primary-foreground/10 bg-black/20">المتبقي في فرع قم</th>
                                 <th className="p-4 text-center w-28 border-r border-primary-foreground/10 bg-black/20">مباع من فرع قم</th>
                                 <th className="p-4 text-center w-28 border-r border-primary-foreground/10 bg-black/20">مهدى من فرع قم</th>
-                                <th className="p-4 text-center w-28 border-r border-primary-foreground/10 bg-black/20 text-xs">طور البيع (فرع قم)</th>
                                 <th className="p-4 text-center w-28 font-black text-white rounded-tl-lg bg-black/40 border-r border-primary-foreground/10">مجموع المتبقي</th>
                             </tr>
                         </thead>
@@ -192,8 +188,8 @@ export default function InventoryPage() {
                                 // Computations
                                 // Remaining Inst: Sent - Transactions(Sold, Gifted, Loaned, BioLoss) - ManualLoss
                                 const remaining_inst = row.sent_to_institution - row.sold_inst - row.gifted_inst - row.loaned_inst - row.loss_inst - row.pending_inst - row.loss_manual;
-                                // New Qom Logic: Total - Sent to Inst - QomSold - QomGifted - QomPendingManual
-                                const remaining_qom = (row.total_printed || 0) - row.sent_to_institution - row.qom_sold_manual - row.qom_gifted_manual - row.qom_pending_manual;
+                                // New Qom Logic: Total - Sent to Inst - QomSold - QomGifted
+                                const remaining_qom = (row.total_printed || 0) - row.sent_to_institution - row.qom_sold_manual - row.qom_gifted_manual;
                                 const total_remaining = remaining_inst + remaining_qom;
 
                                 return (
@@ -270,17 +266,6 @@ export default function InventoryPage() {
                                             />
                                         </td>
 
-                                        {/* Editable: Qom Pending */}
-                                        <td className="p-2 text-center border-l border-border/50">
-                                            <input
-                                                type="number"
-                                                className="w-20 p-1.5 text-center bg-transparent border border-transparent hover:border-input rounded-lg focus:bg-white focus:border-primary focus:ring-1 focus:ring-primary transition-all font-medium text-foreground"
-                                                defaultValue={row.qom_pending_manual}
-                                                onBlur={e => updateField(row.id, 'qom_pending_manual', e.target.value)}
-                                                onFocus={e => e.target.select()}
-                                            />
-                                        </td>
-
                                         {/* Total Remaining - DARKER CELL */}
                                         <td className="p-3 text-center font-black text-lg text-primary bg-black/[0.05] group-hover:bg-primary/20 transition-colors border-l border-border/50">
                                             {total_remaining}
@@ -326,10 +311,6 @@ export default function InventoryPage() {
                         <div>
                             <label className="block text-xs font-bold mb-1 text-muted-foreground">مرسل للمؤسسة</label>
                             <Input type="number" value={formData.sent_to_institution} onChange={e => setFormData({ ...formData, sent_to_institution: e.target.value })} />
-                        </div>
-                        <div>
-                            <label className="block text-xs font-bold mb-1 text-muted-foreground">طور البيع (قم)</label>
-                            <Input type="number" value={formData.qom_pending_manual} onChange={e => setFormData({ ...formData, qom_pending_manual: e.target.value })} />
                         </div>
                         <div>
                             <label className="block text-xs font-bold mb-1 text-muted-foreground">مباع (قم)</label>

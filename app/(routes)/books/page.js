@@ -26,7 +26,7 @@ export default function BooksPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [formData, setFormData] = useState({
         title: "", notes: "", total_printed: "0", sent_to_institution: "0",
-        qom_sold_manual: "0", qom_gifted_manual: "0", qom_pending_manual: "0", loss_manual: "0", unit_price: "0",
+        qom_sold_manual: "0", qom_gifted_manual: "0", loss_manual: "0", unit_price: "0",
         cover_image: null
     });
     const [editId, setEditId] = useState(null);
@@ -52,7 +52,26 @@ export default function BooksPage() {
     const fetchData = async () => {
         try {
             const db = await getDb();
-            const rows = await db.select("SELECT * FROM book ORDER BY title ASC");
+            // Fetch books with Institution transaction stats + Manual Qom fields
+            const rows = await db.select(`
+                SELECT 
+                    b.*,
+                    
+                    -- Institution Aggregates (Transactions)
+                    COALESCE(sales.sold_qty, 0) as sold_inst,
+                    COALESCE(gifts.gifted_qty, 0) as gifted_inst,
+                    COALESCE(loans.loaned_qty, 0) as loaned_inst,
+                    COALESCE(loss.loss_qty, 0) as loss_inst,
+                    COALESCE(pending.pending_qty, 0) as pending_inst
+
+                FROM book b
+                LEFT JOIN vw_book_sales_qty sales ON sales.book_id = b.id AND sales.branch_id = (SELECT id FROM branch WHERE key='institution')
+                LEFT JOIN vw_book_gifts_qty gifts ON gifts.book_id = b.id AND gifts.branch_id = (SELECT id FROM branch WHERE key='institution')
+                LEFT JOIN vw_book_loans_qty loans ON loans.book_id = b.id AND loans.branch_id = (SELECT id FROM branch WHERE key='institution')
+                LEFT JOIN vw_book_loss_qty loss ON loss.book_id = b.id AND loss.branch_id = (SELECT id FROM branch WHERE key='institution')
+                LEFT JOIN vw_book_pending_sales_qty pending ON pending.book_id = b.id AND pending.branch_id = (SELECT id FROM branch WHERE key='institution')
+                ORDER BY b.title ASC
+            `);
             setBooks(rows);
         } catch (err) {
             console.error(err);
@@ -100,11 +119,11 @@ export default function BooksPage() {
 
             // Get Transaction Sums
             // We use simple queries for now. 
-            const sales = await db.select("SELECT SUM(qty) as total FROM `transaction` WHERE book_id=$1 AND type='sale'", [book.id]);
+            const sales = await db.select("SELECT SUM(qty) as total FROM `transaction` WHERE book_id=$1 AND type='sale' AND state!='pending'", [book.id]);
             const gifts = await db.select("SELECT SUM(qty) as total FROM `transaction` WHERE book_id=$1 AND type='gift'", [book.id]);
             const loans = await db.select("SELECT SUM(qty) as total FROM `transaction` WHERE book_id=$1 AND type='loan'", [book.id]);
             const loss = await db.select("SELECT SUM(qty) as total FROM `transaction` WHERE book_id=$1 AND type='loss'", [book.id]);
-            const pending = await db.select("SELECT SUM(qty) as total FROM `transaction` WHERE book_id=$1 AND type='pending'", [book.id]);
+            const pending = await db.select("SELECT SUM(qty) as total FROM `transaction` WHERE book_id=$1 AND type='sale' AND state='pending'", [book.id]);
 
             const realSold = sales[0].total || 0;
             const realGifted = gifts[0].total || 0;
@@ -114,7 +133,6 @@ export default function BooksPage() {
 
             const manualSold = book.qom_sold_manual || 0;
             const manualGifted = book.qom_gifted_manual || 0;
-            const manualPending = book.qom_pending_manual || 0;
             const manualLoss = book.loss_manual || 0;
             const sentInst = book.sent_to_institution || 0;
 
@@ -128,7 +146,7 @@ export default function BooksPage() {
             // Total Printed - (All Real Outflows + All Manual Outflows)
             const totalOutflows =
                 realSold + realGifted + realLoaned + realLoss + realPending +
-                manualSold + manualGifted + manualPending + manualLoss;
+                manualSold + manualGifted + manualLoss;
 
             const currentStock = Math.max(0, totalPrinted - totalOutflows);
 
@@ -137,7 +155,7 @@ export default function BooksPage() {
                 totalSold,
                 totalGifted,
                 realLoaned,
-                manualPending,
+                realPending,
                 manualLoss,
                 sentInst,
                 currentStock
@@ -155,13 +173,12 @@ export default function BooksPage() {
         e.preventDefault();
         try {
             const db = await getDb();
-            const { title, notes, total_printed, sent_to_institution, qom_sold_manual, qom_gifted_manual, qom_pending_manual, loss_manual, unit_price, cover_image } = formData;
+            const { title, notes, total_printed, sent_to_institution, qom_sold_manual, qom_gifted_manual, loss_manual, unit_price, cover_image } = formData;
 
             const nTotal = Number(total_printed) || 0;
             const nSent = Number(sent_to_institution) || 0;
             const nQomSold = Number(qom_sold_manual) || 0;
             const nQomGifted = Number(qom_gifted_manual) || 0;
-            const nQomPending = Number(qom_pending_manual) || 0;
             const nLoss = Number(loss_manual) || 0;
             const nPrice = Number(unit_price) || 0;
 
@@ -169,16 +186,16 @@ export default function BooksPage() {
                 // Update Single
                 await db.execute(`
                     UPDATE book SET title=$1, notes=$2, total_printed=$3, sent_to_institution=$4, qom_sold_manual=$5, 
-                    qom_gifted_manual=$6, qom_pending_manual=$7, loss_manual=$8, unit_price=$9, cover_image=$10 WHERE id=$11
-                `, [title, notes, nTotal, nSent, nQomSold, nQomGifted, nQomPending, nLoss, nPrice, cover_image, editId]);
+                    qom_gifted_manual=$6, loss_manual=$7, unit_price=$8, cover_image=$9 WHERE id=$10
+                `, [title, notes, nTotal, nSent, nQomSold, nQomGifted, nLoss, nPrice, cover_image, editId]);
             } else {
                 // Bulk Add Support
                 const titles = title.split('\n').map(t => t.trim()).filter(t => t !== "");
                 for (const t of titles) {
                     await db.execute(`
                         INSERT INTO book (title, notes, total_printed, sent_to_institution, qom_sold_manual, qom_gifted_manual, 
-                        qom_pending_manual, loss_manual, unit_price, cover_image) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-                    `, [t, notes, nTotal, nSent, nQomSold, nQomGifted, nQomPending, nLoss, nPrice, cover_image]);
+                        loss_manual, unit_price, cover_image) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                    `, [t, notes, nTotal, nSent, nQomSold, nQomGifted, nLoss, nPrice, cover_image]);
                 }
             }
             setIsModalOpen(false);
@@ -208,7 +225,6 @@ export default function BooksPage() {
             sent_to_institution: String(b.sent_to_institution || 0),
             qom_sold_manual: String(b.qom_sold_manual || 0),
             qom_gifted_manual: String(b.qom_gifted_manual || 0),
-            qom_pending_manual: String(b.qom_pending_manual || 0),
             loss_manual: String(b.loss_manual || 0),
             unit_price: String(b.unit_price || 0),
             cover_image: b.cover_image
@@ -220,7 +236,7 @@ export default function BooksPage() {
     const resetForm = () => {
         setFormData({
             title: "", notes: "", total_printed: "0", sent_to_institution: "0",
-            qom_sold_manual: "0", qom_gifted_manual: "0", qom_pending_manual: "0", loss_manual: "0", unit_price: "0", cover_image: null
+            qom_sold_manual: "0", qom_gifted_manual: "0", loss_manual: "0", unit_price: "0", cover_image: null
         });
     };
 
@@ -231,7 +247,7 @@ export default function BooksPage() {
             { name: 'مباع', value: bookStats.totalSold },
             { name: 'اهداء', value: bookStats.totalGifted },
             { name: 'تالف/مفقود', value: bookStats.manualLoss },
-            { name: 'في المؤسسة', value: bookStats.sentInst + bookStats.manualPending }, // Grouping smaller categories
+            { name: 'في المؤسسة', value: bookStats.sentInst }, // Grouping smaller categories
         ].filter(d => d.value > 0);
     }, [bookStats]);
 
@@ -271,7 +287,7 @@ export default function BooksPage() {
             </div>
 
             {viewMode === "grid" ? (
-                /* Book Grid - Optimized for Vertical Book Covers */
+                /* Book Grid view */
                 <div className="flex-1 overflow-y-auto grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-8 pb-20 px-4 content-start">
                     {filteredBooks.map(book => (
                         <div key={book.id} className="group relative perspective-1000">
@@ -340,51 +356,92 @@ export default function BooksPage() {
                 /* Book List View */
                 <div className="flex-1 overflow-y-auto px-4 pb-7">
                     <Card className="overflow-hidden border-0 shadow-lg bg-white/50">
-                        <table className="w-full text-right border-collapse">
+                        <table className="w-full text-right border-collapse text-sm">
                             <thead className="bg-primary text-primary-foreground sticky top-0 z-10">
                                 <tr>
-                                    <th className="p-4 border-l border-primary-foreground/10 w-16 text-center">#</th>
-                                    <th className="p-4 border-l border-primary-foreground/10">عنوان الكتاب</th>
+                                    <th className="p-4 border-l border-primary-foreground/10 w-12 text-center">#</th>
+                                    <th className="p-4 border-l border-primary-foreground/10 min-w-[200px]">عنوان الكتاب</th>
                                     <th className="p-4 border-l border-primary-foreground/10 text-center">العدد المطبوع</th>
+                                    <th className="p-4 border-l border-primary-foreground/10 text-center">العدد المرسل للمؤسسة</th>
+                                    <th className="p-4 border-l border-primary-foreground/10 text-center font-bold bg-black/20">متبقي في المؤسسة</th>
+                                    <th className="p-4 border-l border-primary-foreground/10 text-center">إجمالي المباع</th>
+                                    <th className="p-4 border-l border-primary-foreground/10 text-center text-orange-300">طور البيع</th>
+                                    <th className="p-4 border-l border-primary-foreground/10 text-center">إجمالي المهداة</th>
+                                    <th className="p-4 border-l border-primary-foreground/10 text-center">إجمالي المستعار</th>
+                                    <th className="p-4 border-l border-primary-foreground/10 text-center text-red-200">تالف / مفقود</th>
                                     <th className="p-4 border-l border-primary-foreground/10 text-center">سعر النسخة</th>
-                                    <th className="p-4 border-l border-primary-foreground/10 text-center w-40">خيارات</th>
+                                    <th className="p-4 border-l border-primary-foreground/10 text-center w-48">خيارات</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
-                                {filteredBooks.map((book) => (
-                                    <tr key={book.id} className="group hover:bg-white hover:shadow-sm transition-all duration-200">
-                                        <td className="p-3 text-center">
-                                            <div className="w-10 h-14 bg-gray-100 rounded overflow-hidden relative mx-auto border border-gray-200">
-                                                {book.cover_image ? (
-                                                    <img src={book.cover_image} alt="" className="w-full h-full object-cover" />
-                                                ) : (
-                                                    <div className="w-full h-full flex items-center justify-center text-gray-300">
-                                                        <BookOpenText size={16} />
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </td>
-                                        <td className="p-3 font-bold text-gray-800">{book.title}</td>
-                                        <td className="p-3 text-center text-gray-600">{book.total_printed}</td>
-                                        <td className="p-3 text-center font-bold text-emerald-600">{Number(book.unit_price).toLocaleString()}</td>
-                                        <td className="p-3">
-                                            <div className="flex items-center justify-center gap-2">
-                                                <Button size="icon" variant="ghost" className="h-8 w-8 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-full" onClick={() => openEdit(book)}>
-                                                    <Edit2 size={14} />
-                                                </Button>
-                                                <Button size="icon" variant="ghost" className="h-8 w-8 text-red-600 bg-red-50 hover:bg-red-100 rounded-full" onClick={() => handleDelete(book.id)}>
-                                                    <Trash2 size={14} />
-                                                </Button>
-                                                <Button size="sm" variant="outline" className="h-8 text-xs border-primary/20 hover:bg-primary hover:text-white" onClick={() => openDetails(book)}>
-                                                    <BarChart3 size={14} className="ml-1" /> التفاصيل
-                                                </Button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
+                                {filteredBooks.map((book) => {
+                                    const totalPrinted = book.total_printed || 0;
+                                    const sentToInst = book.sent_to_institution || 0;
+
+                                    // Inst Stats
+                                    const soldInst = book.sold_inst || 0;
+                                    const giftedInst = book.gifted_inst || 0;
+                                    const loanedInst = book.loaned_inst || 0;
+                                    const lossInst = book.loss_inst || 0;
+                                    const pendingInst = book.pending_inst || 0;
+
+                                    // Manual (Qom/Global)
+                                    const manualSold = book.qom_sold_manual || 0;
+                                    const manualGifted = book.qom_gifted_manual || 0;
+                                    const manualLoss = book.loss_manual || 0;
+
+                                    // Calculations
+                                    // Remaining in Institution = Sent - (Inst Real Outflows) - Manual Loss (assuming manual loss is counted against Inst stock per Inventory Logic?)
+                                    // In InventoryPage: remaining_inst = sent - sold - gifted - loaned - loss_inst - pending_inst - loss_manual
+                                    const remainingInst = sentToInst - soldInst - giftedInst - loanedInst - lossInst - pendingInst - manualLoss;
+
+                                    const totalSold = soldInst + manualSold;
+                                    const totalGifted = giftedInst + manualGifted;
+                                    const totalLoaned = loanedInst;
+                                    const totalLoss = lossInst + manualLoss;
+
+                                    return (
+                                        <tr key={book.id} className="group hover:bg-white hover:shadow-sm transition-all duration-200">
+                                            <td className="p-2 text-center">
+                                                <div className="w-10 h-14 bg-gray-100 rounded overflow-hidden relative mx-auto border border-gray-200">
+                                                    {book.cover_image ? (
+                                                        <img src={book.cover_image} alt="" className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <div className="w-full h-full flex items-center justify-center text-gray-300">
+                                                            <BookOpenText size={14} />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td className="p-3 font-bold text-gray-800">{book.title}</td>
+                                            <td className="p-3 text-center text-gray-600">{totalPrinted}</td>
+                                            <td className="p-3 text-center text-gray-600">{sentToInst}</td>
+                                            <td className="p-3 text-center font-black text-primary bg-primary/5">{remainingInst}</td>
+                                            <td className="p-3 text-center text-gray-600">{totalSold}</td>
+                                            <td className="p-3 text-center font-bold text-orange-600">{pendingInst > 0 ? pendingInst : '-'}</td>
+                                            <td className="p-3 text-center text-gray-600">{totalGifted}</td>
+                                            <td className="p-3 text-center text-gray-600">{totalLoaned}</td>
+                                            <td className="p-3 text-center text-red-400 font-medium">{totalLoss}</td>
+                                            <td className="p-3 text-center font-bold text-emerald-600">{Number(book.unit_price).toLocaleString()}</td>
+                                            <td className="p-3">
+                                                <div className="flex items-center justify-center gap-1">
+                                                    <Button size="icon" variant="ghost" className="h-7 w-7 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-full" onClick={() => openEdit(book)}>
+                                                        <Edit2 size={15} />
+                                                    </Button>
+                                                    <Button size="icon" variant="ghost" className="h-7 w-7 text-red-600 bg-red-50 hover:bg-red-100 rounded-full" onClick={() => handleDelete(book.id)}>
+                                                        <Trash2 size={15} />
+                                                    </Button>
+                                                    <Button size="sm" variant="outline" className="h-7 text-[10px] px-2 border-primary/20 hover:bg-primary hover:text-white" onClick={() => openDetails(book)}>
+                                                        <BarChart3 size={15} className="ml-1" /> التفاصيل
+                                                    </Button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
                                 {filteredBooks.length === 0 && (
                                     <tr>
-                                        <td colSpan="5" className="p-8 text-center text-gray-400">
+                                        <td colSpan="11" className="p-8 text-center text-gray-400">
                                             لا توجد نتائج بحث
                                         </td>
                                     </tr>
@@ -410,7 +467,7 @@ export default function BooksPage() {
                                     <img src={detailsBook.cover_image} alt="Cover" className="w-full h-full object-cover" />
                                 ) : (
                                     <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-400">
-                                        <ImageIcon size={48} />
+                                        <BookOpenText size={48} />
                                     </div>
                                 )}
                             </div>
@@ -498,7 +555,7 @@ export default function BooksPage() {
                                         </div>
                                         <div className="flex justify-between border-b py-2">
                                             <span>قيد البيع (لم يكتمل)</span>
-                                            <span className="font-bold text-gray-800">{bookStats.manualPending}</span>
+                                            <span className="font-bold text-gray-800">{bookStats.realPending}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -508,20 +565,20 @@ export default function BooksPage() {
                 </div>
             )}
 
-            {/* Add/Edit Modal (Refined to match Inventory Page style) */}
-            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editId ? "تعديل بيانات الكتاب" : "إضافة كتاب جديد"} maxWidth="max-w-4xl">
+            {/* Add/Edit Modal */}
+            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editId ? "تعديل بيانات الكتاب" : "إضافة كتاب جديد"} maxWidth="max-w-6xl">
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="flex flex-col md:flex-row gap-6">
-                        {/* Image Uploader - Kept as it is unique to Books Page */}
+                        {/* Image Uploader */}
                         <div className="w-full md:w-1/3 flex flex-col gap-2">
                             <label className="text-sm font-bold text-gray-700">صورة الغلاف</label>
                             <div
                                 onClick={handleImageUpload}
-                                className="flex-1 min-h-[300px] border-2 border-dashed border-gray-300 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 hover:border-primary transition-colors relative overflow-hidden group aspect-[9/16]"
+                                className="flex-1 border-2 border-dashed border-gray-300 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 hover:border-primary transition-colors relative overflow-hidden group"
                             >
                                 {formData.cover_image ? (
                                     <>
-                                        <img src={formData.cover_image} className="w-full h-full object-cover absolute inset-0 text-transparent" alt="Preview" />
+                                        <img src={formData.cover_image} className="w-full h-full object-fill absolute inset-0 text-transparent" alt="Preview" />
                                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-white font-bold">
                                             تغيير الصورة
                                         </div>
@@ -535,7 +592,7 @@ export default function BooksPage() {
                             </div>
                         </div>
 
-                        {/* Fields - Styled like Inventory Page */}
+                        {/* Fields */}
                         <div className="flex-1 space-y-4">
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="col-span-2">
@@ -559,17 +616,15 @@ export default function BooksPage() {
                                 </div>
                             </div>
 
-                            {/* Manual Fields Group (Styled like Inventory) */}
+                            {/* Manual Fields Group */}
                             <div className="grid grid-cols-2 gap-3 mt-3 bg-gray-50/50 p-4 rounded-xl border border-gray-100">
-                                <p className="col-span-2 text-xs font-black text-primary/40 uppercase tracking-widest mb-2">أرصدة افتتاحية (يدوي)</p>
+                                <p className="col-span-2 text-xs font-black text-primary/40 uppercase tracking-widest mb-2">
+                                    بيانات إضافية
+                                </p>
 
                                 <div>
                                     <label className="block text-xs font-bold mb-1 text-muted-foreground">مرسل للمؤسسة</label>
                                     <Input type="number" className="h-9" value={formData.sent_to_institution} onChange={e => setFormData({ ...formData, sent_to_institution: e.target.value })} />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold mb-1 text-muted-foreground">طور البيع (قم)</label>
-                                    <Input type="number" className="h-9" value={formData.qom_pending_manual} onChange={e => setFormData({ ...formData, qom_pending_manual: e.target.value })} />
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold mb-1 text-muted-foreground">مباع (قم)</label>
@@ -579,7 +634,7 @@ export default function BooksPage() {
                                     <label className="block text-xs font-bold mb-1 text-muted-foreground">مهدى (قم)</label>
                                     <Input type="number" className="h-9" value={formData.qom_gifted_manual} onChange={e => setFormData({ ...formData, qom_gifted_manual: e.target.value })} />
                                 </div>
-                                <div className="col-span-2">
+                                <div>
                                     <label className="block text-xs font-bold mb-1 text-muted-foreground">مفقود (يدوي)</label>
                                     <Input type="number" className="h-9" value={formData.loss_manual} onChange={e => setFormData({ ...formData, loss_manual: e.target.value })} />
                                 </div>
