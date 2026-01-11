@@ -21,7 +21,7 @@ import { getDb } from "../lib/db";
 import { useEffect } from "react";
 
 const navItems = [
-    { name: "جرد المؤسسة", href: "/inventory", icon: LayoutDashboard },
+    { name: "الجرد العام", href: "/inventory", icon: LayoutDashboard },
     { name: "سجل الإهداء", href: "/gifts", icon: Gift },
     { name: "سجل الاستعارة", href: "/loans", icon: BookOpen },
     { name: "سجل البيع", href: "/sales", icon: ShoppingCart },

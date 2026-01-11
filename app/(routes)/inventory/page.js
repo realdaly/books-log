@@ -168,19 +168,19 @@ export default function InventoryPage() {
                     <table className="w-full text-right text-sm border-collapse border-b border-border">
                         <thead className="bg-primary text-primary-foreground sticky top-0 z-10 shadow-md">
                             <tr>
-                                <th className="p-4 min-w-[220px] rounded-tr-lg">اسم الكتاب</th>
-                                <th className="p-4 text-center w-28 border-r border-primary-foreground/10">العدد الكلي المطبوع</th>
-                                <th className="p-4 text-center w-28 border-r border-primary-foreground/10">العدد المرسل للمؤسسة من قم</th>
-                                <th className="p-4 text-center w-28 border-r border-primary-foreground/10">المتبقي داخل المؤسسة</th>
+                                <th className="p-4 min-w-[220px] rounded-tr-lg">عنوان الكتاب</th>
+                                <th className="p-4 text-center w-28 border-r border-primary-foreground/10">المطبوع</th>
+                                <th className="p-4 text-center w-28 border-r border-primary-foreground/10">الواصل</th>
+                                <th className="p-4 text-center w-28 border-r border-primary-foreground/10">المتبقي</th>
                                 <th className="p-4 text-center w-28 border-r border-primary-foreground/10">طور البيع</th>
-                                <th className="p-4 text-center w-28 border-r border-primary-foreground/10">عدد المباع من الكتاب</th>
-                                <th className="p-4 text-center w-28 border-r border-primary-foreground/10">عدد المهدى من الكتاب</th>
-                                <th className="p-4 text-center w-28 border-r border-primary-foreground/10">عدد المستعار من الكتاب</th>
-                                <th className="p-4 text-center w-28 border-r border-primary-foreground/10">عدد المفقود</th>
-                                <th className="p-4 text-center w-28 border-r border-primary-foreground/10 bg-black/20">المتبقي في فرع قم</th>
+                                <th className="p-4 text-center w-28 border-r border-primary-foreground/10">المباع</th>
+                                <th className="p-4 text-center w-28 border-r border-primary-foreground/10">المهداة</th>
+                                <th className="p-4 text-center w-28 border-r border-primary-foreground/10">المستعار</th>
+                                <th className="p-4 text-center w-28 border-r border-primary-foreground/10">المفقود</th>
+                                <th className="p-4 text-center w-28 border-r border-primary-foreground/10 bg-black/20">متبقي في فرع قم</th>
                                 <th className="p-4 text-center w-28 border-r border-primary-foreground/10 bg-black/20">مباع من فرع قم</th>
                                 <th className="p-4 text-center w-28 border-r border-primary-foreground/10 bg-black/20">مهدى من فرع قم</th>
-                                <th className="p-4 text-center w-28 font-black text-white rounded-tl-lg bg-black/40 border-r border-primary-foreground/10">مجموع المتبقي</th>
+                                <th className="p-4 text-center w-28 font-black text-white rounded-tl-lg bg-black/40 border-r border-primary-foreground/10">المتبقي الكلي</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">

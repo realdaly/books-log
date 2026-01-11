@@ -361,15 +361,15 @@ export default function BooksPage() {
                                 <tr>
                                     <th className="p-4 border-l border-primary-foreground/10 w-12 text-center">#</th>
                                     <th className="p-4 border-l border-primary-foreground/10 min-w-[200px]">عنوان الكتاب</th>
-                                    <th className="p-4 border-l border-primary-foreground/10 text-center">العدد المطبوع</th>
-                                    <th className="p-4 border-l border-primary-foreground/10 text-center">العدد المرسل للمؤسسة</th>
-                                    <th className="p-4 border-l border-primary-foreground/10 text-center font-bold bg-black/20">متبقي في المؤسسة</th>
-                                    <th className="p-4 border-l border-primary-foreground/10 text-center">إجمالي المباع</th>
+                                    <th className="p-4 border-l border-primary-foreground/10 text-center">المطبوع</th>
+                                    <th className="p-4 border-l border-primary-foreground/10 text-center">الواصل</th>
+                                    <th className="p-4 border-l border-primary-foreground/10 text-center font-bold bg-black/20">المتبقي</th>
+                                    <th className="p-4 border-l border-primary-foreground/10 text-center">المباع</th>
                                     <th className="p-4 border-l border-primary-foreground/10 text-center text-orange-300">طور البيع</th>
-                                    <th className="p-4 border-l border-primary-foreground/10 text-center">إجمالي المهداة</th>
-                                    <th className="p-4 border-l border-primary-foreground/10 text-center">إجمالي المستعار</th>
-                                    <th className="p-4 border-l border-primary-foreground/10 text-center text-red-200">تالف / مفقود</th>
-                                    <th className="p-4 border-l border-primary-foreground/10 text-center">سعر النسخة</th>
+                                    <th className="p-4 border-l border-primary-foreground/10 text-center">المهداة</th>
+                                    <th className="p-4 border-l border-primary-foreground/10 text-center">المستعار</th>
+                                    <th className="p-4 border-l border-primary-foreground/10 text-center text-red-200">المفقود</th>
+                                    <th className="p-4 border-l border-primary-foreground/10 text-center">السعر</th>
                                     <th className="p-4 border-l border-primary-foreground/10 text-center w-48">خيارات</th>
                                 </tr>
                             </thead>
@@ -413,7 +413,7 @@ export default function BooksPage() {
                                                     )}
                                                 </div>
                                             </td>
-                                            <td className="p-3 font-bold text-gray-800">{book.title}</td>
+                                            <td className="p-3 font-bold text-gray-800 text-base">{book.title}</td>
                                             <td className="p-3 text-center text-gray-600">{totalPrinted}</td>
                                             <td className="p-3 text-center text-gray-600">{sentToInst}</td>
                                             <td className="p-3 text-center font-black text-primary bg-primary/5">{remainingInst}</td>
@@ -431,7 +431,7 @@ export default function BooksPage() {
                                                     <Button size="icon" variant="ghost" className="h-7 w-7 text-red-600 bg-red-50 hover:bg-red-100 rounded-full" onClick={() => handleDelete(book.id)}>
                                                         <Trash2 size={15} />
                                                     </Button>
-                                                    <Button size="sm" variant="outline" className="h-7 text-[10px] px-2 border-primary/20 hover:bg-primary hover:text-white" onClick={() => openDetails(book)}>
+                                                    <Button size="sm" variant="outline" className="h-7 text-[13px] px-2 border-primary/20 hover:bg-primary hover:text-white" onClick={() => openDetails(book)}>
                                                         <BarChart3 size={15} className="ml-1" /> التفاصيل
                                                     </Button>
                                                 </div>
@@ -550,7 +550,7 @@ export default function BooksPage() {
                                             <span className="font-bold text-gray-800">{bookStats.realLoaned}</span>
                                         </div>
                                         <div className="flex justify-between border-b py-2">
-                                            <span>نسخ مرسلة للمؤسسة</span>
+                                            <span>نسخ واصلة للمؤسسة</span>
                                             <span className="font-bold text-gray-800">{bookStats.sentInst}</span>
                                         </div>
                                         <div className="flex justify-between border-b py-2">
@@ -623,7 +623,7 @@ export default function BooksPage() {
                                 </p>
 
                                 <div>
-                                    <label className="block text-xs font-bold mb-1 text-muted-foreground">مرسل للمؤسسة</label>
+                                    <label className="block text-xs font-bold mb-1 text-muted-foreground">الواصل للمؤسسة</label>
                                     <Input type="number" className="h-9" value={formData.sent_to_institution} onChange={e => setFormData({ ...formData, sent_to_institution: e.target.value })} />
                                 </div>
                                 <div>
