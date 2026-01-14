@@ -6,7 +6,7 @@ import { Card, Button, Input, Textarea } from "../../components/ui/Base";
 import { Modal } from "../../components/ui/Modal";
 import { DateInput } from "../../components/ui/DateInput";
 import { Combobox, ComboboxInput, ComboboxButton, ComboboxOptions, ComboboxOption } from '@headlessui/react';
-import { Loader2, Plus, Trash2, Edit2, Check, ChevronsUpDown, Filter, Settings, Tag } from "lucide-react";
+import { Loader2, Plus, Trash2, Edit2, Check, ChevronsUpDown, Filter, Settings, Tag, Search } from "lucide-react";
 import { ask, message } from '@tauri-apps/plugin-dialog';
 import { NotesCell } from "../../components/ui/NotesCell";
 
@@ -287,12 +287,15 @@ export default function OtherStoresPage() {
                         )}
                     </div>
                     <div className="flex gap-3 w-full md:w-auto">
-                        <Input
-                            placeholder="بحث عن كتاب..."
-                            value={searchTerm}
-                            onChange={e => setSearchTerm(e.target.value)}
-                            className="w-full md:w-64"
-                        />
+                        <div className="relative w-full md:w-64 group">
+                            <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" size={18} />
+                            <Input
+                                placeholder="بحث عن كتاب..."
+                                className="pr-10 w-full"
+                                value={searchTerm}
+                                onChange={e => setSearchTerm(e.target.value)}
+                            />
+                        </div>
                         <Button onClick={() => { resetForm(); setEditId(null); setIsModalOpen(true); }}>
                             <Plus className="ml-2" size={18} /> إضافة حركة
                         </Button>

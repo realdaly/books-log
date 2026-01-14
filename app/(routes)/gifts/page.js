@@ -40,8 +40,6 @@ export default function GiftsPage() {
     const fetchData = useCallback(async () => {
         try {
             const db = await getDb();
-            const institutionBranch = await db.select("SELECT id FROM branch WHERE key='institution'");
-            const branchId = institutionBranch[0]?.id;
 
             const rows = await db.select(`
         SELECT 
@@ -51,9 +49,9 @@ export default function GiftsPage() {
         FROM "transaction" t
         JOIN book b ON t.book_id = b.id
         LEFT JOIN party p ON t.party_id = p.id
-        WHERE t.type = 'gift' AND t.branch_id = $1
+        WHERE t.type = 'gift'
         ORDER BY t.tx_date DESC, t.id DESC
-      `, [branchId]);
+      `);
 
             setTransactions(rows);
 
@@ -93,8 +91,6 @@ export default function GiftsPage() {
         e.preventDefault();
         try {
             const db = await getDb();
-            const institutionBranch = await db.select("SELECT id FROM branch WHERE key='institution'");
-            const branchId = institutionBranch[0]?.id;
             if (editId) {
                 const bookId = formData.book_id?.id || formData.book_id;
                 const partyId = formData.party_id?.id || formData.party_id;
@@ -107,17 +103,17 @@ export default function GiftsPage() {
                 const partyId = formData.party_id?.id || formData.party_id;
                 for (const book of selectedMultiBooks) {
                     await db.execute(`
-                        INSERT INTO "transaction" (type, branch_id, state, book_id, party_id, qty, tx_date, notes)
-                        VALUES ('gift', $1, 'final', $2, $3, $4, $5, $6)
-                    `, [branchId, book.id, partyId, formData.qty, formData.tx_date, formData.notes]);
+                        INSERT INTO "transaction" (type, state, book_id, party_id, qty, tx_date, notes)
+                        VALUES ('gift', 'final', $1, $2, $3, $4, $5)
+                    `, [book.id, partyId, book.qty, formData.tx_date, formData.notes]);
                 }
             } else {
                 const bookId = formData.book_id?.id || formData.book_id;
                 const partyId = formData.party_id?.id || formData.party_id;
                 await db.execute(`
-          INSERT INTO "transaction" (type, branch_id, state, book_id, party_id, qty, tx_date, notes)
-          VALUES ('gift', $1, 'final', $2, $3, $4, $5, $6)
-        `, [branchId, bookId, partyId, formData.qty, formData.tx_date, formData.notes]);
+          INSERT INTO "transaction" (type, state, book_id, party_id, qty, tx_date, notes)
+          VALUES ('gift', 'final', $1, $2, $3, $4, $5)
+        `, [bookId, partyId, formData.qty, formData.tx_date, formData.notes]);
             }
 
             setIsModalOpen(false);
@@ -270,9 +266,9 @@ export default function GiftsPage() {
                                     />
                                 </th>
                                 <th className="p-4 border-l border-primary-foreground/10 whitespace-nowrap w-max">ت</th>
+                                <th className="p-4 border-l border-primary-foreground/10 whitespace-nowrap text-center">التاريخ</th>
                                 <th className="p-4 border-l border-primary-foreground/10 whitespace-nowrap text-center">العدد</th>
                                 <th className="p-4 border-l border-primary-foreground/10 w-1/2 text-right">الجهة المستلمة</th>
-                                <th className="p-4 border-l border-primary-foreground/10 whitespace-nowrap text-center">التاريخ</th>
                                 <th className="p-4 border-l border-primary-foreground/10 w-1/2 text-right">اسم الكتاب</th>
                                 <th className="p-4 border-l border-primary-foreground/10 w-[210px] text-right whitespace-nowrap">الملاحظات</th>
                                 <th className="p-4 text-center">إجراءات</th>
@@ -290,11 +286,11 @@ export default function GiftsPage() {
                                         />
                                     </td>
                                     <td className="p-4 text-center text-muted-foreground border-l border-border/50">{idx + 1}</td>
-                                    <td className="p-4 text-center font-bold text-primary border-l border-border/50">{t.qty}</td>
-                                    <td className="p-4 text-foreground border-l border-border/50">{t.party_name || "-"}</td>
-                                    <td className="p-4 text-muted-foreground border-l border-border/50 tracking-tighter">
+                                    <td className="p-4 text-center text-muted-foreground border-l border-border/50 tracking-tighter">
                                         {t.tx_date?.split('-').reverse().join('/')}
                                     </td>
+                                    <td className="p-4 text-center font-bold text-primary border-l border-border/50">{t.qty}</td>
+                                    <td className="p-4 text-foreground border-l border-border/50">{t.party_name || "-"}</td>
                                     <td className="p-4 font-bold text-foreground border-l border-border/50">{t.book_title}</td>
                                     <td className="p-4 text-muted-foreground border-l border-border/50 w-[210px] whitespace-nowrap overflow-hidden text-ellipsis">
                                         <NotesCell text={t.notes} />

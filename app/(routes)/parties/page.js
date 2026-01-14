@@ -4,7 +4,7 @@ import { getDb } from "../../lib/db";
 import { normalizeArabic } from "../../lib/utils";
 import { Card, Button, Input, Textarea } from "../../components/ui/Base";
 import { Modal } from "../../components/ui/Modal";
-import { Loader2, Plus, Trash2, Edit2, Eye, Image as ImageIcon, Tag, Filter, Settings } from "lucide-react";
+import { Loader2, Plus, Trash2, Edit2, Eye, Image as ImageIcon, Tag, Filter, Settings, Search } from "lucide-react";
 import html2canvas from "html2canvas";
 import { NotesCell } from "../../components/ui/NotesCell";
 import { save, message, ask } from '@tauri-apps/plugin-dialog';
@@ -111,21 +111,29 @@ export default function PartiesPage() {
                     "UPDATE party SET name=$1, phone=$2, address=$3, notes=$4 WHERE id=$5",
                     [formData.name, formData.phone, formData.address, formData.notes, editId]
                 );
-            } else {
-                const res = await db.execute(
-                    "INSERT INTO party (name, phone, address, notes) VALUES ($1, $2, $3, $4)",
-                    [formData.name, formData.phone, formData.address, formData.notes]
-                );
-                pId = res.lastInsertId;
-            }
-
-            // Update Categories
-            // First delete all
-            if (pId) {
-                await db.execute("DELETE FROM party_category_link WHERE party_id=$1", [pId]);
-                // Insert new
+                // Update Categories for single edit
+                await db.execute("DELETE FROM party_category_link WHERE party_id=$1", [editId]);
                 for (const cId of formCategoryIds) {
-                    await db.execute("INSERT INTO party_category_link (party_id, category_id) VALUES ($1, $2)", [pId, cId]);
+                    await db.execute("INSERT INTO party_category_link (party_id, category_id) VALUES ($1, $2)", [editId, cId]);
+                }
+            } else {
+                const names = formData.name.split('\n').map(n => n.trim()).filter(n => n !== "");
+                for (const name of names) {
+                    try {
+                        const res = await db.execute(
+                            "INSERT OR IGNORE INTO party (name, phone, address, notes) VALUES ($1, $2, $3, $4)",
+                            [name, formData.phone, formData.address, formData.notes]
+                        );
+                        // In many SQLite drivers, lastInsertId is only > 0 if a row was actually inserted
+                        const pId = res.lastInsertId;
+                        if (pId > 0 && formCategoryIds.length > 0) {
+                            for (const cId of formCategoryIds) {
+                                await db.execute("INSERT OR IGNORE INTO party_category_link (party_id, category_id) VALUES ($1, $2)", [pId, cId]);
+                            }
+                        }
+                    } catch (itemErr) {
+                        console.error("Failed to add party:", name, itemErr);
+                    }
                 }
             }
 
@@ -135,7 +143,8 @@ export default function PartiesPage() {
             setFormCategoryIds([]);
             fetchData();
         } catch (err) {
-            alert("Error saving: " + err.message);
+            console.error(err);
+            alert("Error saving: " + (err.message || String(err)));
         }
     };
 
@@ -363,12 +372,15 @@ export default function PartiesPage() {
                     </div>
 
                     <div className="flex gap-3 w-full md:w-auto">
-                        <Input
-                            placeholder="بحث عن جهة..."
-                            value={searchTerm}
-                            onChange={e => setSearchTerm(e.target.value)}
-                            className="w-full md:w-64"
-                        />
+                        <div className="relative w-full md:w-80 group">
+                            <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" size={18} />
+                            <Input
+                                placeholder="بحث عن جهة..."
+                                className="pr-10 w-full"
+                                value={searchTerm}
+                                onChange={e => setSearchTerm(e.target.value)}
+                            />
+                        </div>
                         <Button onClick={() => { setEditId(null); setFormData({ name: "", phone: "", address: "", notes: "" }); setFormCategoryIds([]); setIsModalOpen(true); }}>
                             <Plus className="ml-2" size={18} /> إضافة جهة
                         </Button>
@@ -492,7 +504,13 @@ export default function PartiesPage() {
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
                         <label className="block text-sm font-bold mb-1">اسم الجهة</label>
-                        <Input required value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+                        <Textarea
+                            required
+                            placeholder={editId ? "اسم الجهة" : "أدخل اسم الجهة (أدخل كل اسم في سطر جديد للإضافة المتعددة)"}
+                            value={formData.name}
+                            onChange={e => setFormData({ ...formData, name: e.target.value })}
+                            className="min-h-[4rem]"
+                        />
                     </div>
                     <div>
                         <label className="block text-sm mb-1">الهاتف</label>

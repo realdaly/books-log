@@ -4,7 +4,7 @@ import { getDb } from "../../lib/db";
 import { normalizeArabic } from "../../lib/utils";
 import { Card, Button, Input, Textarea } from "../../components/ui/Base";
 import { Modal } from "../../components/ui/Modal";
-import { Loader2, Plus, Trash2, Edit2, Image as ImageIcon, BarChart3, BookOpenText, LayoutGrid } from "lucide-react";
+import { Loader2, Plus, Trash2, Edit2, Image as ImageIcon, BarChart3, BookOpenText, LayoutGrid, Search } from "lucide-react";
 import { ask, open } from '@tauri-apps/plugin-dialog';
 import { readFile } from '@tauri-apps/plugin-fs';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, Legend } from 'recharts';
@@ -50,7 +50,7 @@ export default function BooksPage() {
     const fetchData = async () => {
         try {
             const db = await getDb();
-            // Fetch books with Institution transaction stats + Manual Qom fields
+            // Fetch books with Institution transaction stats
             const rows = await db.select(`
                 SELECT 
                     b.*,
@@ -65,11 +65,11 @@ export default function BooksPage() {
 
                 FROM book b
                 LEFT JOIN vw_other_stores_total ot ON ot.book_id = b.id
-                LEFT JOIN vw_book_sales_qty sales ON sales.book_id = b.id AND sales.branch_id = (SELECT id FROM branch WHERE key='institution')
-                LEFT JOIN vw_book_gifts_qty gifts ON gifts.book_id = b.id AND gifts.branch_id = (SELECT id FROM branch WHERE key='institution')
-                LEFT JOIN vw_book_loans_qty loans ON loans.book_id = b.id AND loans.branch_id = (SELECT id FROM branch WHERE key='institution')
-                LEFT JOIN vw_book_loss_qty loss ON loss.book_id = b.id AND loss.branch_id = (SELECT id FROM branch WHERE key='institution')
-                LEFT JOIN vw_book_pending_sales_qty pending ON pending.book_id = b.id AND pending.branch_id = (SELECT id FROM branch WHERE key='institution')
+                LEFT JOIN vw_book_sales_qty sales ON sales.book_id = b.id
+                LEFT JOIN vw_book_gifts_qty gifts ON gifts.book_id = b.id
+                LEFT JOIN vw_book_loans_qty loans ON loans.book_id = b.id
+                LEFT JOIN vw_book_loss_qty loss ON loss.book_id = b.id
+                LEFT JOIN vw_book_pending_sales_qty pending ON pending.book_id = b.id
                 ORDER BY b.title ASC
             `);
             setBooks(rows);
@@ -124,6 +124,7 @@ export default function BooksPage() {
             const lossDetail = await db.select("SELECT SUM(qty) as total FROM `transaction` WHERE book_id=$1 AND type='loss'", [book.id]);
             const pending = await db.select("SELECT SUM(qty) as total FROM `transaction` WHERE book_id=$1 AND type='sale' AND state='pending'", [book.id]);
             const other = await db.select("SELECT COALESCE(SUM(qty), 0) as total FROM other_transaction WHERE book_id=$1", [book.id]);
+            const revenueResult = await db.select("SELECT COALESCE(SUM(COALESCE(total_price, qty * COALESCE(unit_price, 0))), 0) as total FROM `transaction` WHERE book_id=$1 AND type='sale' AND state='final'", [book.id]);
 
             const realSold = sales[0]?.total || 0;
             const realGifted = gifts[0]?.total || 0;
@@ -131,6 +132,7 @@ export default function BooksPage() {
             const realLoss = lossDetail[0]?.total || 0;
             const realPending = pending[0]?.total || 0;
             const otherTotal = other[0]?.total || 0;
+            const totalRevenue = revenueResult[0]?.total || 0;
 
             const manualLoss = book.loss_manual || 0;
             const sentInst = book.sent_to_institution || 0;
@@ -152,7 +154,8 @@ export default function BooksPage() {
                 manualLoss,
                 sentInst,
                 otherTotal,
-                currentStock
+                currentStock,
+                totalRevenue
             });
 
         } catch (e) {
@@ -167,7 +170,7 @@ export default function BooksPage() {
         e.preventDefault();
         try {
             const db = await getDb();
-            const { title, notes, total_printed, sent_to_institution, qom_sold_manual, qom_gifted_manual, loss_manual, unit_price, cover_image } = formData;
+            const { title, notes, total_printed, sent_to_institution, loss_manual, unit_price, cover_image } = formData;
 
             const nTotal = Number(total_printed) || 0;
             const nSent = Number(sent_to_institution) || 0;
@@ -248,13 +251,15 @@ export default function BooksPage() {
             <div className="flex justify-between items-center px-2 flex-wrap gap-4">
                 <h1 className="text-4xl font-black text-primary drop-shadow-sm">مكتبة الكتب</h1>
                 <div className="flex items-center gap-4 flex-1 justify-end">
-
-                    <Input
-                        placeholder="بحث عن كتاب..."
-                        className="max-w-xs bg-white shadow-sm border-gray-200"
-                        value={query}
-                        onChange={e => setQuery(e.target.value)}
-                    />
+                    <div className="relative w-full max-w-xs group">
+                        <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" size={18} />
+                        <Input
+                            placeholder="بحث عن كتاب..."
+                            className="pr-10 bg-white shadow-sm border-gray-200 w-full"
+                            value={query}
+                            onChange={e => setQuery(e.target.value)}
+                        />
+                    </div>
                     <Button onClick={() => { setEditId(null); resetForm(); setIsModalOpen(true); }} className="shadow-lg hover:scale-105 transition-transform whitespace-nowrap">
                         <Plus className="ml-2" size={20} /> إضافة كتاب جديد
                     </Button>
@@ -390,6 +395,10 @@ export default function BooksPage() {
                                             <div className="text-sm font-bold opacity-70">مخازن أخرى</div>
                                             <div className="text-3xl font-black mt-1">{bookStats.otherTotal}</div>
                                         </div>
+                                        <div className="p-4 rounded-2xl bg-teal-50 text-teal-900 col-span-2 lg:col-span-4 flex justify-between items-center">
+                                            <div className="text-sm font-bold opacity-70">إجمالي الأرباح (المبيعات)</div>
+                                            <div className="text-2xl font-black">{Number(bookStats.totalRevenue).toLocaleString()} دينار عراقي</div>
+                                        </div>
                                     </div>
 
                                     {/* Chart Area */}
@@ -453,7 +462,7 @@ export default function BooksPage() {
                             >
                                 {formData.cover_image ? (
                                     <>
-                                        <img src={formData.cover_image} className="w-full h-full object-fill absolute inset-0 text-transparent" alt="Preview" />
+                                        <img src={formData.cover_image} className="w-full h-full object-cover absolute inset-0 text-transparent" alt="Preview" />
                                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-white font-bold">
                                             تغيير الصورة
                                         </div>
@@ -485,23 +494,23 @@ export default function BooksPage() {
                                     <label className="block text-sm font-bold mb-1 border-primary pr-2">العدد الكلي المطبوع</label>
                                     <Input type="number" required value={formData.total_printed} onChange={e => setFormData({ ...formData, total_printed: e.target.value })} />
                                 </div>
-                                <div className="col-span-2 md:col-span-1">
-                                    <label className="block text-sm font-bold mb-1 border-primary pr-2">سعر النسخة</label>
-                                    <Input type="number" step="0.01" required value={formData.unit_price} onChange={e => setFormData({ ...formData, unit_price: e.target.value })} />
+                                <div>
+                                    <label className="block text-sm font-bold mb-1 border-primary pr-2">الواصل للمؤسسة</label>
+                                    <Input type="number" value={formData.sent_to_institution} onChange={e => setFormData({ ...formData, sent_to_institution: e.target.value })} />
                                 </div>
                             </div>
 
-                            {/* Manual Fields Group */}
+                            {/* additional fields group */}
                             <div className="grid grid-cols-2 gap-3 mt-3 bg-gray-50/50 p-4 rounded-xl border border-gray-100">
                                 <p className="col-span-2 text-xs font-black text-primary/40 uppercase tracking-widest mb-2">
                                     بيانات إضافية
                                 </p>
 
-                                <div>
-                                    <label className="block text-xs font-bold mb-1 text-muted-foreground">الواصل للمؤسسة</label>
-                                    <Input type="number" className="h-9" value={formData.sent_to_institution} onChange={e => setFormData({ ...formData, sent_to_institution: e.target.value })} />
+                                <div className="col-span-2 md:col-span-1">
+                                    <label className="block text-xs font-bold mb-1 text-muted-foreground">سعر النسخة</label>
+                                    <Input type="number" className="h-9" step="0.01" required value={formData.unit_price} onChange={e => setFormData({ ...formData, unit_price: e.target.value })} />
                                 </div>
-                                <div className="col-span-2">
+                                <div>
                                     <label className="block text-xs font-bold mb-1 text-muted-foreground">مفقود (يدوي)</label>
                                     <Input type="number" className="h-9" value={formData.loss_manual} onChange={e => setFormData({ ...formData, loss_manual: e.target.value })} />
                                 </div>

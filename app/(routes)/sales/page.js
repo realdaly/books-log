@@ -44,8 +44,6 @@ export default function SalesPage() {
     const fetchData = useCallback(async () => {
         try {
             const db = await getDb();
-            const institutionBranch = await db.select("SELECT id FROM branch WHERE key='institution'");
-            const branchId = institutionBranch[0]?.id;
 
             const rows = await db.select(`
         SELECT 
@@ -55,9 +53,9 @@ export default function SalesPage() {
         FROM "transaction" t
         JOIN book b ON t.book_id = b.id
         LEFT JOIN party p ON t.party_id = p.id
-        WHERE t.type = 'sale' AND t.branch_id = $1
+        WHERE t.type = 'sale'
         ORDER BY t.tx_date DESC, t.id DESC
-      `, [branchId]);
+      `);
 
             setTransactions(rows);
 
@@ -116,8 +114,6 @@ export default function SalesPage() {
         e.preventDefault();
         try {
             const db = await getDb();
-            const institutionBranch = await db.select("SELECT id FROM branch WHERE key='institution'");
-            const branchId = institutionBranch[0]?.id;
             const state = formData.is_pending ? 'pending' : 'final';
             if (editId) {
                 const partyId = formData.party_id?.id || formData.party_id || null;
@@ -135,10 +131,10 @@ export default function SalesPage() {
                     const partyId = formData.party_id?.id || formData.party_id || null;
                     const totalPrice = (parseFloat(item.qty) || 0) * (parseFloat(item.unit_price) || 0);
                     await db.execute(`
-                        INSERT INTO "transaction" (type, branch_id, state, book_id, party_id, qty, unit_price, total_price, receipt_no, tx_date, notes)
-                        VALUES ('sale', $1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+                        INSERT INTO "transaction" (type, state, book_id, party_id, qty, unit_price, total_price, receipt_no, tx_date, notes)
+                        VALUES ('sale', $1, $2, $3, $4, $5, $6, $7, $8, $9)
                     `, [
-                        branchId, state, item.book.id, partyId, item.qty, item.unit_price, totalPrice,
+                        state, item.book.id, partyId, item.qty, item.unit_price, totalPrice,
                         formData.receipt_no, formData.tx_date, formData.notes
                     ]);
                 }
@@ -146,10 +142,10 @@ export default function SalesPage() {
                 const partyId = formData.party_id?.id || formData.party_id || null;
                 const bookId = formData.book_id?.id || formData.book_id;
                 await db.execute(`
-          INSERT INTO "transaction" (type, branch_id, state, book_id, party_id, qty, unit_price, total_price, receipt_no, tx_date, notes)
-          VALUES ('sale', $1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+          INSERT INTO "transaction" (type, state, book_id, party_id, qty, unit_price, total_price, receipt_no, tx_date, notes)
+          VALUES ('sale', $1, $2, $3, $4, $5, $6, $7, $8, $9)
         `, [
-                    branchId, state, bookId, partyId, formData.qty, formData.unit_price, formData.total_price,
+                    state, bookId, partyId, formData.qty, formData.unit_price, formData.total_price,
                     formData.receipt_no, formData.tx_date, formData.notes
                 ]);
             }

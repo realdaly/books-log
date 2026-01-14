@@ -40,8 +40,6 @@ export default function LoansPage() {
     const fetchData = useCallback(async () => {
         try {
             const db = await getDb();
-            const institutionBranch = await db.select("SELECT id FROM branch WHERE key='institution'");
-            const branchId = institutionBranch[0]?.id;
 
             const rows = await db.select(`
         SELECT 
@@ -51,9 +49,9 @@ export default function LoansPage() {
         FROM "transaction" t
         JOIN book b ON t.book_id = b.id
         LEFT JOIN party p ON t.party_id = p.id
-        WHERE t.type = 'loan' AND t.branch_id = $1
+        WHERE t.type = 'loan'
         ORDER BY t.tx_date DESC, t.id DESC
-      `, [branchId]);
+      `);
 
             setTransactions(rows);
 
@@ -92,8 +90,6 @@ export default function LoansPage() {
         e.preventDefault();
         try {
             const db = await getDb();
-            const institutionBranch = await db.select("SELECT id FROM branch WHERE key='institution'");
-            const branchId = institutionBranch[0]?.id;
             if (editId) {
                 const bookId = formData.book_id?.id || formData.book_id;
                 const partyId = formData.party_id?.id || formData.party_id;
@@ -106,17 +102,17 @@ export default function LoansPage() {
                 const partyId = formData.party_id?.id || formData.party_id;
                 for (const book of selectedMultiBooks) {
                     await db.execute(`
-                        INSERT INTO "transaction" (type, branch_id, state, book_id, party_id, qty, tx_date, notes)
-                        VALUES ('loan', $1, 'final', $2, $3, $4, $5, $6)
-                    `, [branchId, book.id, partyId, formData.qty, formData.tx_date, formData.notes]);
+                        INSERT INTO "transaction" (type, state, book_id, party_id, qty, tx_date, notes)
+                        VALUES ('loan', 'final', $1, $2, $3, $4, $5)
+                    `, [book.id, partyId, book.qty, formData.tx_date, formData.notes]);
                 }
             } else {
                 const bookId = formData.book_id?.id || formData.book_id;
                 const partyId = formData.party_id?.id || formData.party_id;
                 await db.execute(`
-          INSERT INTO "transaction" (type, branch_id, state, book_id, party_id, qty, tx_date, notes)
-          VALUES ('loan', $1, 'final', $2, $3, $4, $5, $6)
-        `, [branchId, bookId, partyId, formData.qty, formData.tx_date, formData.notes]);
+          INSERT INTO "transaction" (type, state, book_id, party_id, qty, tx_date, notes)
+          VALUES ('loan', 'final', $1, $2, $3, $4, $5)
+        `, [bookId, partyId, formData.qty, formData.tx_date, formData.notes]);
             }
 
             setIsModalOpen(false);
