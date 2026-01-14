@@ -6,6 +6,7 @@ import { Card, Button, Input, Textarea } from "../../components/ui/Base";
 import { Modal } from "../../components/ui/Modal";
 import { Loader2, Plus, Trash2, Edit2, Eye, Image as ImageIcon, Tag, Filter, Settings } from "lucide-react";
 import html2canvas from "html2canvas";
+import { NotesCell } from "../../components/ui/NotesCell";
 import { save, message, ask } from '@tauri-apps/plugin-dialog';
 import { writeFile } from '@tauri-apps/plugin-fs';
 
@@ -427,16 +428,16 @@ export default function PartiesPage() {
                                         onChange={toggleSelectAll}
                                     />
                                 </th>
-                                <th className="p-4 border-l border-primary-foreground/10">اسم الجهة</th>
-                                <th className="p-4 border-l border-primary-foreground/10">الهاتف</th>
-                                <th className="p-4 border-l border-primary-foreground/10">العنوان</th>
-                                <th className="p-4 border-l border-primary-foreground/10">ملاحظات</th>
-                                <th className="p-4 border-l border-primary-foreground/10 text-center">اجراءات</th>
+                                <th className="p-4 border-l border-primary-foreground/10 w-[45%] text-right">اسم الجهة</th>
+                                <th className="p-4 border-l border-primary-foreground/10 w-40 text-right whitespace-nowrap">الهاتف</th>
+                                <th className="p-4 border-l border-primary-foreground/10 w-[35%] text-right">العنوان</th>
+                                <th className="p-4 border-l border-primary-foreground/10 w-[210px] text-right whitespace-nowrap">ملاحظات</th>
+                                <th className="p-4 border-l border-primary-foreground/10 text-center">إجراءات</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-border bg-white">
+                        <tbody className="divide-y divide-border">
                             {filteredParties.map(p => (
-                                <tr key={p.id} className={`hover:bg-muted/30 transition-colors ${selectedIds.includes(p.id) ? 'bg-primary/5' : ''}`}>
+                                <tr key={p.id} className={`odd:bg-muted/30 even:bg-white hover:bg-primary/5 transition-colors ${selectedIds.includes(p.id) ? 'bg-primary/10' : ''}`}>
                                     <td className="p-4 text-center border-l border-border/50 w-10">
                                         <input
                                             type="checkbox"
@@ -462,9 +463,11 @@ export default function PartiesPage() {
                                             </div>
                                         )}
                                     </td>
-                                    <td className="p-4 text-muted-foreground border-l border-border/50">{p.phone}</td>
+                                    <td className="p-4 text-muted-foreground border-l border-border/50 w-40 whitespace-nowrap">{p.phone}</td>
                                     <td className="p-4 text-muted-foreground border-l border-border/50">{p.address}</td>
-                                    <td className="p-4 text-muted-foreground border-l border-border/50 max-w-xs truncate">{p.notes}</td>
+                                    <td className="p-4 text-muted-foreground border-l border-border/50 w-[210px] whitespace-nowrap overflow-hidden text-ellipsis">
+                                        <NotesCell text={p.notes} />
+                                    </td>
                                     <td className="p-4 flex justify-center gap-2">
                                         <button onClick={() => viewDetails(p)} className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors" title="تفاصيل"><Eye size={18} /></button>
                                         <button onClick={() => openEdit(p)} className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"><Edit2 size={18} /></button>
@@ -547,7 +550,7 @@ export default function PartiesPage() {
                         </div>
                     </div>
 
-                    <Button type="submit" className="w-full mt-4">حفظ</Button>
+                    <Button type="submit" className="w-full mt-4 font-bold">حفظ</Button>
                 </form>
             </Modal>
 

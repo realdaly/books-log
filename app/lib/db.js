@@ -37,19 +37,9 @@ export async function getDb() {
 
 async function ensureSchema(db) {
     try {
-        // Always check for manual columns (migrations)
         const columns = await db.select("SELECT name FROM pragma_table_info('book')");
         const columnNames = columns.map(c => c.name);
 
-        if (!columnNames.includes("qom_sold_manual")) {
-            await db.execute("ALTER TABLE book ADD COLUMN qom_sold_manual INTEGER DEFAULT 0");
-        }
-        if (!columnNames.includes("qom_gifted_manual")) {
-            await db.execute("ALTER TABLE book ADD COLUMN qom_gifted_manual INTEGER DEFAULT 0");
-        }
-        if (!columnNames.includes("qom_pending_manual")) {
-            await db.execute("ALTER TABLE book ADD COLUMN qom_pending_manual INTEGER DEFAULT 0");
-        }
         if (!columnNames.includes("total_printed")) {
             await db.execute("ALTER TABLE book ADD COLUMN total_printed INTEGER DEFAULT 0");
         }
@@ -62,6 +52,44 @@ async function ensureSchema(db) {
         if (!columnNames.includes("cover_image")) {
             await db.execute("ALTER TABLE book ADD COLUMN cover_image TEXT");
         }
+
+        // Transaction table migrations
+        const txColumns = await db.select("SELECT name FROM pragma_table_info('transaction')");
+        const txColumnNames = txColumns.map(c => c.name);
+        if (!txColumnNames.includes("receipt_no")) {
+            await db.execute("ALTER TABLE `transaction` ADD COLUMN receipt_no TEXT DEFAULT NULL");
+        }
+
+        // New Tables for Other Stores
+        await db.execute(`
+            CREATE TABLE IF NOT EXISTS "other_category" (
+                "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                "name" VARCHAR(255) NOT NULL,
+                UNIQUE("name")
+            );
+        `);
+
+        await db.execute(`
+            CREATE TABLE IF NOT EXISTS "other_transaction" (
+                "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                "book_id" INTEGER NOT NULL,
+                "qty" INTEGER NOT NULL CHECK("qty" > 0),
+                "tx_date" TEXT NOT NULL DEFAULT (date('now')),
+                "notes" TEXT DEFAULT NULL,
+                "created_at" TEXT DEFAULT (datetime('now')),
+                FOREIGN KEY ("book_id") REFERENCES "book" ("id") ON DELETE CASCADE
+            );
+        `);
+
+        await db.execute(`
+            CREATE TABLE IF NOT EXISTS "other_transaction_category_link" (
+                "transaction_id" INTEGER NOT NULL,
+                "category_id" INTEGER NOT NULL,
+                PRIMARY KEY ("transaction_id", "category_id"),
+                FOREIGN KEY ("transaction_id") REFERENCES "other_transaction" ("id") ON DELETE CASCADE,
+                FOREIGN KEY ("category_id") REFERENCES "other_category" ("id") ON DELETE CASCADE
+            );
+        `);
 
     } catch (e) {
         console.error("Schema check/migration error:", e);

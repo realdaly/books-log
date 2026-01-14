@@ -20,8 +20,6 @@ export default function InventoryPage() {
         notes: "",
         total_printed: "0",
         sent_to_institution: "0",
-        qom_sold_manual: "0",
-        qom_gifted_manual: "0",
         loss_manual: "0",
         unit_price: "0"
     });
@@ -39,28 +37,13 @@ export default function InventoryPage() {
             // Fetch books with Institution transaction stats + Manual Qom fields
             const rows = await db.select(`
         SELECT 
-          b.id, 
-          b.title,
-          COALESCE(b.total_printed, 0) as total_printed,
-          COALESCE(b.sent_to_institution, 0) as sent_to_institution,
-          COALESCE(b.qom_sold_manual, 0) as qom_sold_manual,
-          COALESCE(b.qom_gifted_manual, 0) as qom_gifted_manual,
-          COALESCE(b.loss_manual, 0) as loss_manual,
-
-          -- Institution Aggregates (Transactions)
-          COALESCE(sales.sold_qty, 0) as sold_inst,
-          COALESCE(gifts.gifted_qty, 0) as gifted_inst,
-          COALESCE(loans.loaned_qty, 0) as loaned_inst,
-          COALESCE(loss.loss_qty, 0) as loss_inst,
-          COALESCE(pending.pending_qty, 0) as pending_inst
-
-        FROM book b
-        LEFT JOIN vw_book_sales_qty sales ON sales.book_id = b.id AND sales.branch_id = (SELECT id FROM branch WHERE key='institution')
-        LEFT JOIN vw_book_gifts_qty gifts ON gifts.book_id = b.id AND gifts.branch_id = (SELECT id FROM branch WHERE key='institution')
-        LEFT JOIN vw_book_loans_qty loans ON loans.book_id = b.id AND loans.branch_id = (SELECT id FROM branch WHERE key='institution')
-        LEFT JOIN vw_book_loss_qty loss ON loss.book_id = b.id AND loss.branch_id = (SELECT id FROM branch WHERE key='institution')
-        LEFT JOIN vw_book_pending_sales_qty pending ON pending.book_id = b.id AND pending.branch_id = (SELECT id FROM branch WHERE key='institution')
-        ORDER BY b.title ASC
+           v.*,
+           b.total_printed,
+           b.sent_to_institution,
+           b.loss_manual
+        FROM vw_inventory_central v
+        JOIN book b ON b.id = v.book_id
+        ORDER BY v.book_title ASC
       `);
 
             setData(rows);
@@ -79,24 +62,13 @@ export default function InventoryPage() {
         e.preventDefault();
         try {
             const db = await getDb();
-            const { title, notes, total_printed, sent_to_institution, qom_sold_manual, qom_gifted_manual, loss_manual, unit_price } = formData;
-
-            const nTotal = Number(total_printed) || 0;
-            const nSent = Number(sent_to_institution) || 0;
-            const nQomSold = Number(qom_sold_manual) || 0;
-            const nQomGifted = Number(qom_gifted_manual) || 0;
-            const nLoss = Number(loss_manual) || 0;
-            const nPrice = Number(unit_price) || 0;
-
-            const titles = title.split('\n').map(t => t.trim()).filter(t => t !== "");
-
             for (const t of titles) {
                 await db.execute(`
-                    INSERT INTO book (title, notes, total_printed, sent_to_institution, qom_sold_manual, qom_gifted_manual, loss_manual, unit_price) 
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                    INSERT INTO book (title, notes, total_printed, sent_to_institution, loss_manual, unit_price) 
+                    VALUES ($1, $2, $3, $4, $5, $6)
                 `, [
                     t, notes,
-                    nTotal, nSent, nQomSold, nQomGifted, nLoss, nPrice
+                    nTotal, nSent, nLoss, nPrice
                 ]);
             }
 
@@ -113,7 +85,7 @@ export default function InventoryPage() {
         setFormData({
             title: "", notes: "",
             total_printed: "0",
-            sent_to_institution: "0", qom_sold_manual: "0", qom_gifted_manual: "0",
+            sent_to_institution: "0",
             loss_manual: "0",
             unit_price: "0"
         });
@@ -134,7 +106,7 @@ export default function InventoryPage() {
     };
 
     const filteredData = data.filter(r =>
-        normalizeArabic(r.title).includes(normalizeArabic(searchTerm))
+        normalizeArabic(r.book_title).includes(normalizeArabic(searchTerm))
     );
 
     if (loading && data.length === 0) {
@@ -171,15 +143,13 @@ export default function InventoryPage() {
                                 <th className="p-4 min-w-[220px] rounded-tr-lg">عنوان الكتاب</th>
                                 <th className="p-4 text-center w-28 border-r border-primary-foreground/10">المطبوع</th>
                                 <th className="p-4 text-center w-28 border-r border-primary-foreground/10">الواصل</th>
-                                <th className="p-4 text-center w-28 border-r border-primary-foreground/10">المتبقي</th>
-                                <th className="p-4 text-center w-28 border-r border-primary-foreground/10">طور البيع</th>
+                                <th className="p-4 text-center w-28 border-r border-primary-foreground/10 bg-black/20 font-bold">المتبقي</th>
+                                <th className="p-4 text-center w-28 border-r border-primary-foreground/10 text-orange-300">طور البيع</th>
                                 <th className="p-4 text-center w-28 border-r border-primary-foreground/10">المباع</th>
                                 <th className="p-4 text-center w-28 border-r border-primary-foreground/10">المهداة</th>
                                 <th className="p-4 text-center w-28 border-r border-primary-foreground/10">المستعار</th>
-                                <th className="p-4 text-center w-28 border-r border-primary-foreground/10">المفقود</th>
-                                <th className="p-4 text-center w-28 border-r border-primary-foreground/10 bg-black/20">متبقي في فرع قم</th>
-                                <th className="p-4 text-center w-28 border-r border-primary-foreground/10 bg-black/20">مباع من فرع قم</th>
-                                <th className="p-4 text-center w-28 border-r border-primary-foreground/10 bg-black/20">مهدى من فرع قم</th>
+                                <th className="p-4 text-center w-28 border-r border-primary-foreground/10 text-red-200">المفقود</th>
+                                <th className="p-4 text-center w-28 border-r border-primary-foreground/10 bg-black/20">مخازن أخرى</th>
                                 <th className="p-4 text-center w-28 font-black text-white rounded-tl-lg bg-black/40 border-r border-primary-foreground/10">المتبقي الكلي</th>
                             </tr>
                         </thead>
@@ -193,8 +163,8 @@ export default function InventoryPage() {
                                 const total_remaining = remaining_inst + remaining_qom;
 
                                 return (
-                                    <tr key={row.id} className="odd:bg-muted/30 even:bg-white hover:bg-primary/5 transition-colors group">
-                                        <td className="p-3 font-bold text-foreground border-l border-border/50">{row.title}</td>
+                                    <tr key={row.book_id} className="odd:bg-muted/30 even:bg-white hover:bg-primary/5 transition-colors group">
+                                        <td className="p-3 font-bold text-foreground border-l border-border/50">{row.book_title}</td>
 
                                         {/* Editable: Total Printed */}
                                         <td className="p-2 text-center border-l border-border/50">
@@ -202,7 +172,7 @@ export default function InventoryPage() {
                                                 type="number"
                                                 className="w-20 p-1.5 text-center bg-transparent border border-transparent hover:border-input rounded-lg focus:bg-white focus:border-primary focus:ring-1 focus:ring-primary transition-all font-medium text-foreground"
                                                 defaultValue={row.total_printed}
-                                                onBlur={e => updateField(row.id, 'total_printed', e.target.value)}
+                                                onBlur={e => updateField(row.book_id, 'total_printed', e.target.value)}
                                                 onFocus={e => e.target.select()}
                                             />
                                         </td>
@@ -213,21 +183,21 @@ export default function InventoryPage() {
                                                 type="number"
                                                 className="w-20 p-1.5 text-center bg-transparent border border-transparent hover:border-input rounded-lg focus:bg-white focus:border-primary focus:ring-1 focus:ring-primary transition-all font-medium text-foreground"
                                                 defaultValue={row.sent_to_institution}
-                                                onBlur={e => updateField(row.id, 'sent_to_institution', e.target.value)}
+                                                onBlur={e => updateField(row.book_id, 'sent_to_institution', e.target.value)}
                                                 onFocus={e => e.target.select()}
                                             />
                                         </td>
 
                                         {/* Computed: Remaining Inst */}
-                                        <td className="p-3 text-center font-bold text-primary border-l border-border/50">{remaining_inst}</td>
+                                        <td className="p-3 text-center font-bold text-primary border-l border-border/50">{row.remaining_institution}</td>
 
                                         {/* Pending Sale (طور البيع) - Transaction based */}
-                                        <td className="p-3 text-center text-foreground border-l border-border/50">{row.pending_inst || '-'}</td>
+                                        <td className="p-3 text-center text-foreground border-l border-border/50">{row.pending_institution || '-'}</td>
 
                                         {/* Inst Stats */}
-                                        <td className="p-3 text-center text-foreground border-l border-border/50">{row.sold_inst}</td>
-                                        <td className="p-3 text-center text-foreground border-l border-border/50">{row.gifted_inst}</td>
-                                        <td className="p-3 text-center text-foreground border-l border-border/50">{row.loaned_inst}</td>
+                                        <td className="p-3 text-center text-foreground border-l border-border/50">{row.sold_institution}</td>
+                                        <td className="p-3 text-center text-foreground border-l border-border/50">{row.gifted_institution}</td>
+                                        <td className="p-3 text-center text-foreground border-l border-border/50">{row.loaned_institution}</td>
 
                                         {/* Editable: Manual Loss (المفقود) */}
                                         <td className="p-2 text-center border-l border-border/50">
@@ -235,40 +205,20 @@ export default function InventoryPage() {
                                                 type="number"
                                                 className="w-20 p-1.5 text-center bg-transparent border border-transparent hover:border-input rounded-lg focus:bg-white focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all font-medium text-foreground"
                                                 defaultValue={row.loss_manual}
-                                                onBlur={e => updateField(row.id, 'loss_manual', e.target.value)}
+                                                onBlur={e => updateField(row.book_id, 'loss_manual', e.target.value)}
                                                 onFocus={e => e.target.select()}
                                             />
-                                            {row.loss_inst > 0 && <div className="text-[10px] text-red-500 font-bold mt-0.5">+{row.loss_inst} (ترانزكشن)</div>}
+                                            {row.loss_institution > 0 && <div className="text-[10px] text-red-500 font-bold mt-0.5">+{row.loss_institution} (ترانزكشن)</div>}
                                         </td>
 
-                                        {/* Computed: Qom Remaining */}
-                                        <td className="p-3 text-center font-bold text-foreground border-l border-border/50">{remaining_qom}</td>
-
-                                        {/* Editable: Qom Sold */}
-                                        <td className="p-2 text-center border-l border-border/50">
-                                            <input
-                                                type="number"
-                                                className="w-20 p-1.5 text-center bg-transparent border border-transparent hover:border-input rounded-lg focus:bg-white focus:border-primary focus:ring-1 focus:ring-primary transition-all font-medium text-foreground"
-                                                defaultValue={row.qom_sold_manual}
-                                                onBlur={e => updateField(row.id, 'qom_sold_manual', e.target.value)}
-                                                onFocus={e => e.target.select()}
-                                            />
-                                        </td>
-
-                                        {/* Editable: Qom Gifted */}
-                                        <td className="p-2 text-center border-l border-border/50">
-                                            <input
-                                                type="number"
-                                                className="w-20 p-1.5 text-center bg-transparent border border-transparent hover:border-input rounded-lg focus:bg-white focus:border-primary focus:ring-1 focus:ring-primary transition-all font-medium text-foreground"
-                                                defaultValue={row.qom_gifted_manual}
-                                                onBlur={e => updateField(row.id, 'qom_gifted_manual', e.target.value)}
-                                                onFocus={e => e.target.select()}
-                                            />
+                                        {/* Other Stores Total */}
+                                        <td className="p-3 text-center font-bold text-foreground border-l border-border/50 border-r border-primary-foreground/10 bg-black/5">
+                                            <Link href={`/other?book_id=${row.book_id}`} className="hover:underline">{row.other_stores_total}</Link>
                                         </td>
 
                                         {/* Total Remaining - DARKER CELL */}
-                                        <td className="p-3 text-center font-black text-lg text-primary bg-black/[0.05] group-hover:bg-primary/20 transition-colors border-l border-border/50">
-                                            {total_remaining}
+                                        <td className="p-3 text-center font-black text-lg text-primary bg-black/[0.1] group-hover:bg-primary/20 transition-colors border-l border-border/50">
+                                            {row.remaining_total}
                                         </td>
                                     </tr>
                                 );
@@ -313,14 +263,6 @@ export default function InventoryPage() {
                             <Input type="number" value={formData.sent_to_institution} onChange={e => setFormData({ ...formData, sent_to_institution: e.target.value })} />
                         </div>
                         <div>
-                            <label className="block text-xs font-bold mb-1 text-muted-foreground">مباع (قم)</label>
-                            <Input type="number" value={formData.qom_sold_manual} onChange={e => setFormData({ ...formData, qom_sold_manual: e.target.value })} />
-                        </div>
-                        <div>
-                            <label className="block text-xs font-bold mb-1 text-muted-foreground">مهدى (قم)</label>
-                            <Input type="number" value={formData.qom_gifted_manual} onChange={e => setFormData({ ...formData, qom_gifted_manual: e.target.value })} />
-                        </div>
-                        <div>
                             <label className="block text-xs font-bold mb-1 text-muted-foreground">مفقود (يدوي)</label>
                             <Input type="number" value={formData.loss_manual} onChange={e => setFormData({ ...formData, loss_manual: e.target.value })} />
                         </div>
@@ -330,7 +272,7 @@ export default function InventoryPage() {
                         <label className="block text-sm mb-1 font-bold border-primary pr-2">ملاحظات</label>
                         <Textarea placeholder="ملاحظات إضافية..." rows={3} value={formData.notes} onChange={e => setFormData({ ...formData, notes: e.target.value })} />
                     </div>
-                    <Button type="submit" className="w-full h-12 text-lg shadow-lg">حفظ الكتاب</Button>
+                    <Button type="submit" className="w-full h-12 text-lg shadow-lg">حفظ</Button>
                 </form>
             </Modal>
         </div>

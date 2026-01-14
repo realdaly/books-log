@@ -12,6 +12,7 @@ import {
     Settings,
     Book,
     Menu,
+    Layers, // Added icon
     ChevronRight,
     ChevronLeft
 } from "lucide-react";
@@ -27,6 +28,7 @@ const navItems = [
     { name: "سجل البيع", href: "/sales", icon: ShoppingCart },
     { name: "الجهات", href: "/parties", icon: Users },
     { name: "الكتب", href: "/books", icon: Library },
+    { name: "مخازن أخرى", href: "/other", icon: Layers },
     { name: "الإعدادات", href: "/settings", icon: Settings },
 ];
 

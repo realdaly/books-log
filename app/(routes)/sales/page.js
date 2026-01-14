@@ -8,6 +8,7 @@ import { DateInput } from "../../components/ui/DateInput";
 import { Combobox, ComboboxInput, ComboboxButton, ComboboxOptions, ComboboxOption } from '@headlessui/react';
 import { Loader2, Plus, Trash2, Edit2, Check, ChevronsUpDown } from "lucide-react";
 import { ask } from '@tauri-apps/plugin-dialog';
+import { NotesCell } from "../../components/ui/NotesCell";
 
 export default function SalesPage() {
     const [transactions, setTransactions] = useState([]);
@@ -319,22 +320,21 @@ export default function SalesPage() {
                                         onChange={toggleSelectAll}
                                     />
                                 </th>
-                                <th className="p-4 border-l border-primary-foreground/10">ت</th>
-                                <th className="p-4 border-l border-primary-foreground/10">الحالة</th>
-                                <th className="p-4 border-l border-primary-foreground/10 text-center">العدد</th>
-                                <th className="p-4 border-l border-primary-foreground/10">اسم الكتاب</th>
-                                <th className="p-4 border-l border-primary-foreground/10">الجهة (المشتري)</th>
-                                <th className="p-4 border-l border-primary-foreground/10 text-center">سعر النسخة</th>
-                                <th className="p-4 border-l border-primary-foreground/10 text-center">المبلغ الكلي</th>
-                                <th className="p-4 border-l border-primary-foreground/10">رقم الوصل</th>
-                                <th className="p-4 border-l border-primary-foreground/10">التاريخ</th>
-                                <th className="p-4 border-l border-primary-foreground/10">ملاحظات</th>
-                                <th className="p-4 text-center">اجراءات</th>
+                                <th className="p-4 border-l border-primary-foreground/10 whitespace-nowrap text-center min-w-[100px]">الحالة</th>
+                                <th className="p-4 border-l border-primary-foreground/10 text-center whitespace-nowrap">العدد</th>
+                                <th className="p-4 border-l border-primary-foreground/10 w-1/2 text-right">اسم الكتاب</th>
+                                <th className="p-4 border-l border-primary-foreground/10 w-1/2 text-right">الجهة (المشتري)</th>
+                                <th className="p-4 border-l border-primary-foreground/10 text-center whitespace-nowrap">السعر</th>
+                                <th className="p-4 border-l border-primary-foreground/10 text-center whitespace-nowrap">المبلغ الكلي</th>
+                                <th className="p-4 border-l border-primary-foreground/10 whitespace-nowrap text-right">رقم الوصل</th>
+                                <th className="p-4 border-l border-primary-foreground/10 whitespace-nowrap text-center">التاريخ</th>
+                                <th className="p-4 border-l border-primary-foreground/10 w-20 text-center whitespace-nowrap">ملاحظات</th>
+                                <th className="p-4 text-center">إجراءات</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-border bg-white">
+                        <tbody className="divide-y divide-border">
                             {transactions.map((t, idx) => (
-                                <tr key={t.id} className={`hover:bg-muted/30 transition-colors ${selectedIds.includes(t.id) ? 'bg-primary/5' : ''}`}>
+                                <tr key={t.id} className={`odd:bg-muted/30 even:bg-white hover:bg-primary/5 transition-colors ${selectedIds.includes(t.id) ? 'bg-primary/10' : ''}`}>
                                     <td className="p-4 text-center border-l border-border/50 w-10">
                                         <input
                                             type="checkbox"
@@ -343,11 +343,10 @@ export default function SalesPage() {
                                             onChange={() => toggleSelect(t.id)}
                                         />
                                     </td>
-                                    <td className="p-4 text-muted-foreground border-l border-border/50">{idx + 1}</td>
-                                    <td className="p-4 border-l border-border/50">
+                                    <td className="p-4 border-l border-border/50 text-center whitespace-nowrap">
                                         {t.state === 'pending'
-                                            ? <span className="px-2 py-1 rounded bg-amber-100 text-amber-800 text-xs font-bold">طور البيع</span>
-                                            : <span className="px-2 py-1 rounded bg-emerald-100 text-emerald-800 text-xs font-bold">مكتمل</span>
+                                            ? <span className="px-2 py-1 rounded bg-amber-100 text-amber-800 text-xs font-bold whitespace-nowrap">طور البيع</span>
+                                            : <span className="px-2 py-1 rounded bg-emerald-100 text-emerald-800 text-xs font-bold whitespace-nowrap">مكتمل</span>
                                         }
                                     </td>
                                     <td className="p-4 font-bold text-primary border-l border-border/50 text-center">{t.qty}</td>
@@ -355,11 +354,13 @@ export default function SalesPage() {
                                     <td className="p-4 text-foreground border-l border-border/50 font-medium">{t.party_name || "-"}</td>
                                     <td className="p-4 text-muted-foreground border-l border-border/50 text-center">{t.unit_price?.toLocaleString()}</td>
                                     <td className="p-4 font-bold text-primary border-l border-border/50 text-center">{t.total_price?.toLocaleString()}</td>
-                                    <td className="p-4 text-muted-foreground border-l border-border/50">{t.receipt_no}</td>
-                                    <td className="p-4 text-muted-foreground border-l border-border/50 tracking-tighter">
+                                    <td className="p-4 text-muted-foreground border-l border-border/50 text-center">{t.receipt_no}</td>
+                                    <td className="p-4 text-center text-muted-foreground border-l border-border/50 tracking-tighter">
                                         {t.tx_date?.split('-').reverse().join('/')}
                                     </td>
-                                    <td className="p-4 text-muted-foreground border-l border-border/50 truncate max-w-[150px]">{t.notes}</td>
+                                    <td className="p-4 text-muted-foreground border-l border-border/50 w-20 text-center">
+                                        <NotesCell text={t.notes} iconOnly={true} />
+                                    </td>
                                     <td className="p-4 flex justify-center gap-2">
                                         <button onClick={() => openEdit(t)} className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"><Edit2 size={18} /></button>
                                         <button onClick={() => handleDelete(t.id)} className="p-1.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors"><Trash2 size={18} /></button>
@@ -583,7 +584,7 @@ export default function SalesPage() {
                                     <div className="relative mt-1">
                                         <ComboboxButton as="div" className="relative w-full cursor-default overflow-hidden rounded-lg bg-white text-right shadow-md border focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm">
                                             <ComboboxInput
-                                                className="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-gray-900 focus:ring-0 text-right"
+                                                className="w-full border-none py-3 pl-3 pr-10 text-sm leading-5 text-gray-900 focus:ring-0 text-right"
                                                 displayValue={(party) => party?.name || ''}
                                                 onFocus={(e) => e.target.select()}
                                                 onChange={(event) => setQuery(event.target.value)}

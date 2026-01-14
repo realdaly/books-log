@@ -8,6 +8,7 @@ import { DateInput } from "../../components/ui/DateInput";
 import { Combobox, ComboboxInput, ComboboxButton, ComboboxOptions, ComboboxOption } from '@headlessui/react';
 import { Loader2, Plus, Trash2, Edit2, Check, ChevronsUpDown } from "lucide-react";
 import { ask } from '@tauri-apps/plugin-dialog';
+import { NotesCell } from "../../components/ui/NotesCell";
 
 export default function GiftsPage() {
     const [transactions, setTransactions] = useState([]);
@@ -242,7 +243,7 @@ export default function GiftsPage() {
         <div className="space-y-6 h-full flex flex-col">
             <div className="flex justify-between items-center">
                 <div className="flex items-center gap-4">
-                    <h1 className="text-3xl font-bold text-primary">سجل إهداء الإصدارات</h1>
+                    <h1 className="text-3xl font-bold text-primary">سجل الإهداء</h1>
                     {selectedIds.length > 0 && (
                         <Button variant="destructive" size="sm" onClick={handleBulkDelete} className="animate-in fade-in slide-in-from-left-2">
                             <Trash2 className="ml-2" size={16} />
@@ -268,19 +269,19 @@ export default function GiftsPage() {
                                         onChange={toggleSelectAll}
                                     />
                                 </th>
-                                <th className="p-4 border-l border-primary-foreground/10">ت</th>
-                                <th className="p-4 border-l border-primary-foreground/10">عدد الإهداء</th>
-                                <th className="p-4 border-l border-primary-foreground/10">الجهة المستلمة</th>
-                                <th className="p-4 border-l border-primary-foreground/10">التاريخ</th>
-                                <th className="p-4 border-l border-primary-foreground/10">اسم الكتاب</th>
-                                <th className="p-4 border-l border-primary-foreground/10">الملاحظات</th>
-                                <th className="p-4 text-center">اجراءات</th>
+                                <th className="p-4 border-l border-primary-foreground/10 whitespace-nowrap w-max">ت</th>
+                                <th className="p-4 border-l border-primary-foreground/10 whitespace-nowrap text-center">العدد</th>
+                                <th className="p-4 border-l border-primary-foreground/10 w-1/2 text-right">الجهة المستلمة</th>
+                                <th className="p-4 border-l border-primary-foreground/10 whitespace-nowrap text-center">التاريخ</th>
+                                <th className="p-4 border-l border-primary-foreground/10 w-1/2 text-right">اسم الكتاب</th>
+                                <th className="p-4 border-l border-primary-foreground/10 w-[210px] text-right whitespace-nowrap">الملاحظات</th>
+                                <th className="p-4 text-center">إجراءات</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-border bg-white">
+                        <tbody className="divide-y divide-border">
                             {transactions.map((t, idx) => (
-                                <tr key={t.id} className={`hover:bg-muted/30 transition-colors ${selectedIds.includes(t.id) ? 'bg-primary/5' : ''}`}>
-                                    <td className="p-4 text-center border-l border-border/50 w-10">
+                                <tr key={t.id} className={`odd:bg-muted/30 even:bg-white hover:bg-primary/5 transition-colors ${selectedIds.includes(t.id) ? 'bg-primary/10' : ''}`}>
+                                    <td className="p-4 text-center border-l border-border/50">
                                         <input
                                             type="checkbox"
                                             className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
@@ -288,14 +289,16 @@ export default function GiftsPage() {
                                             onChange={() => toggleSelect(t.id)}
                                         />
                                     </td>
-                                    <td className="p-4 text-muted-foreground border-l border-border/50">{idx + 1}</td>
-                                    <td className="p-4 font-bold text-primary border-l border-border/50">{t.qty}</td>
+                                    <td className="p-4 text-center text-muted-foreground border-l border-border/50">{idx + 1}</td>
+                                    <td className="p-4 text-center font-bold text-primary border-l border-border/50">{t.qty}</td>
                                     <td className="p-4 text-foreground border-l border-border/50">{t.party_name || "-"}</td>
                                     <td className="p-4 text-muted-foreground border-l border-border/50 tracking-tighter">
                                         {t.tx_date?.split('-').reverse().join('/')}
                                     </td>
                                     <td className="p-4 font-bold text-foreground border-l border-border/50">{t.book_title}</td>
-                                    <td className="p-4 text-muted-foreground border-l border-border/50 truncate max-w-[150px]">{t.notes}</td>
+                                    <td className="p-4 text-muted-foreground border-l border-border/50 w-[210px] whitespace-nowrap overflow-hidden text-ellipsis">
+                                        <NotesCell text={t.notes} />
+                                    </td>
                                     <td className="p-4 flex justify-center gap-2">
                                         <button onClick={() => openEdit(t)} className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"><Edit2 size={18} /></button>
                                         <button onClick={() => handleDelete(t.id)} className="p-1.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors"><Trash2 size={18} /></button>
