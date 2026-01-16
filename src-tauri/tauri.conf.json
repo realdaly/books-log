@@ -13,7 +13,7 @@
     "withGlobalTauri": true,
     "windows": [
       {
-        "title": "جرد الكتب",
+        "title": "نظام إدارة الكتب",
         "maximized": true
       }
     ],

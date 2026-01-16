@@ -12,9 +12,7 @@ import {
     Settings,
     Book,
     Menu,
-    Layers, // Added icon
-    ChevronRight,
-    ChevronLeft
+    Layers
 } from "lucide-react";
 import { cn } from "../lib/utils";
 import { Button } from "./ui/Base";
@@ -88,7 +86,7 @@ export default function Sidebar() {
                             href={item.href}
                             {...(isHardLink ? {} : { prefetch: false })}
                             className={cn(
-                                "flex items-center py-3 rounded-lg transition-all duration-200 group relative overflow-hidden whitespace-nowrap text-sm font-medium",
+                                "flex items-center py-3 rounded-l-lg transition-all duration-200 group relative overflow-hidden whitespace-nowrap text-sm font-medium",
                                 isActive
                                     ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
                                     : "text-muted-foreground hover:bg-secondary hover:text-foreground",
