@@ -40,19 +40,24 @@ export default function PartiesPage() {
     const fetchData = useCallback(async () => {
         try {
             const db = await getDb();
-            // Fetch Parties with their Category IDs
+            // Fetch Parties with their Category IDs and Names
             const partiesRows = await db.select(`
-                SELECT p.*, GROUP_CONCAT(pcl.category_id) as cat_ids 
-                FROM party p 
-                LEFT JOIN party_category_link pcl ON p.id = pcl.party_id 
-                GROUP BY p.id 
+                SELECT 
+                    p.*,
+                    GROUP_CONCAT(pc.name) as category_names,
+                    GROUP_CONCAT(pc.id) as category_ids
+                FROM party p
+                LEFT JOIN party_category_link pcl ON p.id = pcl.party_id
+                LEFT JOIN party_category pc ON pcl.category_id = pc.id
+                GROUP BY p.id
                 ORDER BY p.id DESC
             `);
 
-            // Normalize cat_ids to array
+            // Normalize to arrays
             const partiesWithCats = partiesRows.map(p => ({
                 ...p,
-                categoryIds: p.cat_ids ? String(p.cat_ids).split(',').map(Number) : []
+                category_names: p.category_names ? p.category_names.split(',') : [],
+                categoryIds: p.category_ids ? String(p.category_ids).split(',').map(Number) : []
             }));
 
             setParties(partiesWithCats);
@@ -435,10 +440,11 @@ export default function PartiesPage() {
                                         onChange={toggleSelectAll}
                                     />
                                 </th>
-                                <th className="p-4 border-l border-primary-foreground/10 w-[45%] text-right">اسم الجهة</th>
+                                <th className="p-4 border-l border-primary-foreground/10 w-[30%] text-right">اسم الجهة</th>
                                 <th className="p-4 border-l border-primary-foreground/10 w-40 text-right whitespace-nowrap">الهاتف</th>
-                                <th className="p-4 border-l border-primary-foreground/10 w-[35%] text-right">العنوان</th>
-                                <th className="p-4 border-l border-primary-foreground/10 w-[210px] text-right whitespace-nowrap">ملاحظات</th>
+                                <th className="p-4 border-l border-primary-foreground/10 w-[25%] text-right">العنوان</th>
+                                <th className="p-4 border-l border-primary-foreground/10 w-[200px] text-right whitespace-nowrap">التصنيفات</th>
+                                <th className="p-4 border-l border-primary-foreground/10 w-[180px] text-right whitespace-nowrap">ملاحظات</th>
                                 <th className="p-4 border-l border-primary-foreground/10 text-center">إجراءات</th>
                             </tr>
                         </thead>
@@ -455,24 +461,18 @@ export default function PartiesPage() {
                                     </td>
                                     <td className="p-4 font-bold text-foreground border-l border-border/50">
                                         <div>{p.name}</div>
-                                        {/* Show Categories Here */}
-                                        {p.categoryIds && p.categoryIds.length > 0 && (
-                                            <div className="flex flex-wrap gap-1 mt-1">
-                                                {p.categoryIds.map(cId => {
-                                                    const cat = categories.find(c => c.id === cId);
-                                                    if (!cat) return null;
-                                                    return (
-                                                        <span key={cId} className="px-1.5 py-0.5 bg-gray-100 text-gray-500 text-[10px] rounded-sm border border-gray-200">
-                                                            {cat.name}
-                                                        </span>
-                                                    );
-                                                })}
-                                            </div>
-                                        )}
                                     </td>
                                     <td className="p-4 text-muted-foreground border-l border-border/50 w-40 whitespace-nowrap">{p.phone}</td>
                                     <td className="p-4 text-muted-foreground border-l border-border/50">{p.address}</td>
-                                    <td className="p-4 text-muted-foreground border-l border-border/50 w-[210px] whitespace-nowrap overflow-hidden text-ellipsis">
+                                    <td className="p-4 w-[200px] border-l border-border/50">
+                                        <div className="flex flex-wrap gap-1 overflow-hidden h-6">
+                                            {p.category_names && p.category_names.map((name, idx) => (
+                                                <span key={idx} className="px-1.5 py-0.5 bg-gray-100 text-gray-600 text-[10px] rounded border border-gray-200 whitespace-nowrap">{name}</span>
+                                            ))}
+                                            {(!p.category_names || p.category_names.length === 0) && <span className="text-gray-400 text-xs">-</span>}
+                                        </div>
+                                    </td>
+                                    <td className="p-4 text-muted-foreground border-l border-border/50 w-[180px] whitespace-nowrap overflow-hidden text-ellipsis">
                                         <NotesCell text={p.notes} />
                                     </td>
                                     <td className="p-4 flex justify-center gap-2">
@@ -484,7 +484,7 @@ export default function PartiesPage() {
                             ))}
                             {filteredParties.length === 0 && (
                                 <tr>
-                                    <td colSpan="6" className="p-8 text-center text-muted-foreground">
+                                    <td colSpan="7" className="p-8 text-center text-muted-foreground">
                                         لا توجد بيانات
                                     </td>
                                 </tr>

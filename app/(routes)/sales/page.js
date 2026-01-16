@@ -6,7 +6,7 @@ import { Card, Button, Input, Textarea } from "../../components/ui/Base";
 import { Modal } from "../../components/ui/Modal";
 import { DateInput } from "../../components/ui/DateInput";
 import { Combobox, ComboboxInput, ComboboxButton, ComboboxOptions, ComboboxOption } from '@headlessui/react';
-import { Loader2, Plus, Trash2, Edit2, Check, ChevronsUpDown } from "lucide-react";
+import { Loader2, Plus, Trash2, Edit2, Check, ChevronsUpDown, Filter } from "lucide-react";
 import { ask } from '@tauri-apps/plugin-dialog';
 import { NotesCell } from "../../components/ui/NotesCell";
 
@@ -40,6 +40,9 @@ export default function SalesPage() {
     // Quick Add Party State
     const [isAddPartyOpen, setIsAddPartyOpen] = useState(false);
     const [newPartyForm, setNewPartyForm] = useState({ name: "", phone: "", address: "", notes: "" });
+
+    // Status Filter
+    const [filterStatus, setFilterStatus] = useState([]);
 
     const fetchData = useCallback(async () => {
         try {
@@ -286,21 +289,59 @@ export default function SalesPage() {
 
     if (loading) return <Loader2 className="animate-spin" />;
 
+    const filteredTransactions = transactions.filter(t => {
+        if (filterStatus.length === 0) return true;
+        return filterStatus.includes(t.state);
+    });
+
     return (
         <div className="space-y-6 h-full flex flex-col">
-            <div className="flex justify-between items-center">
-                <div className="flex items-center gap-4">
-                    <h1 className="text-3xl font-bold text-primary">سجل البيع</h1>
-                    {selectedIds.length > 0 && (
-                        <Button variant="destructive" size="sm" onClick={handleBulkDelete} className="animate-in fade-in slide-in-from-left-2">
-                            <Trash2 className="ml-2" size={16} />
-                            حذف المحدد ({selectedIds.length})
-                        </Button>
-                    )}
+            <div className="flex flex-col gap-4">
+                <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-4">
+                        <h1 className="text-3xl font-bold text-primary">سجل البيع</h1>
+                        {selectedIds.length > 0 && (
+                            <Button variant="destructive" size="sm" onClick={handleBulkDelete} className="animate-in fade-in slide-in-from-left-2">
+                                <Trash2 className="ml-2" size={16} />
+                                حذف المحدد ({selectedIds.length})
+                            </Button>
+                        )}
+                    </div>
+                    <Button onClick={() => { resetForm(); setEditId(null); setIsModalOpen(true); }}>
+                        <Plus className="ml-2" size={18} /> إضافة بيع
+                    </Button>
                 </div>
-                <Button onClick={() => { resetForm(); setEditId(null); setIsModalOpen(true); }}>
-                    <Plus className="ml-2" size={18} /> إضافة بيع
-                </Button>
+
+                {/* Status Filter Bar */}
+                <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                    <div className="flex items-center gap-2 py-1.5 px-3 bg-gray-50 rounded-lg border">
+                        <Filter size={16} className="text-gray-400" />
+                        <span className="text-xs font-bold text-gray-500 whitespace-nowrap">تصفية:</span>
+                    </div>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => setFilterStatus(prev => prev.includes('final') ? [] : ['final'])}
+                            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${filterStatus.includes('final')
+                                ? "bg-primary text-white border-primary shadow-sm"
+                                : "bg-white text-gray-600 border-gray-200 hover:border-primary/50"
+                                }`}
+                        >
+                            مكتمل
+                        </button>
+                        <button
+                            onClick={() => setFilterStatus(prev => prev.includes('pending') ? [] : ['pending'])}
+                            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${filterStatus.includes('pending')
+                                ? "bg-primary text-white border-primary shadow-sm"
+                                : "bg-white text-gray-600 border-gray-200 hover:border-primary/50"
+                                }`}
+                        >
+                            طور البيع
+                        </button>
+                        {filterStatus.length > 0 && (
+                            <button onClick={() => setFilterStatus([])} className="px-2 py-1 text-xs text-red-500 hover:text-red-700 font-bold">مسح</button>
+                        )}
+                    </div>
+                </div>
             </div>
 
             <Card className="flex-1 p-0 overflow-hidden border-0 shadow-lg bg-white/40">
@@ -329,7 +370,7 @@ export default function SalesPage() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
-                            {transactions.map((t, idx) => (
+                            {filteredTransactions.map((t, idx) => (
                                 <tr key={t.id} className={`odd:bg-muted/30 even:bg-white hover:bg-primary/5 transition-colors ${selectedIds.includes(t.id) ? 'bg-primary/10' : ''}`}>
                                     <td className="p-4 text-center border-l border-border/50 w-10">
                                         <input
@@ -363,7 +404,7 @@ export default function SalesPage() {
                                     </td>
                                 </tr>
                             ))}
-                            {transactions.length === 0 && (
+                            {filteredTransactions.length === 0 && (
                                 <tr>
                                     <td colSpan="12" className="p-8 text-center text-muted-foreground">
                                         لا توجد بيانات
@@ -672,7 +713,7 @@ export default function SalesPage() {
                     <Button type="submit" className="w-full">إضافة</Button>
                 </form>
             </Modal>
-        </div>
+        </div >
     );
 }
 

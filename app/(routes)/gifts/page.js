@@ -105,7 +105,7 @@ export default function GiftsPage() {
                     await db.execute(`
                         INSERT INTO "transaction" (type, state, book_id, party_id, qty, tx_date, notes)
                         VALUES ('gift', 'final', $1, $2, $3, $4, $5)
-                    `, [book.id, partyId, book.qty, formData.tx_date, formData.notes]);
+                    `, [book.id, partyId, formData.qty, formData.tx_date, formData.notes]);
                 }
             } else {
                 const bookId = formData.book_id?.id || formData.book_id;

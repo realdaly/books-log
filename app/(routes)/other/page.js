@@ -506,22 +506,42 @@ export default function OtherStoresPage() {
                         <label className="text-sm font-bold mb-2 flex items-center gap-2 text-primary">
                             <Tag size={16} /> التصنيفات
                         </label>
+
+                        {/* New Category Input */}
+                        <div className="flex items-center gap-2 mb-3">
+                            <Input
+                                placeholder="إضافة تصنيف جديد..."
+                                value={newCategoryName}
+                                onChange={e => setNewCategoryName(e.target.value)}
+                                className="h-8 py-5 text-sm"
+                            />
+                            <Button
+                                type="button"
+                                onClick={handleAddCategory}
+                                className="h-8 px-3 py-5 text-xs"
+                            >
+                                <Plus size={14} className="ml-1" /> إضافة
+                            </Button>
+                        </div>
+
+                        {/* Category List */}
                         <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-2 bg-gray-50 rounded-md border">
+                            {categories.length === 0 && <span className="text-xs text-gray-400">لا توجد تصنيفات</span>}
                             {categories.map(cat => (
                                 <button
                                     key={cat.id}
                                     type="button"
                                     onClick={() => toggleFormCategory(cat.id)}
                                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${formData.categoryIds.includes(cat.id)
-                                        ? "bg-primary text-white border-primary shadow-sm"
-                                        : "bg-white text-gray-500 border-gray-200 hover:border-primary/30"
+                                        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                        : "bg-white text-gray-500 border-gray-200 hover:border-gray-300"
                                         }`}
                                 >
                                     {cat.name}
                                     {formData.categoryIds.includes(cat.id) && " ✓"}
                                 </button>
                             ))}
-                            {categories.length === 0 && <span className="text-xs text-gray-400 py-1">لا توجد تصنيفات، أضف من الإعدادات</span>}
+
                         </div>
                     </div>
 
