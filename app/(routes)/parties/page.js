@@ -4,7 +4,7 @@ import { getDb } from "../../lib/db";
 import { normalizeArabic } from "../../lib/utils";
 import { Card, Button, Input, Textarea } from "../../components/ui/Base";
 import { Modal } from "../../components/ui/Modal";
-import { Loader2, Plus, Trash2, Edit2, Eye, Image as ImageIcon, Tag, Filter, Settings, Search } from "lucide-react";
+import { Loader2, Plus, Trash2, Edit2, Eye, Image as ImageIcon, Tag, Filter, Settings, Search, X } from "lucide-react";
 import html2canvas from "html2canvas";
 import { NotesCell } from "../../components/ui/NotesCell";
 import { save, message, ask } from '@tauri-apps/plugin-dialog';
@@ -376,10 +376,18 @@ export default function PartiesPage() {
                             <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" size={18} />
                             <Input
                                 placeholder="بحث عن جهة..."
-                                className="pr-10 w-full"
+                                className="pr-10 pl-10 w-full"
                                 value={searchTerm}
                                 onChange={e => setSearchTerm(e.target.value)}
                             />
+                            {searchTerm && (
+                                <button
+                                    onClick={() => setSearchTerm("")}
+                                    className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-red-500 transition-colors"
+                                >
+                                    <X size={16} />
+                                </button>
+                            )}
                         </div>
                         <Button onClick={() => { setEditId(null); setFormData({ name: "", phone: "", address: "", notes: "" }); setFormCategoryIds([]); setIsModalOpen(true); }}>
                             <Plus className="ml-2" size={18} /> إضافة جهة
@@ -388,43 +396,30 @@ export default function PartiesPage() {
                 </div>
 
                 {/* Categories Filter Bar */}
-                {categories.length > 0 && (
-                    <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                        <div className="flex items-center gap-2 py-1.5 px-3 bg-gray-50 rounded-lg border">
-                            <Filter size={16} className="text-gray-400" />
-                            <span className="text-xs font-bold text-gray-500 whitespace-nowrap">تصفية حسب التصنيف:</span>
-                        </div>
-                        <div className="flex gap-2">
-                            {categories.map(cat => (
-                                <button
-                                    key={cat.id}
-                                    onClick={() => toggleFilterCategory(cat.id)}
-                                    className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${filterCategoryIds.includes(cat.id)
-                                        ? "bg-primary text-white border-primary shadow-sm"
-                                        : "bg-white text-gray-600 border-gray-200 hover:border-primary/50"
-                                        }`}
-                                >
-                                    {cat.name}
-                                </button>
-                            ))}
-                            {filterCategoryIds.length > 0 && (
-                                <button
-                                    onClick={() => setFilterCategoryIds([])}
-                                    className="px-2 py-1 text-xs text-red-500 hover:text-red-700 font-bold"
-                                >
-                                    مسح
-                                </button>
-                            )}
-                        </div>
-                        <button
-                            onClick={() => setManageCategoriesOpen(true)}
-                            className="mr-auto p-1.5 text-gray-400 hover:text-primary hover:bg-gray-100 rounded-full transition-colors"
-                            title="إدارة التصنيفات"
-                        >
-                            <Settings size={16} />
-                        </button>
+                <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                    <div className="flex items-center gap-2 py-1.5 px-3 bg-gray-50 rounded-lg border">
+                        <Filter size={16} className="text-gray-400" />
+                        <span className="text-xs font-bold text-gray-500 whitespace-nowrap">تصفية:</span>
                     </div>
-                )}
+                    <div className="flex gap-2">
+                        {categories.map(cat => (
+                            <button
+                                key={cat.id}
+                                onClick={() => toggleFilterCategory(cat.id)}
+                                className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${filterCategoryIds.includes(cat.id)
+                                    ? "bg-primary text-white border-primary shadow-sm"
+                                    : "bg-white text-gray-600 border-gray-200 hover:border-primary/50"
+                                    }`}
+                            >
+                                {cat.name}
+                            </button>
+                        ))}
+                        {filterCategoryIds.length > 0 && (
+                            <button onClick={() => setFilterCategoryIds([])} className="px-2 py-1 text-xs text-red-500 hover:text-red-700 font-bold">مسح</button>
+                        )}
+                    </div>
+                    <button onClick={() => setManageCategoriesOpen(true)} className="mr-auto p-1.5 text-gray-400 hover:text-primary hover:bg-gray-100 rounded-full transition-colors"><Settings size={16} /></button>
+                </div>
             </div>
 
             <Card className="flex-1 p-0 overflow-hidden border-0 shadow-lg bg-white/40">
@@ -527,7 +522,7 @@ export default function PartiesPage() {
 
                     {/* Category Management */}
                     <div className="pt-2 border-t mt-4">
-                        <label className="block text-sm font-bold mb-2 flex items-center gap-2">
+                        <label className="text-sm font-bold mb-2 flex items-center gap-2">
                             <Tag size={16} /> التصنيفات
                         </label>
 
@@ -537,12 +532,12 @@ export default function PartiesPage() {
                                 placeholder="إضافة تصنيف جديد..."
                                 value={newCategoryName}
                                 onChange={e => setNewCategoryName(e.target.value)}
-                                className="h-8 py-4 text-sm"
+                                className="h-8 py-5 text-sm"
                             />
                             <Button
                                 type="button"
                                 onClick={handleAddCategory}
-                                className="h-8 px-3 text-xs"
+                                className="h-8 px-3 py-5 text-xs"
                             >
                                 <Plus size={14} className="ml-1" /> إضافة
                             </Button>
@@ -668,7 +663,6 @@ export default function PartiesPage() {
                     </form>
 
                     <div className="bg-gray-50 p-4 rounded-xl border">
-                        <h3 className="font-bold text-sm text-gray-700 mb-3">تعديل المسميات</h3>
                         <div className="space-y-2 max-h-[60vh] overflow-y-auto">
                             {categories.map(cat => (
                                 <div key={cat.id} className="flex items-center gap-2 bg-white p-2 rounded-lg border shadow-sm">

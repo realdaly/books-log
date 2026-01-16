@@ -388,9 +388,9 @@ export default function SalesPage() {
                             <button
                                 type="button"
                                 onClick={() => setIsMultiMode(!isMultiMode)}
-                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ring-2 ring-primary ring-offset-2 ${isMultiMode ? 'bg-primary' : 'bg-gray-200'}`}
+                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ring-2 ring-primary ring-offset-2 ${isMultiMode ? 'bg-primary' : 'bg-gray-300'}`}
                             >
-                                <span className={`${isMultiMode ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
+                                <span className={`${isMultiMode ? '-translate-x-6' : '-translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
                             </button>
                         </div>
                     )}
@@ -401,7 +401,7 @@ export default function SalesPage() {
                             <div className="relative w-full">
                                 <Combobox value={formData.book_id} onChange={handleBookChange} onClose={() => setBookQuery('')}>
                                     <div className="relative mt-1">
-                                        <ComboboxButton as="div" className="relative w-full cursor-default overflow-hidden rounded-lg bg-white text-right shadow-md border focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm">
+                                        <ComboboxButton as="div" className="relative w-full cursor-default overflow-hidden rounded-lg bg-white text-right shadow-md border focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm py-1">
                                             <ComboboxInput
                                                 className="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-gray-900 focus:ring-0 text-right"
                                                 displayValue={(book) => book?.title || ''}
@@ -466,15 +466,17 @@ export default function SalesPage() {
                                 </Button>
                             </div>
 
-                            <div className="max-h-[300px] overflow-y-auto border rounded-xl divide-y bg-white">
+                            <div className="max-h-[200px] overflow-y-auto border rounded-xl divide-y bg-white">
                                 {books.map(book => (
-                                    <div key={book.id} className="p-3 flex items-center justify-between hover:bg-gray-50">
+                                    <div
+                                        key={book.id}
+                                        onClick={() => toggleMultiBook(book)} className="p-3 flex items-center justify-between hover:bg-gray-50 cursor-pointer">
                                         <div className="flex items-center gap-3">
                                             <input
                                                 type="checkbox"
-                                                className="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary"
+                                                className="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary pointer-events-none"
                                                 checked={selectedMultiBooks.some(b => b.book.id === book.id)}
-                                                onChange={() => toggleMultiBook(book)}
+                                                readOnly
                                             />
                                             <span className="font-bold text-sm">{book.title}</span>
                                         </div>
@@ -574,10 +576,10 @@ export default function SalesPage() {
 
                     <div>
                         <label className="block text-sm font-medium mb-1 text-primary">الجهة (المشتري)</label>
-                        <div className="flex gap-2">
+                        <div className="flex items-center gap-2">
                             <div className="relative w-full">
                                 <Combobox value={formData.party_id} onChange={(val) => setFormData({ ...formData, party_id: val })} onClose={() => setQuery('')}>
-                                    <div className="relative mt-1">
+                                    <div className="relative">
                                         <ComboboxButton as="div" className="relative w-full cursor-default overflow-hidden rounded-lg bg-white text-right shadow-md border focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm">
                                             <ComboboxInput
                                                 className="w-full border-none py-3 pl-3 pr-10 text-sm leading-5 text-gray-900 focus:ring-0 text-right"
@@ -633,7 +635,7 @@ export default function SalesPage() {
                                     </div>
                                 </Combobox>
                             </div>
-                            <Button type="button" onClick={() => setIsAddPartyOpen(true)} className="mt-1 px-3">
+                            <Button type="button" onClick={() => setIsAddPartyOpen(true)} className="px-3">
                                 <Plus size={18} />
                             </Button>
                         </div>

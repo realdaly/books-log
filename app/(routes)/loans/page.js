@@ -325,9 +325,9 @@ export default function LoansPage() {
                             <button
                                 type="button"
                                 onClick={() => setIsMultiMode(!isMultiMode)}
-                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ring-2 ring-primary ring-offset-2 ${isMultiMode ? 'bg-primary' : 'bg-gray-200'}`}
+                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ring-2 ring-primary ring-offset-2 ${isMultiMode ? 'bg-primary' : 'bg-gray-300'}`}
                             >
-                                <span className={`${isMultiMode ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
+                                <span className={`${isMultiMode ? '-translate-x-6' : '-translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
                             </button>
                         </div>
                     )}
@@ -338,7 +338,7 @@ export default function LoansPage() {
                             <div className="relative w-full">
                                 <Combobox value={formData.book_id} onChange={(val) => setFormData({ ...formData, book_id: val })} onClose={() => setBookQuery('')}>
                                     <div className="relative mt-1">
-                                        <ComboboxButton as="div" className="relative w-full cursor-default overflow-hidden rounded-lg bg-white text-right shadow-md border focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm">
+                                        <ComboboxButton as="div" className="relative w-full cursor-default overflow-hidden rounded-lg bg-white text-right shadow-md border focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm py-1">
                                             <ComboboxInput
                                                 className="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-gray-900 focus:ring-0 text-right"
                                                 displayValue={(book) => book?.title || ''}
@@ -403,7 +403,7 @@ export default function LoansPage() {
                                 </Button>
                             </div>
 
-                            <div className="max-h-[300px] overflow-y-auto border rounded-xl divide-y bg-white custom-scrollbar">
+                            <div className="max-h-[200px] overflow-y-auto border rounded-xl divide-y bg-white custom-scrollbar">
                                 {books.map(book => (
                                     <div key={book.id} className="p-3 flex items-center justify-between hover:bg-gray-50 cursor-pointer" onClick={() => toggleMultiBook(book)}>
                                         <div className="flex items-center gap-3">
@@ -423,11 +423,11 @@ export default function LoansPage() {
 
                     <div>
                         <label className="block text-sm font-medium mb-1">الجهة المستعيرة</label>
-                        <div className="flex gap-2">
+                        <div className="flex items-center gap-2">
                             <div className="relative w-full">
                                 <Combobox value={formData.party_id} onChange={(val) => setFormData({ ...formData, party_id: val })} onClose={() => setQuery('')}>
                                     <div className="relative mt-1">
-                                        <ComboboxButton as="div" className="relative w-full cursor-default overflow-hidden rounded-lg bg-white text-right shadow-md border focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm">
+                                        <ComboboxButton as="div" className="relative w-full cursor-default overflow-hidden rounded-lg bg-white text-right shadow-md border focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm py-1">
                                             <ComboboxInput
                                                 className="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-gray-900 focus:ring-0 text-right"
                                                 displayValue={(party) => party?.name || ''}

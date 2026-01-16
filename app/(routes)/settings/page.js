@@ -139,7 +139,7 @@ export default function SettingsPage() {
 
     return (
         <div className="space-y-6 max-w-xl mx-auto">
-            <h1 className="text-3xl font-bold text-primary text-center">الاعدادات</h1>
+            <h1 className="text-3xl font-bold text-primary text-center">الإعدادات</h1>
             <Card className="p-8 space-y-6 shadow-xl border-0">
                 <div className="space-y-2">
                     <label className="block text-sm font-black text-primary/60 uppercase tracking-wider">اسم المؤسسة</label>

@@ -4,7 +4,7 @@ import { getDb } from "../../lib/db";
 import { normalizeArabic } from "../../lib/utils";
 import { Card, Button, Input, Textarea } from "../../components/ui/Base";
 import { Modal } from "../../components/ui/Modal";
-import { Loader2, Plus, Trash2, Edit2, Image as ImageIcon, BarChart3, BookOpenText, LayoutGrid, Search } from "lucide-react";
+import { Loader2, Plus, Trash2, Edit2, Image as ImageIcon, BarChart3, BookOpenText, LayoutGrid, Search, X } from "lucide-react";
 import { ask, open } from '@tauri-apps/plugin-dialog';
 import { readFile } from '@tauri-apps/plugin-fs';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, Legend } from 'recharts';
@@ -255,10 +255,18 @@ export default function BooksPage() {
                         <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" size={18} />
                         <Input
                             placeholder="بحث عن كتاب..."
-                            className="pr-10 bg-white shadow-sm border-gray-200 w-full"
+                            className="pr-10 pl-10 bg-white shadow-sm border-gray-200 w-full"
                             value={query}
                             onChange={e => setQuery(e.target.value)}
                         />
+                        {query && (
+                            <button
+                                onClick={() => setQuery("")}
+                                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-red-500 transition-colors"
+                            >
+                                <X size={16} />
+                            </button>
+                        )}
                     </div>
                     <Button onClick={() => { setEditId(null); resetForm(); setIsModalOpen(true); }} className="shadow-lg hover:scale-105 transition-transform whitespace-nowrap">
                         <Plus className="ml-2" size={20} /> إضافة كتاب جديد
@@ -487,7 +495,7 @@ export default function BooksPage() {
                                         value={formData.title}
                                         onChange={e => setFormData({ ...formData, title: e.target.value })}
                                         className="text- min-h-[4rem]"
-                                        rows={editId ? 1 : 3}
+                                        rows={editId ? 1 : 5}
                                     />
                                 </div>
                                 <div className="col-span-2 md:col-span-1">
@@ -508,17 +516,17 @@ export default function BooksPage() {
 
                                 <div className="col-span-2 md:col-span-1">
                                     <label className="block text-xs font-bold mb-1 text-muted-foreground">سعر النسخة</label>
-                                    <Input type="number" className="h-9" step="0.01" required value={formData.unit_price} onChange={e => setFormData({ ...formData, unit_price: e.target.value })} />
+                                    <Input type="number" className="h-11" step="0.01" required value={formData.unit_price} onChange={e => setFormData({ ...formData, unit_price: e.target.value })} />
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold mb-1 text-muted-foreground">مفقود (يدوي)</label>
-                                    <Input type="number" className="h-9" value={formData.loss_manual} onChange={e => setFormData({ ...formData, loss_manual: e.target.value })} />
+                                    <Input type="number" className="h-11" value={formData.loss_manual} onChange={e => setFormData({ ...formData, loss_manual: e.target.value })} />
                                 </div>
                             </div>
 
                             <div>
                                 <label className="block text-sm mb-1 font-bold border-primary pr-2">ملاحظات</label>
-                                <Textarea placeholder="ملاحظات إضافية..." rows={3} value={formData.notes} onChange={e => setFormData({ ...formData, notes: e.target.value })} />
+                                <Textarea placeholder="ملاحظات إضافية..." rows={5} value={formData.notes} onChange={e => setFormData({ ...formData, notes: e.target.value })} />
                             </div>
                         </div>
                     </div>

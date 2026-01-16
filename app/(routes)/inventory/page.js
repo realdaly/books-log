@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback } from "react";
 import { getDb } from "../../lib/db";
 import { normalizeArabic } from "../../lib/utils";
 import { Card, Input } from "../../components/ui/Base";
-import { Loader2, Search } from "lucide-react";
+import { Loader2, Search, X } from "lucide-react";
 import Link from "next/link";
 
 export default function InventoryPage() {
@@ -83,8 +83,16 @@ export default function InventoryPage() {
                             placeholder="بحث عن كتاب..."
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
-                            className="pr-10 w-full"
+                            className="pr-10 pl-10 w-full"
                         />
+                        {searchTerm && (
+                            <button
+                                onClick={() => setSearchTerm("")}
+                                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-red-500 transition-colors"
+                            >
+                                <X size={16} />
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>
@@ -117,7 +125,7 @@ export default function InventoryPage() {
                                         <td className="p-2 text-center border-l border-border/50">
                                             <input
                                                 type="number"
-                                                className="w-14 p-1 text-center bg-transparent border border-transparent hover:border-input rounded-lg focus:bg-white focus:border-primary focus:ring-1 focus:ring-primary transition-all font-medium text-foreground text-xs"
+                                                className="w-14 p-1 text-center bg-transparent border border-transparent hover:border-input rounded-lg focus:bg-white focus:border-primary focus:ring-1 focus:ring-primary transition-all font-medium text-foreground"
                                                 defaultValue={row.total_printed}
                                                 onBlur={e => updateField(row.book_id, 'total_printed', e.target.value)}
                                                 onFocus={e => e.target.select()}
@@ -128,7 +136,7 @@ export default function InventoryPage() {
                                         <td className="p-2 text-center border-l border-border/50">
                                             <input
                                                 type="number"
-                                                className="w-14 p-1 text-center bg-transparent border border-transparent hover:border-input rounded-lg focus:bg-white focus:border-primary focus:ring-1 focus:ring-primary transition-all font-medium text-foreground text-xs"
+                                                className="w-14 p-1 text-center bg-transparent border border-transparent hover:border-input rounded-lg focus:bg-white focus:border-primary focus:ring-1 focus:ring-primary transition-all font-medium text-foreground"
                                                 defaultValue={row.sent_to_institution}
                                                 onBlur={e => updateField(row.book_id, 'sent_to_institution', e.target.value)}
                                                 onFocus={e => e.target.select()}
@@ -150,7 +158,7 @@ export default function InventoryPage() {
                                         <td className="p-2 text-center border-l border-border/50">
                                             <input
                                                 type="number"
-                                                className="w-14 p-1 text-center bg-transparent border border-transparent hover:border-input rounded-lg focus:bg-white focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all font-medium text-foreground text-xs"
+                                                className="w-14 p-1 text-center bg-transparent border border-transparent hover:border-input rounded-lg focus:bg-white focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all font-medium text-foreground"
                                                 defaultValue={row.loss_manual}
                                                 onBlur={e => updateField(row.book_id, 'loss_manual', e.target.value)}
                                                 onFocus={e => e.target.select()}

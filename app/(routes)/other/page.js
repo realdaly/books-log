@@ -6,7 +6,7 @@ import { Card, Button, Input, Textarea } from "../../components/ui/Base";
 import { Modal } from "../../components/ui/Modal";
 import { DateInput } from "../../components/ui/DateInput";
 import { Combobox, ComboboxInput, ComboboxButton, ComboboxOptions, ComboboxOption } from '@headlessui/react';
-import { Loader2, Plus, Trash2, Edit2, Check, ChevronsUpDown, Filter, Settings, Tag, Search } from "lucide-react";
+import { Loader2, Plus, Trash2, Edit2, Check, ChevronsUpDown, Filter, Settings, Tag, Search, X } from "lucide-react";
 import { ask, message } from '@tauri-apps/plugin-dialog';
 import { NotesCell } from "../../components/ui/NotesCell";
 
@@ -69,13 +69,6 @@ export default function OtherStoresPage() {
 
             const catRows = await db.select("SELECT * FROM other_category ORDER BY name ASC");
             setCategories(catRows);
-
-            // Seed default categories if empty
-            if (catRows.length === 0) {
-                await db.execute("INSERT OR IGNORE INTO other_category (name) VALUES ('بيع'), ('إهداء'), ('أخرى')");
-                const seededCats = await db.select("SELECT * FROM other_category ORDER BY name ASC");
-                setCategories(seededCats);
-            }
 
         } catch (err) {
             console.error(err);
@@ -271,6 +264,14 @@ export default function OtherStoresPage() {
         }
     };
 
+    const selectAllBooks = () => {
+        if (selectedMultiBooks.length === books.length) {
+            setSelectedMultiBooks([]);
+        } else {
+            setSelectedMultiBooks([...books]);
+        }
+    };
+
     if (loading) return <div className="flex justify-center items-center h-full"><Loader2 className="animate-spin text-primary" size={48} /></div>;
 
     return (
@@ -290,11 +291,19 @@ export default function OtherStoresPage() {
                         <div className="relative w-full md:w-64 group">
                             <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" size={18} />
                             <Input
-                                placeholder="بحث عن كتاب..."
-                                className="pr-10 w-full"
+                                placeholder="بحث عن حركة..."
+                                className="pr-10 pl-10 w-full"
                                 value={searchTerm}
                                 onChange={e => setSearchTerm(e.target.value)}
                             />
+                            {searchTerm && (
+                                <button
+                                    onClick={() => setSearchTerm("")}
+                                    className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-red-500 transition-colors"
+                                >
+                                    <X size={16} />
+                                </button>
+                            )}
                         </div>
                         <Button onClick={() => { resetForm(); setEditId(null); setIsModalOpen(true); }}>
                             <Plus className="ml-2" size={18} /> إضافة حركة
@@ -380,63 +389,107 @@ export default function OtherStoresPage() {
             <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editId ? "تعديل حركة" : (isMultiMode ? "إضافة حركات متعددة" : "إضافة حركة")} maxWidth={isMultiMode ? "max-w-4xl" : "max-w-lg"}>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     {!editId && (
-                        <div className="flex items-center justify-between bg-primary/5 p-2 rounded-lg mb-4 cursor-pointer" onClick={() => setIsMultiMode(!isMultiMode)}>
+                        <div className="flex items-center justify-between bg-primary/5 p-2 rounded-lg mb-4">
                             <span className="text-sm font-bold text-primary">إضافة عدة كتب؟</span>
-                            <div className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isMultiMode ? 'bg-primary' : 'bg-gray-200'}`}>
-                                <span className={`${isMultiMode ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
-                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setIsMultiMode(!isMultiMode)}
+                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ring-2 ring-primary ring-offset-2 ${isMultiMode ? 'bg-primary' : 'bg-gray-300'}`}
+                            >
+                                <span className={`${isMultiMode ? '-translate-x-6' : '-translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
+                            </button>
                         </div>
                     )}
 
-                    {!isMultiMode ? (
-                        <div>
-                            <label className="block text-sm font-bold mb-1 text-primary">الكتاب</label>
-                            <Combobox value={formData.book_id} onChange={(val) => setFormData({ ...formData, book_id: val })} onClose={() => setBookQuery('')}>
-                                <div className="relative">
-                                    <div className="relative w-full cursor-default overflow-hidden rounded-lg bg-white text-right shadow-md border focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 sm:text-sm">
-                                        <ComboboxInput
-                                            className="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-gray-900 focus:ring-0 text-right"
-                                            displayValue={b => b?.title || ''}
-                                            onFocus={(e) => e.target.select()}
-                                            onChange={e => setBookQuery(e.target.value)}
-                                            placeholder="اختر كتاباً..."
-                                        />
-                                        <ComboboxButton className="absolute inset-y-0 right-0 flex items-center pr-2">
-                                            <ChevronsUpDown className="h-5 w-5 text-gray-400" aria-hidden="true" />
-                                        </ComboboxButton>
-                                    </div>
-                                    <ComboboxOptions className="absolute mt-1 max-h-60 w-full overflow-auto rounded-md bg-white shadow-xl z-50 py-1 border text-right">
-                                        {filteredBooks.length === 0 && bookQuery !== "" ? (
-                                            <div className="px-4 py-2 text-sm text-gray-700">لا توجد كتب بهذا الاسم</div>
-                                        ) : (
-                                            filteredBooks.map(book => (
-                                                <ComboboxOption key={book.id} value={book} className={({ active }) => `px-4 py-2 cursor-pointer flex items-center justify-between ${active ? 'bg-primary text-white' : 'text-gray-900'}`}>
-                                                    {({ selected }) => (
-                                                        <>
-                                                            <span className={`block truncate ${selected ? 'font-black' : 'font-bold'}`}>{book.title}</span>
-                                                            {selected && <Check size={16} />}
-                                                        </>
-                                                    )}
-                                                </ComboboxOption>
-                                            ))
-                                        )}
-                                    </ComboboxOptions>
+                    {
+                        !isMultiMode ? (
+                            <div>
+                                <label className="block text-sm font-bold mb-1 text-primary">الكتاب</label>
+                                <div className="relative w-full">
+                                    <Combobox value={formData.book_id} onChange={(val) => setFormData({ ...formData, book_id: val })} onClose={() => setBookQuery('')}>
+                                        <div className="relative mt-1">
+                                            <ComboboxButton as="div" className="relative w-full cursor-default overflow-hidden rounded-lg bg-white text-right shadow-md border focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm py-1">
+                                                <ComboboxInput
+                                                    className="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-gray-900 focus:ring-0 text-right"
+                                                    displayValue={b => b?.title || ''}
+                                                    onFocus={(e) => e.target.select()}
+                                                    onChange={e => setBookQuery(e.target.value)}
+                                                    placeholder="اختر كتاباً..."
+                                                />
+                                                <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                                                    <ChevronsUpDown
+                                                        className="h-5 w-5 text-gray-400"
+                                                        aria-hidden="true"
+                                                    />
+                                                </div>
+                                            </ComboboxButton>
+                                            <ComboboxOptions className="absolute mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-50">
+                                                {filteredBooks.length === 0 && bookQuery !== '' ? (
+                                                    <div className="relative cursor-default select-none px-4 py-2 text-gray-700 font-bold">
+                                                        لا توجد بيانات.
+                                                    </div>
+                                                ) : (
+                                                    filteredBooks.map((book) => (
+                                                        <ComboboxOption
+                                                            key={book.id}
+                                                            className={({ active }) =>
+                                                                `relative cursor-default select-none py-2 pl-10 pr-4 ${active ? 'bg-primary text-primary-foreground' : 'text-gray-900'
+                                                                }`
+                                                            }
+                                                            value={book}
+                                                        >
+                                                            {({ selected, active }) => (
+                                                                <>
+                                                                    <span
+                                                                        className={`block truncate ${selected ? 'font-medium' : 'font-normal'
+                                                                            }`}
+                                                                    >
+                                                                        {book.title}
+                                                                    </span>
+                                                                    {selected ? (
+                                                                        <span
+                                                                            className={`absolute inset-y-0 left-0 flex items-center pl-3 ${active ? 'text-white' : 'text-primary'
+                                                                                }`}
+                                                                        >
+                                                                            <Check className="h-5 w-5" aria-hidden="true" />
+                                                                        </span>
+                                                                    ) : null}
+                                                                </>
+                                                            )}
+                                                        </ComboboxOption>
+                                                    ))
+                                                )}
+                                            </ComboboxOptions>
+                                        </div>
+                                    </Combobox>
                                 </div>
-                            </Combobox>
-                        </div>
-                    ) : (
-                        <div className="space-y-2">
-                            <label className="block text-sm font-bold text-primary">اختر الكتب:</label>
-                            <div className="max-h-60 overflow-y-auto border rounded-xl p-2 bg-gray-50 space-y-2 custom-scrollbar">
-                                {books.map(book => (
-                                    <div key={book.id} onClick={() => toggleMultiBook(book)} className="flex items-center gap-3 p-2 hover:bg-white rounded-lg cursor-pointer border border-transparent hover:border-primary/20 bg-white/50 shadow-sm transition-all text-right">
-                                        <input type="checkbox" checked={selectedMultiBooks.some(b => b.id === book.id)} readOnly className="w-5 h-5 rounded text-primary" />
-                                        <span className="text-sm font-bold">{book.title}</span>
-                                    </div>
-                                ))}
                             </div>
-                        </div>
-                    )}
+                        ) : (
+                            <div className="space-y-2">
+                                <div className="flex justify-between items-center bg-gray-50 p-3 rounded-lg border border-dashed border-gray-300">
+                                    <span className="text-sm font-bold text-primary">اختر الكتب المراد اهداؤها:</span>
+                                    <Button type="button" variant="outline" size="sm" onClick={selectAllBooks}>
+                                        {selectedMultiBooks.length === books.length ? "إلغاء تحديد الكل" : "تحديد الكل"}
+                                    </Button>
+                                </div>
+                                <div className="max-h-[200px] overflow-y-auto border rounded-xl divide-y bg-white custom-scrollbar">
+                                    {books.map(book => (
+                                        <div key={book.id} className="p-3 flex items-center justify-between hover:bg-gray-50 cursor-pointer" onClick={() => toggleMultiBook(book)}>
+                                            <div className="flex items-center gap-3">
+                                                <input
+                                                    type="checkbox"
+                                                    className="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary pointer-events-none"
+                                                    checked={selectedMultiBooks.some(b => b.id === book.id)}
+                                                    readOnly
+                                                />
+                                                <span className="font-bold text-sm">{book.title}</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )
+                    }
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
@@ -450,10 +503,10 @@ export default function OtherStoresPage() {
                     </div>
 
                     <div className="pt-2 border-t">
-                        <label className="block text-sm font-bold mb-2 flex items-center gap-2 text-primary">
+                        <label className="text-sm font-bold mb-2 flex items-center gap-2 text-primary">
                             <Tag size={16} /> التصنيفات
                         </label>
-                        <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-2 bg-gray-50 rounded border">
+                        <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-2 bg-gray-50 rounded-md border">
                             {categories.map(cat => (
                                 <button
                                     key={cat.id}
@@ -478,15 +531,18 @@ export default function OtherStoresPage() {
                     </div>
 
                     <Button type="submit" className="w-full h-12 text-lg font-bold bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20">حفظ</Button>
-                </form>
-            </Modal>
+                </form >
+            </Modal >
 
             {/* Category Management Modal */}
-            <Modal isOpen={manageCategoriesOpen} onClose={() => setManageCategoriesOpen(false)} title="إدارة تصنيفات المخازن">
+            < Modal isOpen={manageCategoriesOpen} onClose={() => setManageCategoriesOpen(false)} title="إدارة التصنيفات" >
                 <div className="space-y-4">
                     <form onSubmit={handleAddCategory} className="flex gap-2">
-                        <Input placeholder="تصنيف جديد..." value={newCategoryName} onChange={e => setNewCategoryName(e.target.value)} />
-                        <Button type="submit" className="px-4"><Plus size={18} /></Button>
+                        <Input className="h-10" placeholder="تصنيف جديد..." value={newCategoryName} onChange={e => setNewCategoryName(e.target.value)} />
+                        <Button type="submit" className="h-10 px-3">
+                            <Plus className="ml-1" size={14} />
+                            إضافة
+                        </Button>
                     </form>
                     <div className="space-y-2 max-h-60 overflow-y-auto border rounded-xl p-2 bg-gray-50 custom-scrollbar">
                         {categories.map(cat => (
@@ -506,9 +562,12 @@ export default function OtherStoresPage() {
                                 )}
                             </div>
                         ))}
+                        {categories.length === 0 && (
+                            <p className="text-gray-400 text-center text-sm py-4">لا توجد تصنيفات</p>
+                        )}
                     </div>
                 </div>
-            </Modal>
-        </div>
+            </Modal >
+        </div >
     );
 }
