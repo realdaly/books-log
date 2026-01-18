@@ -322,11 +322,11 @@ export default function OtherStoresPage() {
 
                 {/* Categories Filter Bar */}
                 <div className="flex items-center gap-2 pb-2 w-full">
-                    <div className="flex items-center gap-2 py-1.5 px-3 bg-gray-50 rounded-lg border">
+                    <div className="flex items-center gap-2 py-1.5 px-3 bg-gray-50 rounded-full border">
                         <Filter size={16} className="text-gray-400" />
                         <span className="text-xs font-bold text-gray-500 whitespace-nowrap">تصفية:</span>
                     </div>
-                    <div className="flex-1 flex gap-2 overflow-x-auto scrollbar-hide">
+                    <div className="flex-1 flex gap-0.5 overflow-x-auto scrollbar-hide">
                         {categories.map(cat => (
                             <button
                                 key={cat.id}

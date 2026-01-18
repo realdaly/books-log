@@ -80,7 +80,7 @@ export default function BooksPage() {
             // Fetch books with Institution transaction stats
             const rows = await db.select(`
                 SELECT 
-                    b.id, b.title, b.notes, b.total_printed, b.sent_to_institution, b.loss_manual, b.unit_price, b.created_at, b.updated_at,
+                    b.id, b.title, b.cover_image, b.notes, b.total_printed, b.sent_to_institution, b.loss_manual, b.unit_price, b.created_at, b.updated_at,
                     COALESCE(ot.other_qty, 0) as other_stores_total,
                     
                     -- Institution Aggregates (Transactions)
@@ -423,7 +423,14 @@ export default function BooksPage() {
     return (
         <div className="space-y-8 h-full flex flex-col pb-8">
             <div className="flex justify-between items-center px-2 flex-wrap gap-4">
-                <h1 className="text-4xl font-black text-primary drop-shadow-sm">مكتبة الكتب</h1>
+                <div className="flex items-center gap-4">
+                    <h1 className="text-4xl font-black text-primary drop-shadow-sm">مكتبة الكتب</h1>
+                    {selectedIds.length > 0 && (
+                        <Button variant="destructive" size="sm" onClick={handleBulkDelete} className="h-7 text-xs px-2 animate-in fade-in zoom-in-50">
+                            <Trash2 size={14} className="ml-1" /> حذف ({selectedIds.length})
+                        </Button>
+                    )}
+                </div>
                 <div className="flex items-center gap-4 flex-1 justify-end">
                     <div className="relative w-full max-w-xs group">
                         <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" size={18} />
@@ -451,7 +458,7 @@ export default function BooksPage() {
             {/* Filter & Selection Bar */}
             <div className="flex items-center gap-2 px-2 pb-2 w-full">
                 {/* Selection Controls */}
-                <div className="flex items-center gap-2 pl-2 border-l ml-2">
+                <div className="flex items-center gap-2 pl-2 border-l">
                     <input
                         type="checkbox"
                         className="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer accent-emerald-600"
@@ -459,21 +466,16 @@ export default function BooksPage() {
                         onChange={toggleSelectAll}
                     />
                     <span className="text-xs font-bold text-gray-500 cursor-pointer select-none" onClick={toggleSelectAll}>الكل</span>
-                    {selectedIds.length > 0 && (
-                        <Button variant="destructive" size="sm" onClick={handleBulkDelete} className="h-7 text-xs px-2 animate-in fade-in zoom-in-50">
-                            <Trash2 size={14} className="ml-1" /> حذف ({selectedIds.length})
-                        </Button>
-                    )}
                 </div>
 
                 {/* Filter Label */}
-                <div className="flex items-center gap-2 py-1.5 px-3 bg-gray-50 rounded-lg border">
+                <div className="flex items-center gap-2 py-1.5 px-3 bg-gray-50 rounded-full border">
                     <Filter size={16} className="text-gray-400" />
                     <span className="text-xs font-bold text-gray-500 whitespace-nowrap">تصفية:</span>
                 </div>
 
                 {/* Filter Chips */}
-                <div className="flex-1 flex gap-2 overflow-x-auto scrollbar-hide">
+                <div className="flex-1 flex gap-0.5 overflow-x-auto scrollbar-hide">
                     {categories.map(cat => (
                         <button
                             key={cat.id}
@@ -501,7 +503,7 @@ export default function BooksPage() {
             <div className="flex-1 overflow-y-auto grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-8 pl-2 content-start">
                 {filteredBooks.map(book => (
                     <div key={book.id} className="group relative perspective-1000">
-                        <div className="relative w-full aspect-[2/3] transition-all duration-300 transform group-hover:-translate-y-2 group-hover:shadow-2xl rounded-lg overflow-hidden bg-white shadow-md border border-gray-200">
+                        <div className="relative w-full aspect-[2/3] transition-all duration-300 group-hover:shadow-2xl rounded-lg overflow-hidden bg-white shadow-md border border-gray-200">
 
                             {/* Book Cover */}
                             <div className="absolute inset-0 bg-gray-100 flex items-center justify-center overflow-hidden">
@@ -521,7 +523,7 @@ export default function BooksPage() {
                                     <img
                                         src={book.cover_image}
                                         alt={book.title}
-                                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                        className="w-full h-full object-cover"
                                     />
                                 ) : (
                                     <div className="flex flex-col items-center justify-center text-gray-400 p-4 text-center">
