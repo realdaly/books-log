@@ -423,7 +423,7 @@ export default function BooksPage() {
         <div className="space-y-8 h-full flex flex-col pb-8">
             <div className="flex justify-between items-center px-2 flex-wrap gap-4">
                 <div className="flex items-center gap-4">
-                    <h1 className="text-4xl font-black text-primary drop-shadow-sm">مكتبة الكتب</h1>
+                    <h1 className="text-2xl md:text-4xl font-black text-primary drop-shadow-sm">مكتبة الكتب</h1>
                     {selectedIds.length > 0 && (
                         <Button variant="destructive" size="sm" onClick={handleBulkDelete} className="h-7 text-xs px-2 animate-in fade-in zoom-in-50">
                             <Trash2 size={14} className="ml-1" /> حذف ({selectedIds.length})
@@ -499,7 +499,7 @@ export default function BooksPage() {
             </div>
 
             {/* Book Grid view */}
-            <div className="flex-1 overflow-y-auto grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-8 pl-2 content-start">
+            <div className="flex-1 overflow-y-auto grid grid-cols-2 md:grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-4 md:gap-8 pl-2 content-start">
                 {filteredBooks.map(book => (
                     <div key={book.id} className="group relative perspective-1000">
                         <div className="relative w-full aspect-[2/3] transition-all duration-300 group-hover:shadow-2xl rounded-lg overflow-hidden bg-white shadow-md border border-gray-200">
@@ -738,7 +738,7 @@ export default function BooksPage() {
 
                         {/* Fields */}
                         <div className="flex-1 space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="col-span-2">
                                     <label className="block text-sm font-bold mb-1 border-primary pr-2">اسم الكتاب</label>
                                     <Textarea

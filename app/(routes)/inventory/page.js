@@ -109,7 +109,7 @@ export default function InventoryPage() {
         <div className="space-y-6 h-full flex flex-col">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h1 className="text-3xl font-black text-primary mb-1"> {publisherName || "نظام إدارة الكتب"}</h1>
+                    <h1 className="text-xl md:text-3xl font-black text-primary mb-1"> {publisherName || "نظام إدارة الكتب"}</h1>
                     <p className="text-primary/70 text-sm">نظرة عامة على المخزون وحالة التوزيع</p>
                 </div>
 

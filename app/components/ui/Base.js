@@ -15,10 +15,10 @@ export function Button({ className, variant = "default", size = "default", ...pr
                 variant === "ghost" && "hover:bg-accent hover:text-accent-foreground",
                 variant === "link" && "text-primary underline-offset-4 hover:underline",
                 // Sizes
-                size === "default" && "h-11 px-6 py-2",
-                size === "sm" && "h-9 rounded-md px-3",
-                size === "lg" && "h-14 rounded-xl px-10 text-lg",
-                size === "icon" && "h-10 w-10",
+                size === "default" && "h-10 px-4 md:h-11 md:px-6 py-2",
+                size === "sm" && "h-8 px-2 md:h-9 md:px-3 rounded-md",
+                size === "lg" && "h-12 px-6 md:h-14 md:px-10 md:text-lg rounded-xl",
+                size === "icon" && "h-9 w-9 md:h-10 md:w-10",
                 className
             )}
             {...props}
@@ -35,7 +35,7 @@ export const Input = forwardRef(({ className, onFocus, ...props }, ref) => {
                 if (onFocus) onFocus(e);
             }}
             className={cn(
-                "flex h-11 w-full rounded-lg border-2 border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-primary focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-50 transition-all font-medium text-foreground",
+                "flex h-10 md:h-11 w-full rounded-lg border-2 border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-primary focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-50 transition-all font-medium text-foreground",
                 className
             )}
             {...props}

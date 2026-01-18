@@ -377,7 +377,7 @@ export default function PartiesPage() {
             <div className="flex flex-col gap-4">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div className="flex items-center gap-4">
-                        <h1 className="text-3xl font-bold text-primary">الجهات</h1>
+                        <h1 className="text-xl md:text-3xl font-bold text-primary">الجهات</h1>
                         {selectedIds.length > 0 && (
                             <Button variant="destructive" size="sm" onClick={handleBulkDelete} className="animate-in fade-in slide-in-from-left-2">
                                 <Trash2 className="ml-2" size={16} />

@@ -299,7 +299,7 @@ export default function SalesPage() {
             <div className="flex flex-col gap-4">
                 <div className="flex justify-between items-center">
                     <div className="flex items-center gap-4">
-                        <h1 className="text-3xl font-bold text-primary">سجل البيع</h1>
+                        <h1 className="text-xl md:text-3xl font-bold text-primary">سجل البيع</h1>
                         {selectedIds.length > 0 && (
                             <Button variant="destructive" size="sm" onClick={handleBulkDelete} className="animate-in fade-in slide-in-from-left-2">
                                 <Trash2 className="ml-2" size={16} />
@@ -564,7 +564,7 @@ export default function SalesPage() {
 
                     {!isMultiMode && (
                         <>
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium mb-1">العدد</label>
                                     <Input
@@ -583,7 +583,7 @@ export default function SalesPage() {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium mb-1">المبلغ الكلي</label>
                                     <p className="text-sm font-bold">{formData.total_price} دينار عراقي</p>
@@ -593,7 +593,7 @@ export default function SalesPage() {
                         </>
                     )}
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-medium mb-1">رقم الوصل</label>
                             <Input

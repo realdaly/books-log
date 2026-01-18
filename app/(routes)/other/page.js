@@ -288,7 +288,7 @@ export default function OtherStoresPage() {
             <div className="flex flex-col gap-4">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div className="flex items-center gap-4">
-                        <h1 className="text-3xl font-bold text-primary">سجل المخازن الأخرى</h1>
+                        <h1 className="text-xl md:text-3xl font-bold text-primary">سجل المخازن الأخرى</h1>
                         {selectedIds.length > 0 && (
                             <Button variant="destructive" size="sm" onClick={handleBulkDelete}>
                                 <Trash2 className="ml-2" size={16} />

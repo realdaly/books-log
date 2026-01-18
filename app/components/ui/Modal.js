@@ -45,10 +45,10 @@ export function Modal({ isOpen, onClose, title, children, maxWidth = "max-w-lg" 
             <div className="fixed inset-0 flex w-screen items-center justify-center p-4">
                 {/* Panel */}
                 <DialogPanel
-                    className={`w-full ${maxWidth} transform rounded-2xl bg-white p-0 text-right shadow-2xl border border-border transition duration-300 ease-out data-[closed]:scale-95 data-[closed]:opacity-0`}
+                    className={`w-full ${maxWidth} transform rounded-2xl bg-white p-0 text-right shadow-2xl border border-border transition duration-300 ease-out data-[closed]:scale-95 data-[closed]:opacity-0 max-h-[90vh] flex flex-col`}
                     dir="rtl"
                 >
-                    <div className="flex justify-between items-center p-6 border-b bg-muted/20">
+                    <div className="flex justify-between items-center p-6 border-b bg-muted/20 shrink-0">
                         <DialogTitle
                             as="h3"
                             className="text-xl font-bold text-foreground leading-6"
@@ -64,7 +64,7 @@ export function Modal({ isOpen, onClose, title, children, maxWidth = "max-w-lg" 
                             <X size={18} />
                         </Button>
                     </div>
-                    <div className="p-6">
+                    <div className="p-6 overflow-y-auto custom-scrollbar">
                         {children}
                     </div>
                 </DialogPanel>

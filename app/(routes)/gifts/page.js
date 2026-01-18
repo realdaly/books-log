@@ -239,7 +239,7 @@ export default function GiftsPage() {
         <div className="space-y-6 h-full flex flex-col">
             <div className="flex justify-between items-center">
                 <div className="flex items-center gap-4">
-                    <h1 className="text-3xl font-bold text-primary">سجل الإهداء</h1>
+                    <h1 className="text-xl md:text-3xl font-bold text-primary">سجل الإهداء</h1>
                     {selectedIds.length > 0 && (
                         <Button variant="destructive" size="sm" onClick={handleBulkDelete} className="animate-in fade-in slide-in-from-left-2">
                             <Trash2 className="ml-2" size={16} />

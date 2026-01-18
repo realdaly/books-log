@@ -40,12 +40,33 @@ export default function Sidebar() {
             console.error("Sidebar warming up DB failed:", err);
             // alert("Database Initialization Failed. Please restart the app. " + err);
         });
+
+        // Auto-close on small screens
+        const handleResize = () => {
+            if (window.innerWidth < 1024) {
+                setIsOpen(false);
+            } else {
+                setIsOpen(true);
+            }
+        };
+        // Initial check
+        if (window.innerWidth < 1024) setIsOpen(false);
+
+        // Optional: Listen to resize? No, usually annoying. 
+        // Just initial check is standard. 
     }, []);
+
+    // Close on navigation if mobile
+    useEffect(() => {
+        if (window.innerWidth < 1024) {
+            setIsOpen(false);
+        }
+    }, [pathname]);
 
     return (
         <aside
             className={cn(
-                "bg-white border-l border-border flex flex-col h-full shadow-xl relative z-40 transition-all duration-500 cubic-bezier(0.4, 0, 0.2, 1)",
+                "bg-white border-l border-border flex flex-col h-full shadow-xl relative z-40 transition-all duration-300 ease-in-out shrink-0",
                 isOpen ? "w-[280px]" : "w-[80px]"
             )}
         >
