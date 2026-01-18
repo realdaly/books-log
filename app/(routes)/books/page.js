@@ -4,9 +4,11 @@ import { getDb } from "../../lib/db";
 import { normalizeArabic } from "../../lib/utils";
 import { Card, Button, Input, Textarea } from "../../components/ui/Base";
 import { Modal } from "../../components/ui/Modal";
-import { Loader2, Plus, Trash2, Edit2, Image as ImageIcon, BarChart3, BookOpenText, LayoutGrid, Search, X, Settings, Tag, Filter } from "lucide-react";
+import { Loader2, Plus, Trash2, Edit2, Image as ImageIcon, BarChart3, BookOpenText, LayoutGrid, Search, X, Settings, Tag, Filter, Check, ChevronsUpDown } from "lucide-react";
 import { ask, open, message } from '@tauri-apps/plugin-dialog';
 import { readFile } from '@tauri-apps/plugin-fs';
+import { Combobox, ComboboxInput, ComboboxButton, ComboboxOptions, ComboboxOption, Transition } from '@headlessui/react';
+import { FileWarning, Download } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, Legend } from 'recharts';
 
 // Modern Color Palette for Charts
@@ -35,6 +37,15 @@ export default function BooksPage() {
     const [categories, setCategories] = useState([]);
     const [newCategoryName, setNewCategoryName] = useState("");
     const [editingCategory, setEditingCategory] = useState(null);
+    const [categoryQuery, setCategoryQuery] = useState("");
+
+    const filteredComboboxCategories = useMemo(() => {
+        return categoryQuery === ""
+            ? categories
+            : categories.filter((cat) =>
+                normalizeArabic(cat.name).toLowerCase().includes(normalizeArabic(categoryQuery).toLowerCase())
+            );
+    }, [categoryQuery, categories]);
 
     const filteredBooks = useMemo(() => {
         let result = books;
@@ -742,20 +753,12 @@ export default function BooksPage() {
                                     <label className="block text-sm font-bold mb-1 border-primary pr-2">الواصل للمؤسسة</label>
                                     <Input type="number" value={formData.sent_to_institution} onChange={e => setFormData({ ...formData, sent_to_institution: e.target.value })} />
                                 </div>
-                            </div>
-
-                            {/* additional fields group */}
-                            <div className="grid grid-cols-2 gap-3 mt-3 bg-gray-50/50 p-4 rounded-xl border border-gray-100">
-                                <p className="col-span-2 text-xs font-black text-primary/40 uppercase tracking-widest mb-2">
-                                    بيانات إضافية
-                                </p>
-
                                 <div className="col-span-2 md:col-span-1">
-                                    <label className="block text-xs font-bold mb-1 text-muted-foreground">سعر النسخة</label>
+                                    <label className="block text-sm font-bold mb-1 border-primary pr-2">سعر النسخة</label>
                                     <Input type="number" className="h-11" step="0.01" required value={formData.unit_price} onChange={e => setFormData({ ...formData, unit_price: e.target.value })} />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold mb-1 text-muted-foreground">مفقود (يدوي)</label>
+                                    <label className="block text-sm font-bold mb-1 border-primary pr-2">مفقود (يدوي)</label>
                                     <Input type="number" className="h-11" value={formData.loss_manual} onChange={e => setFormData({ ...formData, loss_manual: e.target.value })} />
                                 </div>
                             </div>
@@ -767,46 +770,115 @@ export default function BooksPage() {
                                     <Tag size={16} /> التصنيفات
                                 </label>
 
-                                {/* New Category Input */}
-                                <div className="flex items-center gap-2 mb-3">
-                                    <Input
-                                        placeholder="إضافة تصنيف جديد..."
-                                        value={newCategoryName}
-                                        onChange={e => setNewCategoryName(e.target.value)}
-                                        className="h-8 text-sm"
-                                    />
+                                {/* Combobox for Selection */}
+                                <div className="w-full flex items-center gap-2">
+                                    <div className="flex-1">
+                                        <Combobox
+                                            value={formData.categoryIds}
+                                            onChange={(ids) => setFormData({ ...formData, categoryIds: ids })}
+                                            multiple
+                                        >
+                                            <div className="relative mt-1">
+                                                <ComboboxButton as="div" className="py-1 relative w-full cursor-default overflow-hidden rounded-lg bg-white text-left shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm border">
+                                                    <ComboboxInput
+                                                        className="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-gray-900 focus:ring-0 text-right font-bold"
+                                                        displayValue={() => ""}
+                                                        onChange={(event) => setCategoryQuery(event.target.value)}
+                                                        placeholder="اختر التصنيفات..."
+                                                    />
+                                                    <div className="absolute inset-y-0 right-0 flex items-center pr-2">
+                                                        <ChevronsUpDown
+                                                            className="h-5 w-5 text-gray-400"
+                                                            aria-hidden="true"
+                                                        />
+                                                    </div>
+                                                </ComboboxButton>
+                                                <Transition
+                                                    as="div" // Fragment causes issues sometimes, div is safer
+                                                    leave="transition ease-in duration-100"
+                                                    leaveFrom="opacity-100"
+                                                    leaveTo="opacity-0"
+                                                    afterLeave={() => setCategoryQuery('')}
+                                                >
+                                                    <ComboboxOptions className="absolute mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-50 custom-scrollbar">
+                                                        {filteredComboboxCategories.length === 0 && categoryQuery !== '' ? (
+                                                            <div className="relative cursor-default select-none py-2 px-4 text-gray-700">
+                                                                لا توجد نتائج.
+                                                            </div>
+                                                        ) : (
+                                                            filteredComboboxCategories.map((cat) => (
+                                                                <ComboboxOption
+                                                                    key={cat.id}
+                                                                    className={({ active }) =>
+                                                                        `relative cursor-default select-none py-2 pl-4 pr-10 ${active ? 'bg-primary text-white' : 'text-gray-900'
+                                                                        }`
+                                                                    }
+                                                                    value={cat.id}
+                                                                >
+                                                                    {({ selected, active }) => (
+                                                                        <>
+                                                                            <span
+                                                                                className={`block truncate ${selected ? 'font-bold' : 'font-normal'
+                                                                                    }`}
+                                                                            >
+                                                                                {cat.name}
+                                                                            </span>
+                                                                            {selected ? (
+                                                                                <span
+                                                                                    className={`absolute inset-y-0 right-0 flex items-center pr-3 ${active ? 'text-white' : 'text-primary'
+                                                                                        }`}
+                                                                                >
+                                                                                    <Check className="h-5 w-5" aria-hidden="true" />
+                                                                                </span>
+                                                                            ) : null}
+                                                                        </>
+                                                                    )}
+                                                                </ComboboxOption>
+                                                            ))
+                                                        )}
+                                                    </ComboboxOptions>
+                                                </Transition>
+                                            </div>
+                                        </Combobox>
+                                    </div>
                                     <Button
                                         type="button"
-                                        onClick={handleAddCategory}
-                                        className="h-8 px-3 text-xs"
+                                        onClick={() => setManageCategoriesOpen(true)}
+                                        className="px-3 mt-1"
+                                        title="إضافة تصنيف جديد"
                                     >
-                                        <Plus size={14} className="ml-1" /> إضافة
+                                        <Plus size={18} />
                                     </Button>
                                 </div>
 
-                                {/* Category List */}
-                                <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-2 bg-gray-50 rounded-md border">
-                                    {categories.length === 0 && <span className="text-xs text-gray-400">لا توجد تصنيفات</span>}
-                                    {categories.map(cat => (
-                                        <button
-                                            key={cat.id}
-                                            type="button"
-                                            onClick={() => toggleFormCategory(cat.id)}
-                                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${formData.categoryIds.includes(cat.id)
-                                                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                                                : "bg-white text-gray-500 border-gray-200 hover:border-gray-300"
-                                                }`}
-                                        >
-                                            {cat.name}
-                                            {formData.categoryIds.includes(cat.id) && " ✓"}
-                                        </button>
-                                    ))}
+                                {/* Selected Categories Chips */}
+                                <div className="flex flex-wrap gap-2 mt-2">
+                                    {formData.categoryIds.length > 0 ? (
+                                        categories
+                                            .filter(cat => formData.categoryIds.includes(cat.id))
+                                            .map(cat => (
+                                                <span key={cat.id} className="bg-emerald-50 text-emerald-700 text-xs px-2 py-1 rounded-md border border-emerald-100 font-bold flex items-center gap-1">
+                                                    {cat.name}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => toggleFormCategory(cat.id)}
+                                                        className="text-emerald-500 hover:text-emerald-800"
+                                                    >
+                                                        <X size={14} />
+                                                    </button>
+                                                </span>
+                                            ))
+                                    ) : (
+                                        <span className="text-xs text-gray-400">لم يتم اختيار تصنيفات</span>
+                                    )}
                                 </div>
+
+
                             </div>
 
                             <div>
                                 <label className="block text-sm mb-1 font-bold border-primary pr-2">ملاحظات</label>
-                                <Textarea placeholder="ملاحظات إضافية..." rows={5} value={formData.notes} onChange={e => setFormData({ ...formData, notes: e.target.value })} />
+                                <Textarea placeholder="ملاحظات إضافية..." rows={editId ? 5 : 2} value={formData.notes} onChange={e => setFormData({ ...formData, notes: e.target.value })} />
                             </div>
                         </div>
                     </div>
