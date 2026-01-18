@@ -490,18 +490,18 @@ export default function LoansPage() {
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium mb-1">التاريخ</label>
-                            <DateInput
-                                value={formData.tx_date}
-                                onChange={val => setFormData({ ...formData, tx_date: val })}
-                            />
-                        </div>
-                        <div>
                             <label className="block text-sm font-medium mb-1">العدد</label>
                             <Input
                                 type="number" min="1" required
                                 value={formData.qty}
                                 onChange={e => setFormData({ ...formData, qty: e.target.value })}
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium mb-1">التاريخ</label>
+                            <DateInput
+                                value={formData.tx_date}
+                                onChange={val => setFormData({ ...formData, tx_date: val })}
                             />
                         </div>
                     </div>

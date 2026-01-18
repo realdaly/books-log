@@ -2,13 +2,12 @@
 import { useEffect, useState, useMemo } from "react";
 import { getDb } from "../../lib/db";
 import { normalizeArabic } from "../../lib/utils";
-import { Card, Button, Input, Textarea } from "../../components/ui/Base";
+import { Button, Input, Textarea } from "../../components/ui/Base";
 import { Modal } from "../../components/ui/Modal";
-import { Loader2, Plus, Trash2, Edit2, Image as ImageIcon, BarChart3, BookOpenText, LayoutGrid, Search, X, Settings, Tag, Filter, Check, ChevronsUpDown } from "lucide-react";
+import { Loader2, Plus, Trash2, Edit2, Image as ImageIcon, BarChart3, BookOpenText, Search, X, Settings, Tag, Filter, Check, ChevronsUpDown } from "lucide-react";
 import { ask, open, message } from '@tauri-apps/plugin-dialog';
 import { readFile } from '@tauri-apps/plugin-fs';
 import { Combobox, ComboboxInput, ComboboxButton, ComboboxOptions, ComboboxOption, Transition } from '@headlessui/react';
-import { FileWarning, Download } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, Legend } from 'recharts';
 
 // Modern Color Palette for Charts
@@ -687,16 +686,20 @@ export default function BooksPage() {
                                     {/* Extra Info */}
                                     <div className="grid grid-cols-2 gap-4 text-sm text-gray-500">
                                         <div className="flex justify-between border-b py-2">
-                                            <span>استعارات (كتب خارجية)</span>
-                                            <span className="font-bold text-gray-800">{bookStats.realLoaned}</span>
-                                        </div>
-                                        <div className="flex justify-between border-b py-2">
                                             <span>نسخ واصلة للمؤسسة</span>
                                             <span className="font-bold text-gray-800">{bookStats.sentInst}</span>
                                         </div>
                                         <div className="flex justify-between border-b py-2">
+                                            <span>استعارات (كتب خارجية)</span>
+                                            <span className="font-bold text-gray-800">{bookStats.realLoaned}</span>
+                                        </div>
+                                        <div className="flex justify-between border-b py-2">
                                             <span>قيد البيع (لم يكتمل)</span>
                                             <span className="font-bold text-gray-800">{bookStats.realPending}</span>
+                                        </div>
+                                        <div className="flex justify-between border-b py-2">
+                                            <span>مفقود / تالف</span>
+                                            <span className="font-bold text-gray-800">{bookStats.manualLoss}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -749,19 +752,19 @@ export default function BooksPage() {
                                 </div>
                                 <div className="col-span-2 md:col-span-1">
                                     <label className="block text-sm font-bold mb-1 border-primary pr-2">العدد الكلي المطبوع</label>
-                                    <Input type="number" required value={formData.total_printed} onChange={e => setFormData({ ...formData, total_printed: e.target.value })} />
+                                    <Input type="number" min={0} required value={formData.total_printed} onChange={e => setFormData({ ...formData, total_printed: e.target.value })} />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-bold mb-1 border-primary pr-2">الواصل للمؤسسة</label>
-                                    <Input type="number" value={formData.sent_to_institution} onChange={e => setFormData({ ...formData, sent_to_institution: e.target.value })} />
+                                    <Input type="number" min={0} value={formData.sent_to_institution} onChange={e => setFormData({ ...formData, sent_to_institution: e.target.value })} />
                                 </div>
                                 <div className="col-span-2 md:col-span-1">
                                     <label className="block text-sm font-bold mb-1 border-primary pr-2">سعر النسخة</label>
-                                    <Input type="number" className="h-11" step="0.01" required value={formData.unit_price} onChange={e => setFormData({ ...formData, unit_price: e.target.value })} />
+                                    <Input type="number" min={0} className="h-11" step="0.01" required value={formData.unit_price} onChange={e => setFormData({ ...formData, unit_price: e.target.value })} />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-bold mb-1 border-primary pr-2">مفقود (يدوي)</label>
-                                    <Input type="number" className="h-11" value={formData.loss_manual} onChange={e => setFormData({ ...formData, loss_manual: e.target.value })} />
+                                    <Input type="number" min={0} className="h-11" value={formData.loss_manual} onChange={e => setFormData({ ...formData, loss_manual: e.target.value })} />
                                 </div>
                             </div>
 

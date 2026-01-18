@@ -586,11 +586,7 @@ export default function SalesPage() {
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium mb-1">المبلغ الكلي</label>
-                                    <Input
-                                        type="number" step="0.01"
-                                        value={formData.total_price}
-                                        onChange={e => setFormData({ ...formData, total_price: e.target.value })}
-                                    />
+                                    <p className="text-sm font-bold">{formData.total_price} دينار عراقي</p>
                                 </div>
                                 <div />
                             </div>

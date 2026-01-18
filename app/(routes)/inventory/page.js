@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback } from "react";
 import { getDb } from "../../lib/db";
 import { normalizeArabic } from "../../lib/utils";
 import { Card, Input } from "../../components/ui/Base";
-import { Loader2, Search, X } from "lucide-react";
+import { Loader2, Search, X, Check } from "lucide-react";
 import Link from "next/link";
 
 export default function InventoryPage() {
@@ -11,6 +11,7 @@ export default function InventoryPage() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
     const [publisherName, setPublisherName] = useState("");
+    const [successMap, setSuccessMap] = useState({});
 
     const fetchData = useCallback(async () => {
         try {
@@ -47,13 +48,49 @@ export default function InventoryPage() {
     }, [fetchData]);
 
     const updateField = async (id, field, value) => {
-        const numVal = parseInt(value) || 0;
-        // Optimistic update
-        setData(prev => prev.map(row => row.id === id ? { ...row, [field]: numVal } : row));
+        const numVal = Math.max(0, parseInt(value) || 0);
+
+        // Optimistic update with recalculation
+        setData(prev => prev.map(row => {
+            if (row.book_id === id) {
+                const oldVal = row[field];
+                const diff = numVal - oldVal;
+
+                // Create new row with updated field
+                let newRow = { ...row, [field]: numVal };
+
+                // Recalculate dependent values locally
+                if (field === 'total_printed') {
+                    newRow.remaining_total = (newRow.remaining_total || 0) + diff;
+                } else if (field === 'sent_to_institution') {
+                    newRow.remaining_institution = (newRow.remaining_institution || 0) + diff;
+                } else if (field === 'loss_manual') {
+                    newRow.remaining_institution = (newRow.remaining_institution || 0) - diff;
+                    newRow.remaining_total = (newRow.remaining_total || 0) - diff;
+                }
+                return newRow;
+            }
+            return row;
+        }));
 
         try {
             const db = await getDb();
+            // Use 'id' (which is book_id) for update
             await db.execute(`UPDATE book SET ${field} = $1 WHERE id = $2`, [numVal, id]);
+
+            // Show Success Indicator
+            const key = `${id}_${field}`;
+            setSuccessMap(prev => ({ ...prev, [key]: true }));
+
+            // Hide after 2 seconds
+            setTimeout(() => {
+                setSuccessMap(prev => {
+                    const newState = { ...prev };
+                    delete newState[key];
+                    return newState;
+                });
+            }, 2000);
+
         } catch (err) {
             console.error("Update failed", err);
             fetchData(); // Revert on error
@@ -72,7 +109,7 @@ export default function InventoryPage() {
         <div className="space-y-6 h-full flex flex-col">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h1 className="text-3xl font-black text-primary mb-1">جرد اصدارات {publisherName || "المؤسسة"}</h1>
+                    <h1 className="text-3xl font-black text-primary mb-1"> {publisherName || "نظام إدارة الكتب"}</h1>
                     <p className="text-primary/70 text-sm">نظرة عامة على المخزون وحالة التوزيع</p>
                 </div>
 
@@ -123,24 +160,44 @@ export default function InventoryPage() {
 
                                         {/* Editable: Total Printed */}
                                         <td className="p-2 text-center border-l border-border/50">
-                                            <input
-                                                type="number"
-                                                className="w-14 p-1 text-center bg-transparent border border-transparent hover:border-input rounded-lg focus:bg-white focus:border-primary focus:ring-1 focus:ring-primary transition-all font-medium text-foreground"
-                                                defaultValue={row.total_printed}
-                                                onBlur={e => updateField(row.book_id, 'total_printed', e.target.value)}
-                                                onFocus={e => e.target.select()}
-                                            />
+                                            <div className="relative flex justify-center">
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    className="w-14 p-1 text-center bg-transparent border border-transparent hover:border-input rounded-lg focus:bg-white focus:border-primary focus:ring-1 focus:ring-primary transition-all font-medium text-foreground"
+                                                    defaultValue={row.total_printed}
+                                                    onBlur={e => updateField(row.book_id, 'total_printed', e.target.value)}
+                                                    onFocus={e => e.target.select()}
+                                                    onKeyDown={(e) => e.key === 'Enter' && e.target.blur()}
+                                                />
+                                                {successMap[`${row.book_id}_total_printed`] && (
+                                                    <div className="absolute -top-4 bg-white/90 backdrop-blur border border-emerald-200 shadow-sm rounded-full px-1.5 py-0.5 flex items-center gap-0.5 animate-in fade-in zoom-in slide-in-from-bottom-2">
+                                                        <Check size={10} className="text-emerald-600" />
+                                                        <span className="text-[10px] font-bold text-emerald-600">تم</span>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </td>
 
                                         {/* Editable: Sent to Inst */}
                                         <td className="p-2 text-center border-l border-border/50">
-                                            <input
-                                                type="number"
-                                                className="w-14 p-1 text-center bg-transparent border border-transparent hover:border-input rounded-lg focus:bg-white focus:border-primary focus:ring-1 focus:ring-primary transition-all font-medium text-foreground"
-                                                defaultValue={row.sent_to_institution}
-                                                onBlur={e => updateField(row.book_id, 'sent_to_institution', e.target.value)}
-                                                onFocus={e => e.target.select()}
-                                            />
+                                            <div className="relative flex justify-center">
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    className="w-14 p-1 text-center bg-transparent border border-transparent hover:border-input rounded-lg focus:bg-white focus:border-primary focus:ring-1 focus:ring-primary transition-all font-medium text-foreground"
+                                                    defaultValue={row.sent_to_institution}
+                                                    onBlur={e => updateField(row.book_id, 'sent_to_institution', e.target.value)}
+                                                    onFocus={e => e.target.select()}
+                                                    onKeyDown={(e) => e.key === 'Enter' && e.target.blur()}
+                                                />
+                                                {successMap[`${row.book_id}_sent_to_institution`] && (
+                                                    <div className="absolute -top-4 bg-white/90 backdrop-blur border border-emerald-200 shadow-sm rounded-full px-1.5 py-0.5 flex items-center gap-0.5 animate-in fade-in zoom-in slide-in-from-bottom-2">
+                                                        <Check size={10} className="text-emerald-600" />
+                                                        <span className="text-[10px] font-bold text-emerald-600">تم</span>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </td>
 
                                         {/* Computed: Remaining Inst */}
@@ -156,13 +213,23 @@ export default function InventoryPage() {
 
                                         {/* Editable: Manual Loss (المفقود) */}
                                         <td className="p-2 text-center border-l border-border/50">
-                                            <input
-                                                type="number"
-                                                className="w-14 p-1 text-center bg-transparent border border-transparent hover:border-input rounded-lg focus:bg-white focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all font-medium text-foreground"
-                                                defaultValue={row.loss_manual}
-                                                onBlur={e => updateField(row.book_id, 'loss_manual', e.target.value)}
-                                                onFocus={e => e.target.select()}
-                                            />
+                                            <div className="relative flex justify-center">
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    className="w-14 p-1 text-center bg-transparent border border-transparent hover:border-input rounded-lg focus:bg-white focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all font-medium text-foreground"
+                                                    defaultValue={row.loss_manual}
+                                                    onBlur={e => updateField(row.book_id, 'loss_manual', e.target.value)}
+                                                    onFocus={e => e.target.select()}
+                                                    onKeyDown={(e) => e.key === 'Enter' && e.target.blur()}
+                                                />
+                                                {successMap[`${row.book_id}_loss_manual`] && (
+                                                    <div className="absolute -top-4 bg-white/90 backdrop-blur border border-emerald-200 shadow-sm rounded-full px-1.5 py-0.5 flex items-center gap-0.5 animate-in fade-in zoom-in slide-in-from-bottom-2">
+                                                        <Check size={10} className="text-emerald-600" />
+                                                        <span className="text-[10px] font-bold text-emerald-600">تم</span>
+                                                    </div>
+                                                )}
+                                            </div>
                                             {row.loss_institution > 0 && <div className="text-[10px] text-red-500 font-bold mt-0.5">+{row.loss_institution}</div>}
                                         </td>
 
