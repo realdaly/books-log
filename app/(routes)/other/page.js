@@ -312,17 +312,17 @@ export default function OtherStoresPage() {
                 </div>
 
                 {/* Categories Filter Bar */}
-                <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                <div className="flex items-center gap-2 pb-2 w-full">
                     <div className="flex items-center gap-2 py-1.5 px-3 bg-gray-50 rounded-lg border">
                         <Filter size={16} className="text-gray-400" />
                         <span className="text-xs font-bold text-gray-500 whitespace-nowrap">تصفية:</span>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex-1 flex gap-2 overflow-x-auto scrollbar-hide">
                         {categories.map(cat => (
                             <button
                                 key={cat.id}
                                 onClick={() => setFilterCategoryIds(prev => prev.includes(cat.id) ? prev.filter(id => id !== cat.id) : [...prev, cat.id])}
-                                className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${filterCategoryIds.includes(cat.id)
+                                className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border whitespace-nowrap shrink-0 ${filterCategoryIds.includes(cat.id)
                                     ? "bg-primary text-white border-primary shadow-sm"
                                     : "bg-white text-gray-600 border-gray-200 hover:border-primary/50"
                                     }`}

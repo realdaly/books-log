@@ -91,6 +91,25 @@ async function ensureSchema(db) {
             );
         `);
 
+        // Book Categories
+        await db.execute(`
+            CREATE TABLE IF NOT EXISTS "book_category" (
+                "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                "name" VARCHAR(255) NOT NULL,
+                UNIQUE("name")
+            );
+        `);
+
+        await db.execute(`
+            CREATE TABLE IF NOT EXISTS "book_category_link" (
+                "book_id" INTEGER NOT NULL,
+                "category_id" INTEGER NOT NULL,
+                PRIMARY KEY ("book_id", "category_id"),
+                FOREIGN KEY ("book_id") REFERENCES "book" ("id") ON DELETE CASCADE,
+                FOREIGN KEY ("category_id") REFERENCES "book_category" ("id") ON DELETE CASCADE
+            );
+        `);
+
     } catch (e) {
         console.error("Schema check/migration error:", e);
     }

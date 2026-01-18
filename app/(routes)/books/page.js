@@ -4,8 +4,8 @@ import { getDb } from "../../lib/db";
 import { normalizeArabic } from "../../lib/utils";
 import { Card, Button, Input, Textarea } from "../../components/ui/Base";
 import { Modal } from "../../components/ui/Modal";
-import { Loader2, Plus, Trash2, Edit2, Image as ImageIcon, BarChart3, BookOpenText, LayoutGrid, Search, X } from "lucide-react";
-import { ask, open } from '@tauri-apps/plugin-dialog';
+import { Loader2, Plus, Trash2, Edit2, Image as ImageIcon, BarChart3, BookOpenText, LayoutGrid, Search, X, Settings, Tag, Filter } from "lucide-react";
+import { ask, open, message } from '@tauri-apps/plugin-dialog';
 import { readFile } from '@tauri-apps/plugin-fs';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, Legend } from 'recharts';
 
@@ -19,21 +19,37 @@ export default function BooksPage() {
     const [detailsBook, setDetailsBook] = useState(null);
     const [bookStats, setBookStats] = useState(null);
     const [query, setQuery] = useState("");
-
-    // CRUD State
+    const [editId, setEditId] = useState(null);
+    const [filterCategoryIds, setFilterCategoryIds] = useState([]);
+    const [manageCategoriesOpen, setManageCategoriesOpen] = useState(false);
+    const [selectedIds, setSelectedIds] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [formData, setFormData] = useState({
         title: "", notes: "", total_printed: "0", sent_to_institution: "0",
         loss_manual: "0", unit_price: "0",
-        cover_image: null
+        cover_image: null,
+        categoryIds: []
     });
-    const [editId, setEditId] = useState(null);
+
+    // Category Management
+    const [categories, setCategories] = useState([]);
+    const [newCategoryName, setNewCategoryName] = useState("");
+    const [editingCategory, setEditingCategory] = useState(null);
 
     const filteredBooks = useMemo(() => {
-        if (!query) return books;
-        const normalizedQuery = normalizeArabic(query);
-        return books.filter(b => normalizeArabic(b.title).includes(normalizedQuery));
-    }, [books, query]);
+        let result = books;
+
+        if (query) {
+            const normalizedQuery = normalizeArabic(query);
+            result = result.filter(b => normalizeArabic(b.title).includes(normalizedQuery));
+        }
+
+        if (filterCategoryIds.length > 0) {
+            result = result.filter(b => filterCategoryIds.every(id => b.category_ids.includes(id)));
+        }
+
+        return result;
+    }, [books, query, filterCategoryIds]);
 
     // Handle ESC key to close details
     useEffect(() => {
@@ -53,7 +69,7 @@ export default function BooksPage() {
             // Fetch books with Institution transaction stats
             const rows = await db.select(`
                 SELECT 
-                    b.*,
+                    b.id, b.title, b.notes, b.total_printed, b.sent_to_institution, b.loss_manual, b.unit_price, b.created_at, b.updated_at,
                     COALESCE(ot.other_qty, 0) as other_stores_total,
                     
                     -- Institution Aggregates (Transactions)
@@ -61,7 +77,10 @@ export default function BooksPage() {
                     COALESCE(gifts.gifted_qty, 0) as gifted_inst,
                     COALESCE(loans.loaned_qty, 0) as loaned_inst,
                     COALESCE(loss.loss_qty, 0) as loss_inst,
-                    COALESCE(pending.pending_qty, 0) as pending_inst
+                    COALESCE(pending.pending_qty, 0) as pending_inst,
+
+                    GROUP_CONCAT(cat.name) as category_names,
+                    GROUP_CONCAT(cat.id) as category_ids
 
                 FROM book b
                 LEFT JOIN vw_other_stores_total ot ON ot.book_id = b.id
@@ -70,9 +89,22 @@ export default function BooksPage() {
                 LEFT JOIN vw_book_loans_qty loans ON loans.book_id = b.id
                 LEFT JOIN vw_book_loss_qty loss ON loss.book_id = b.id
                 LEFT JOIN vw_book_pending_sales_qty pending ON pending.book_id = b.id
+                LEFT JOIN book_category_link bcl ON b.id = bcl.book_id
+                LEFT JOIN book_category cat ON bcl.category_id = cat.id
+                GROUP BY b.id
                 ORDER BY b.title ASC
             `);
-            setBooks(rows);
+
+            const normalizedRows = rows.map(r => ({
+                ...r,
+                category_names: r.category_names ? r.category_names.split(',') : [],
+                category_ids: r.category_ids ? r.category_ids.split(',').map(Number) : []
+            }));
+
+            setBooks(normalizedRows);
+
+            const catRows = await db.select("SELECT * FROM book_category ORDER BY name ASC");
+            setCategories(catRows);
         } catch (err) {
             console.error(err);
         } finally {
@@ -102,7 +134,7 @@ export default function BooksPage() {
                 const mimeType = selected.toLowerCase().endsWith('.png') ? 'image/png' :
                     selected.toLowerCase().endsWith('.webp') ? 'image/webp' : 'image/jpeg';
 
-                setFormData({ ...formData, cover_image: `data:${mimeType};base64,${base64}` });
+                setFormData({ ...formData, cover_image: `data:${mimeType}; base64, ${base64} ` });
             }
         } catch (err) {
             console.error("Image upload failed", err);
@@ -116,6 +148,11 @@ export default function BooksPage() {
         setDetailsLoading(true);
         try {
             const db = await getDb();
+            // Fetch full book details (for image)
+            const bookRes = await db.select("SELECT * FROM book WHERE id=$1", [book.id]);
+            if (bookRes[0]) {
+                setDetailsBook(prev => ({ ...prev, ...bookRes[0] }));
+            }
 
             // Get Transaction Sums
             const sales = await db.select("SELECT SUM(qty) as total FROM `transaction` WHERE book_id=$1 AND type='sale' AND state!='pending'", [book.id]);
@@ -165,6 +202,58 @@ export default function BooksPage() {
         }
     };
 
+    // --- Category Handlers ---
+    const handleAddCategory = async (e) => {
+        e.preventDefault();
+        if (!newCategoryName.trim()) return;
+        try {
+            const db = await getDb();
+            await db.execute("INSERT INTO book_category (name) VALUES ($1)", [newCategoryName.trim()]);
+            setNewCategoryName("");
+            const catRows = await db.select("SELECT * FROM book_category ORDER BY name ASC");
+            setCategories(catRows);
+        } catch (e) {
+            alert("خطأ: ربما التصنيف موجود مسبقاً");
+        }
+    };
+
+    const handleUpdateCategory = async (e) => {
+        e.preventDefault();
+        if (!editingCategory || !editingCategory.name.trim()) return;
+        try {
+            const db = await getDb();
+            await db.execute("UPDATE book_category SET name=$1 WHERE id=$2", [editingCategory.name.trim(), editingCategory.id]);
+            setEditingCategory(null);
+            const catRows = await db.select("SELECT * FROM book_category ORDER BY name ASC");
+            setCategories(catRows);
+            fetchData(); // Refresh books to update names
+        } catch (e) {
+            alert("خطأ في التحديث");
+        }
+    };
+
+    const handleDeleteCategory = async (id) => {
+        if (!await ask("هل أنت متأكد من حذف هذا التصنيف؟")) return;
+        try {
+            const db = await getDb();
+            await db.execute("DELETE FROM book_category WHERE id=$1", [id]);
+            const catRows = await db.select("SELECT * FROM book_category ORDER BY name ASC");
+            setCategories(catRows);
+            fetchData();
+        } catch (e) {
+            alert("خطأ في الحذف");
+        }
+    };
+
+    const toggleFormCategory = (catId) => {
+        setFormData(prev => ({
+            ...prev,
+            categoryIds: prev.categoryIds.includes(catId)
+                ? prev.categoryIds.filter(id => id !== catId)
+                : [...prev.categoryIds, catId]
+        }));
+    };
+
     // --- CRUD ---
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -180,17 +269,48 @@ export default function BooksPage() {
             if (editId) {
                 // Update Single
                 await db.execute(`
-                    UPDATE book SET title=$1, notes=$2, total_printed=$3, sent_to_institution=$4, 
-                    loss_manual=$5, unit_price=$6, cover_image=$7 WHERE id=$8
-                `, [title, notes, nTotal, nSent, nLoss, nPrice, cover_image, editId]);
+                    UPDATE book SET title = $1, notes = $2, total_printed = $3, sent_to_institution = $4,
+                    loss_manual = $5, unit_price = $6, cover_image = $7 WHERE id = $8
+                        `, [title, notes, nTotal, nSent, nLoss, nPrice, cover_image, editId]);
+
+                // Update Categories
+                await db.execute("DELETE FROM book_category_link WHERE book_id=$1", [editId]);
+                for (const catId of formData.categoryIds) {
+                    await db.execute("INSERT INTO book_category_link (book_id, category_id) VALUES ($1, $2)", [editId, catId]);
+                }
+
             } else {
                 // Bulk Add Support
                 const titles = title.split('\n').map(t => t.trim()).filter(t => t !== "");
+                const existingBooks = [];
+                let addedCount = 0;
+
                 for (const t of titles) {
+                    // Check existence
+                    const exists = await db.select("SELECT id FROM book WHERE title = $1", [t]);
+                    if (exists.length > 0) {
+                        existingBooks.push(t);
+                        continue;
+                    }
+
                     await db.execute(`
-                        INSERT INTO book (title, notes, total_printed, sent_to_institution, 
-                        loss_manual, unit_price, cover_image) VALUES ($1, $2, $3, $4, $5, $6, $7)
+                        INSERT INTO book(title, notes, total_printed, sent_to_institution,
+                            loss_manual, unit_price, cover_image) VALUES($1, $2, $3, $4, $5, $6, $7)
                     `, [t, notes, nTotal, nSent, nLoss, nPrice, cover_image]);
+
+                    const idRes = await db.select("SELECT last_insert_rowid() as id");
+                    const newId = idRes[0]?.id;
+
+                    if (newId && formData.categoryIds.length > 0) {
+                        for (const catId of formData.categoryIds) {
+                            await db.execute("INSERT INTO book_category_link (book_id, category_id) VALUES ($1, $2)", [newId, catId]);
+                        }
+                    }
+                    addedCount++;
+                }
+
+                if (existingBooks.length > 0) {
+                    await message(`تم إضافة ${addedCount} كتاب بنجاح.\n\nلم يتم إضافة الكتب التالية لأنها موجودة مسبقاً:\n- ${existingBooks.join('\n- ')}`, { title: 'تنبيه - كتب مكررة', kind: 'warning' });
                 }
             }
             setIsModalOpen(false);
@@ -203,6 +323,39 @@ export default function BooksPage() {
         }
     };
 
+    const toggleSelect = (id) => {
+        setSelectedIds(prev =>
+            prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+        );
+    };
+
+    const toggleSelectAll = () => {
+        if (selectedIds.length === filteredBooks.length && filteredBooks.length > 0) {
+            setSelectedIds([]);
+        } else {
+            setSelectedIds(filteredBooks.map(b => b.id));
+        }
+    };
+
+    const handleBulkDelete = async () => {
+        if (selectedIds.length === 0) return;
+        const confirmed = await ask(`هل انت متأكد من حذف ${selectedIds.length} كتاب؟\nسيتم حذف جميع الحركات المرتبطة بها!`, { title: 'تأكيد الحذف المتعدد', kind: 'warning' });
+        if (!confirmed) return;
+
+        try {
+            const db = await getDb();
+            for (const id of selectedIds) {
+                await db.execute("DELETE FROM book WHERE id=$1", [id]);
+            }
+            setSelectedIds([]);
+            fetchData();
+            setDetailsBook(null);
+        } catch (e) {
+            console.error(e);
+            await ask("حدث خطأ أثناء الحذف", { kind: "error" });
+        }
+    };
+
     const handleDelete = async (id) => {
         const confirmed = await ask("هل انت متأكد من حذف الكتاب؟ سيتم حذف جميع الحركات المرتبطة به!", { title: 'تأكيد الحذف', kind: 'warning' });
         if (!confirmed) return;
@@ -212,24 +365,34 @@ export default function BooksPage() {
         if (detailsBook?.id === id) setDetailsBook(null);
     };
 
-    const openEdit = (b) => {
-        setFormData({
-            title: b.title,
-            notes: b.notes || "",
-            total_printed: String(b.total_printed || 0),
-            sent_to_institution: String(b.sent_to_institution || 0),
-            loss_manual: String(b.loss_manual || 0),
-            unit_price: String(b.unit_price || 0),
-            cover_image: b.cover_image
-        });
-        setEditId(b.id);
-        setIsModalOpen(true);
+    const openEdit = async (b) => {
+        try {
+            const db = await getDb();
+            const res = await db.select("SELECT * FROM book WHERE id=$1", [b.id]);
+            const fullBook = res[0];
+            if (!fullBook) return;
+
+            setFormData({
+                title: fullBook.title,
+                notes: fullBook.notes || "",
+                total_printed: String(fullBook.total_printed || 0),
+                sent_to_institution: String(fullBook.sent_to_institution || 0),
+                loss_manual: String(fullBook.loss_manual || 0),
+                unit_price: String(fullBook.unit_price || 0),
+                cover_image: fullBook.cover_image,
+                categoryIds: b.category_ids || []
+            });
+            setEditId(b.id);
+            setIsModalOpen(true);
+        } catch (e) {
+            console.error(e);
+        }
     };
 
     const resetForm = () => {
         setFormData({
             title: "", notes: "", total_printed: "0", sent_to_institution: "0",
-            loss_manual: "0", unit_price: "0", cover_image: null
+            loss_manual: "0", unit_price: "0", cover_image: null, categoryIds: []
         });
     };
 
@@ -274,6 +437,55 @@ export default function BooksPage() {
                 </div>
             </div>
 
+            {/* Filter & Selection Bar */}
+            <div className="flex items-center gap-2 px-2 pb-2 w-full">
+                {/* Selection Controls */}
+                <div className="flex items-center gap-2 pl-2 border-l ml-2">
+                    <input
+                        type="checkbox"
+                        className="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer accent-emerald-600"
+                        checked={filteredBooks.length > 0 && selectedIds.length === filteredBooks.length}
+                        onChange={toggleSelectAll}
+                    />
+                    <span className="text-xs font-bold text-gray-500 cursor-pointer select-none" onClick={toggleSelectAll}>الكل</span>
+                    {selectedIds.length > 0 && (
+                        <Button variant="destructive" size="sm" onClick={handleBulkDelete} className="h-7 text-xs px-2 animate-in fade-in zoom-in-50">
+                            <Trash2 size={14} className="ml-1" /> حذف ({selectedIds.length})
+                        </Button>
+                    )}
+                </div>
+
+                {/* Filter Label */}
+                <div className="flex items-center gap-2 py-1.5 px-3 bg-gray-50 rounded-lg border">
+                    <Filter size={16} className="text-gray-400" />
+                    <span className="text-xs font-bold text-gray-500 whitespace-nowrap">تصفية:</span>
+                </div>
+
+                {/* Filter Chips */}
+                <div className="flex-1 flex gap-2 overflow-x-auto scrollbar-hide">
+                    {categories.map(cat => (
+                        <button
+                            key={cat.id}
+                            onClick={() => setFilterCategoryIds(prev => prev.includes(cat.id) ? prev.filter(id => id !== cat.id) : [...prev, cat.id])}
+                            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border whitespace-nowrap shrink-0 ${filterCategoryIds.includes(cat.id)
+                                ? "bg-primary text-white border-primary shadow-sm"
+                                : "bg-white text-gray-600 border-gray-200 hover:border-primary/50"
+                                }`}
+                        >
+                            {cat.name}
+                        </button>
+                    ))}
+                    {filterCategoryIds.length > 0 && (
+                        <button onClick={() => setFilterCategoryIds([])} className="px-2 py-1 text-xs text-red-500 hover:text-red-700 font-bold">مسح</button>
+                    )}
+                </div>
+
+                {/* Settings Button */}
+                <button onClick={() => setManageCategoriesOpen(true)} className="mr-auto p-1.5 text-gray-400 hover:text-primary hover:bg-gray-100 rounded-full transition-colors">
+                    <Settings size={16} />
+                </button>
+            </div>
+
             {/* Book Grid view */}
             <div className="flex-1 overflow-y-auto grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-8 pl-2 content-start">
                 {filteredBooks.map(book => (
@@ -282,6 +494,18 @@ export default function BooksPage() {
 
                             {/* Book Cover */}
                             <div className="absolute inset-0 bg-gray-100 flex items-center justify-center overflow-hidden">
+
+                                {/* Selection Checkbox */}
+                                <div className={`absolute top-3 left-3 z-20 ${selectedIds.includes(book.id) ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity duration-200`}>
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedIds.includes(book.id)}
+                                        onClick={(e) => e.stopPropagation()}
+                                        onChange={() => toggleSelect(book.id)}
+                                        className="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary shadow-lg cursor-pointer accent-emerald-600"
+                                    />
+                                </div>
+
                                 {book.cover_image ? (
                                     <img
                                         src={book.cover_image}
@@ -372,6 +596,18 @@ export default function BooksPage() {
                                     <div className="text-xl font-black text-emerald-600">{Number(detailsBook.unit_price).toLocaleString()}</div>
                                 </div>
                             </div>
+
+                            <div className="flex flex-wrap gap-2 mt-4 justify-center">
+                                {detailsBook.category_names && detailsBook.category_names.length > 0 ? (
+                                    detailsBook.category_names.map((cat, idx) => (
+                                        <span key={idx} className="bg-emerald-50 text-emerald-700 text-xs px-2 py-1 rounded-md border border-emerald-100 font-bold">
+                                            {cat}
+                                        </span>
+                                    ))
+                                ) : (
+                                    <span className="text-xs text-gray-400">لا توجد تصنيفات</span>
+                                )}
+                            </div>
                         </div>
 
                         {/* Right Side: Charts & Stats */}
@@ -425,7 +661,7 @@ export default function BooksPage() {
                                                         dataKey="value"
                                                     >
                                                         {chartData.map((entry, index) => (
-                                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                                            <Cell key={`cell - ${index} `} fill={COLORS[index % COLORS.length]} />
                                                         ))}
                                                     </Pie>
                                                     <RechartsTooltip />
@@ -524,6 +760,50 @@ export default function BooksPage() {
                                 </div>
                             </div>
 
+
+                            {/* Categories Section */}
+                            <div className="pt-2 border-t">
+                                <label className="text-sm font-bold mb-2 flex items-center gap-2 text-primary">
+                                    <Tag size={16} /> التصنيفات
+                                </label>
+
+                                {/* New Category Input */}
+                                <div className="flex items-center gap-2 mb-3">
+                                    <Input
+                                        placeholder="إضافة تصنيف جديد..."
+                                        value={newCategoryName}
+                                        onChange={e => setNewCategoryName(e.target.value)}
+                                        className="h-8 text-sm"
+                                    />
+                                    <Button
+                                        type="button"
+                                        onClick={handleAddCategory}
+                                        className="h-8 px-3 text-xs"
+                                    >
+                                        <Plus size={14} className="ml-1" /> إضافة
+                                    </Button>
+                                </div>
+
+                                {/* Category List */}
+                                <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-2 bg-gray-50 rounded-md border">
+                                    {categories.length === 0 && <span className="text-xs text-gray-400">لا توجد تصنيفات</span>}
+                                    {categories.map(cat => (
+                                        <button
+                                            key={cat.id}
+                                            type="button"
+                                            onClick={() => toggleFormCategory(cat.id)}
+                                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${formData.categoryIds.includes(cat.id)
+                                                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                                : "bg-white text-gray-500 border-gray-200 hover:border-gray-300"
+                                                }`}
+                                        >
+                                            {cat.name}
+                                            {formData.categoryIds.includes(cat.id) && " ✓"}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
                             <div>
                                 <label className="block text-sm mb-1 font-bold border-primary pr-2">ملاحظات</label>
                                 <Textarea placeholder="ملاحظات إضافية..." rows={5} value={formData.notes} onChange={e => setFormData({ ...formData, notes: e.target.value })} />
@@ -533,6 +813,39 @@ export default function BooksPage() {
 
                     <Button type="submit" className="w-full text-lg h-12 shadow-lg">حفظ</Button>
                 </form>
+            </Modal>
+
+            {/* Manage Categories Modal */}
+            <Modal isOpen={manageCategoriesOpen} onClose={() => { setManageCategoriesOpen(false); setEditingCategory(null); setNewCategoryName(""); }} title="إدارة التصنيفات">
+                <div className="space-y-4">
+                    <form onSubmit={handleAddCategory} className="flex gap-2">
+                        <Input className="h-10" placeholder="تصنيف جديد..." value={newCategoryName} onChange={e => setNewCategoryName(e.target.value)} />
+                        <Button type="submit" className="h-10 px-3">
+                            <Plus className="ml-1" size={14} />
+                            إضافة
+                        </Button>
+                    </form>
+                    <div className="space-y-2 max-h-60 overflow-y-auto border rounded-xl p-2 bg-gray-50 custom-scrollbar">
+                        {categories.map(cat => (
+                            <div key={cat.id} className="flex items-center gap-2 bg-white p-2 rounded-lg border shadow-sm group">
+                                {editingCategory?.id === cat.id ? (
+                                    <form onSubmit={handleUpdateCategory} className="flex-1 flex gap-2">
+                                        <Input autoFocus value={editingCategory.name} onChange={e => setEditingCategory({ ...editingCategory, name: e.target.value })} className="h-8" />
+                                        <Button size="sm" type="submit" className="h-8">حفظ</Button>
+                                        <Button size="sm" type="button" variant="ghost" onClick={() => setEditingCategory(null)} className="h-8">إلغاء</Button>
+                                    </form>
+                                ) : (
+                                    <>
+                                        <span className="flex-1 text-sm font-bold text-gray-700">{cat.name}</span>
+                                        <button onClick={() => setEditingCategory(cat)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors" title="تعديل"><Edit2 size={16} /></button>
+                                        <button onClick={() => handleDeleteCategory(cat.id)} className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors" title="حذف"><Trash2 size={16} /></button>
+                                    </>
+                                )}
+                            </div>
+                        ))}
+                        {categories.length === 0 && <p className="text-center text-gray-400 py-4 text-sm">لا توجد تصنيفات بعد.</p>}
+                    </div>
+                </div>
             </Modal>
         </div>
     );
