@@ -9,6 +9,8 @@ import { Loader2, Save, Download, Upload, Database } from "lucide-react";
 export default function SettingsPage() {
     const [config, setConfig] = useState({ publisher_name: "شركة نشر" });
     const [loading, setLoading] = useState(true);
+    const [importing, setImporting] = useState(false);
+    const [importProgress, setImportProgress] = useState("");
 
     useEffect(() => {
         async function load() {
@@ -135,6 +137,109 @@ export default function SettingsPage() {
         }
     };
 
+    const handleRunImport = async () => {
+        if (!confirm("هل أنت متأكد من بدء استيراد البيانات؟ سيتم إضافة جهات وعمليات جديدة.")) return;
+        setImporting(true);
+        setImportProgress("جاري تحميل الملف...");
+        try {
+            const res = await fetch('/import_data.json');
+            if (!res.ok) throw new Error("لم يتم العثور على ملف import_data.json");
+            const data = await res.json();
+
+            setImportProgress("جاري معالجة الجهات...");
+            const db = await getDb();
+
+            // 1. Existing Parties Map
+            const existingParties = await db.select("SELECT * FROM party");
+            const partyMap = new Map(); // Name -> ID
+            existingParties.forEach(p => partyMap.set(p.name, p.id));
+
+            // 2. Insert new parties
+            let newPartiesCount = 0;
+            for (const pName of data.parties) {
+                if (!partyMap.has(pName)) {
+                    // Clean name
+                    const cleanName = pName.trim();
+                    if (!cleanName) continue;
+
+                    // Double check in map after trim
+                    if (partyMap.has(cleanName)) continue;
+
+                    const result = await db.execute("INSERT INTO party (name, notes) VALUES ($1, '')", [cleanName]);
+                    partyMap.set(cleanName, result.lastInsertId);
+                    newPartiesCount++;
+                }
+            }
+
+            // 3. Books Map
+            setImportProgress("جاري مطابقة الكتب...");
+            const bookRows = await db.select("SELECT id, title FROM book");
+            const bookMap = new Map();
+            bookRows.forEach(b => {
+                if (b.title) bookMap.set(b.title.trim(), b.id);
+            });
+
+            // 4. Insert Transactions
+            let txCount = 0;
+            let skippedCount = 0;
+            let newBooksCount = 0;
+            const total = data.transactions.length;
+
+            for (let i = 0; i < total; i++) {
+                const tx = data.transactions[i];
+                if (i % 50 === 0) setImportProgress(`استيراد العمليات ${i}/${total}`);
+
+                const partyId = partyMap.get(tx.party_name ? tx.party_name.trim() : "");
+                let bookId = bookMap.get(tx.book_title ? tx.book_title.trim() : "");
+
+                if (!partyId) {
+                    console.warn("Party not found:", tx.party_name);
+                    continue;
+                }
+
+                if (!bookId) {
+                    console.log("Book not found, creating:", tx.book_title);
+                    const cleanBookTitle = tx.book_title ? tx.book_title.trim() : "Unknown Book";
+
+                    // Insert new book
+                    // Defaults: total_printed=0, sent_to_institution=0, unit_price=0
+                    try {
+                        const resBook = await db.execute(
+                            "INSERT INTO book (title, total_printed, sent_to_institution, unit_price) VALUES ($1, 0, 0, 0)",
+                            [cleanBookTitle]
+                        );
+                        bookId = resBook.lastInsertId;
+                        bookMap.set(cleanBookTitle, bookId);
+                        newBooksCount++;
+                    } catch (err) {
+                        console.error("Failed to create book:", cleanBookTitle, err);
+                        skippedCount++;
+                        continue;
+                    }
+                }
+
+                // Check if transaction already exists? (Maybe too slow/complex)
+                // User said "Insert these values".
+                // I will just insert.
+
+                await db.execute(
+                    "INSERT INTO \"transaction\" (book_id, party_id, qty, tx_date, notes, state, type) VALUES ($1, $2, $3, $4, $5, 'final', 'gift')",
+                    [bookId, partyId, tx.qty, tx.date, tx.notes || ""]
+                );
+                txCount++;
+            }
+
+            alert(`تم الاستيراد بنجاح!\n\n- جهات جديدة: ${newPartiesCount}\n- كتب جديدة: ${newBooksCount}\n- عمليات مضافة: ${txCount}\n- عمليات تم تخطيها (أخطاء): ${skippedCount}`);
+
+        } catch (e) {
+            console.error(e);
+            alert("حدث خطأ: " + e.message);
+        } finally {
+            setImporting(false);
+            setImportProgress("");
+        }
+    };
+
     if (loading) return <Loader2 className="animate-spin" />;
 
     return (
@@ -184,6 +289,37 @@ export default function SettingsPage() {
                 <p className="text-sm text-muted-foreground text-center bg-gray-50 p-3 rounded-lg border border-dashed">
                     ملاحظة: عند استيراد قاعدة بيانات، سيتم استبدال جميع البيانات الحالية بالبيانات الموجودة في الملف المستورد.
                 </p>
+            </Card>
+
+            {/* Excel Import Card (Temporary) */}
+            <Card className="p-8 space-y-6 shadow-xl border-0">
+                <div className="flex items-center gap-2 border-b pb-4">
+                    <Database className="text-blue-600" />
+                    <h2 className="text-xl font-bold text-blue-600">استيراد بيانات من Excel (مؤقت)</h2>
+                </div>
+
+                <div className="space-y-4">
+                    <p className="text-sm text-gray-600">
+                        سيقوم هذا الإجراء بقراءة ملف <code>public/import_data.json</code> الذي تم إنشاؤه مسبقاً، واستيراد الجهات والعمليات (الإهداءات) إلى قاعدة البيانات.
+                    </p>
+                    <Button
+                        onClick={handleRunImport}
+                        className="w-full gap-2 h-12 bg-blue-600 hover:bg-blue-700 text-white"
+                        disabled={importing}
+                    >
+                        {importing ? (
+                            <>
+                                <Loader2 className="animate-spin" size={20} />
+                                <span>جاري الاستيراد... ({importProgress})</span>
+                            </>
+                        ) : (
+                            <>
+                                <Upload size={20} />
+                                <span>بدء استيراد البيانات (Gifts)</span>
+                            </>
+                        )}
+                    </Button>
+                </div>
             </Card>
         </div>
     );
