@@ -159,9 +159,9 @@ export default function InventoryPage() {
 
     const filteredData = data;
 
-    if (loading && data.length === 0) {
+    /* if (loading && data.length === 0) {
         return <div className="flex justify-center items-center h-full"><Loader2 className="animate-spin text-secondary" size={48} /></div>;
-    }
+    } */
 
     return (
         <div className="space-y-6 h-full flex flex-col">
@@ -246,7 +246,17 @@ export default function InventoryPage() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
-                            {filteredData.map(row => {
+                            {loading && (
+                                <tr>
+                                    <td colSpan="11" className="p-12 text-center text-muted-foreground">
+                                        <div className="flex flex-col items-center justify-center gap-2">
+                                            <Loader2 className="animate-spin text-primary" size={32} />
+                                            <span className="text-sm font-medium">جاري تحديث البيانات...</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            )}
+                            {!loading && filteredData.map(row => {
                                 return (
                                     <tr key={row.book_id} className="odd:bg-muted/30 even:bg-white hover:bg-primary/5 transition-colors group">
                                         <td className="p-3 font-bold text-foreground border-l border-border/50">{row.book_title}</td>
@@ -346,7 +356,7 @@ export default function InventoryPage() {
                             })}
                         </tbody>
                     </table>
-                    {filteredData.length === 0 && (
+                    {!loading && filteredData.length === 0 && (
                         <div className="flex flex-col items-center justify-center h-64 text-primary/60">
                             <p className="text-xl font-bold">لا توجد بيانات</p>
                         </div>

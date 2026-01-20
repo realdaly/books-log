@@ -469,7 +469,7 @@ export default function BooksPage() {
         ].filter(d => d.value > 0);
     }, [bookStats]);
 
-    if (loading) return <div className="flex justify-center items-center h-full"><Loader2 className="animate-spin text-primary" size={64} /></div>;
+    /* if (loading) return <div className="flex justify-center items-center h-full"><Loader2 className="animate-spin text-primary" size={64} /></div>; */
 
     return (
         <div className="space-y-8 h-full flex flex-col pb-8">
@@ -552,7 +552,13 @@ export default function BooksPage() {
 
             {/* Book Grid view */}
             <div className="flex-1 overflow-y-auto grid grid-cols-2 md:grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-4 md:gap-8 pl-2 content-start">
-                {books.map(book => (
+                {loading && (
+                    <div className="col-span-full flex flex-col items-center justify-center h-64 text-muted-foreground">
+                        <Loader2 className="animate-spin mb-4 text-primary" size={48} />
+                        <p className="font-bold text-lg">جاري تحميل الكتب...</p>
+                    </div>
+                )}
+                {!loading && books.map(book => (
                     <div key={book.id} className="group relative perspective-1000">
                         <div className="relative w-full aspect-[2/3] transition-all duration-300 group-hover:shadow-2xl rounded-lg overflow-hidden bg-white shadow-md border border-gray-200">
 
@@ -617,7 +623,7 @@ export default function BooksPage() {
                 ))}
 
                 {/* Add New Book Card */}
-                <button
+                {!loading && <button
                     onClick={() => { setEditId(null); resetForm(); setIsModalOpen(true); }}
                     className="group relative w-full aspect-[2/3] rounded-xl border-2 border-dashed border-gray-300 hover:border-primary hover:bg-primary/5 flex flex-col items-center justify-center gap-3 transition-all duration-300"
                 >
@@ -625,7 +631,7 @@ export default function BooksPage() {
                         <Plus size={32} />
                     </div>
                     <span className="font-bold text-gray-400 group-hover:text-primary text-sm">إضافة كتاب جديد</span>
-                </button>
+                </button>}
             </div>
 
 

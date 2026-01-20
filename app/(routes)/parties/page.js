@@ -412,7 +412,7 @@ export default function PartiesPage() {
         }
     };
 
-    if (loading && !detailsOpen) return <div className="flex justify-center items-center h-full"><Loader2 className="animate-spin text-primary" size={48} /></div>;
+    /* if (loading && !detailsOpen) return <div className="flex justify-center items-center h-full"><Loader2 className="animate-spin text-primary" size={48} /></div>; */
 
     const filteredTxs = partyTransactions.filter(t => filterType === 'all' || t.type === filterType);
 
@@ -503,7 +503,17 @@ export default function PartiesPage() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
-                            {parties.map(p => (
+                            {loading && (
+                                <tr>
+                                    <td colSpan="7" className="p-12 text-center text-muted-foreground">
+                                        <div className="flex flex-col items-center justify-center gap-2">
+                                            <Loader2 className="animate-spin text-primary" size={32} />
+                                            <span className="text-sm font-medium">جاري تحديث البيانات...</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            )}
+                            {!loading && parties.map(p => (
                                 <tr key={p.id} className={`odd:bg-muted/30 even:bg-white hover:bg-primary/5 transition-colors ${selectedIds.includes(p.id) ? 'bg-primary/10' : ''}`}>
                                     <td className="p-4 text-center border-l border-border/50 w-10">
                                         <input
@@ -536,7 +546,7 @@ export default function PartiesPage() {
                                     </td>
                                 </tr>
                             ))}
-                            {parties.length === 0 && (
+                            {!loading && parties.length === 0 && (
                                 <tr>
                                     <td colSpan="7" className="p-8 text-center text-muted-foreground">
                                         لا توجد بيانات

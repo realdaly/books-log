@@ -362,7 +362,7 @@ export default function SalesPage() {
     };
 
 
-    if (loading) return <Loader2 className="animate-spin" />;
+    /* if (loading) return <Loader2 className="animate-spin" />; */
 
 
     return (
@@ -462,7 +462,17 @@ export default function SalesPage() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
-                            {transactions.map((t, idx) => (
+                            {loading && (
+                                <tr>
+                                    <td colSpan="12" className="p-12 text-center text-muted-foreground">
+                                        <div className="flex flex-col items-center justify-center gap-2">
+                                            <Loader2 className="animate-spin text-primary" size={32} />
+                                            <span className="text-sm font-medium">جاري تحديث البيانات...</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            )}
+                            {!loading && transactions.map((t, idx) => (
                                 <tr key={t.id} className={`odd:bg-muted/30 even:bg-white hover:bg-primary/5 transition-colors ${selectedIds.includes(t.id) ? 'bg-primary/10' : ''}`}>
                                     <td className="p-4 text-center border-l border-border/50 w-10">
                                         <input
@@ -496,7 +506,7 @@ export default function SalesPage() {
                                     </td>
                                 </tr>
                             ))}
-                            {transactions.length === 0 && (
+                            {!loading && transactions.length === 0 && (
                                 <tr>
                                     <td colSpan="12" className="p-8 text-center text-muted-foreground">
                                         لا توجد بيانات
