@@ -6,7 +6,7 @@ import { Card, Button, Input, Textarea } from "../../components/ui/Base";
 import { Modal } from "../../components/ui/Modal";
 import { DateInput } from "../../components/ui/DateInput";
 import { Combobox, ComboboxInput, ComboboxButton, ComboboxOptions, ComboboxOption } from '@headlessui/react';
-import { Loader2, Plus, Trash2, Edit2, Check, ChevronsUpDown, Filter } from "lucide-react";
+import { Loader2, Plus, Trash2, Edit2, Check, ChevronsUpDown, Filter, Search, X } from "lucide-react";
 import { ask } from '@tauri-apps/plugin-dialog';
 import { NotesCell } from "../../components/ui/NotesCell";
 
@@ -36,6 +36,7 @@ export default function SalesPage() {
     // Combobox State
     const [query, setQuery] = useState('');
     const [bookQuery, setBookQuery] = useState('');
+    const [multiBookQuery, setMultiBookQuery] = useState('');
 
     // Quick Add Party State
     const [isAddPartyOpen, setIsAddPartyOpen] = useState(false);
@@ -92,6 +93,11 @@ export default function SalesPage() {
             : books.filter((book) => {
                 return normalizeArabic(book.title).includes(normalizeArabic(bookQuery))
             });
+
+    const filteredMultiBooks =
+        multiBookQuery === ''
+            ? books
+            : books.filter((book) => normalizeArabic(book.title).includes(normalizeArabic(multiBookQuery)));
 
     const handleQtyPriceChange = (field, val) => {
         const newForm = { ...formData, [field]: val };
@@ -262,6 +268,7 @@ export default function SalesPage() {
         });
         setIsMultiMode(false);
         setSelectedMultiBooks([]);
+        setMultiBookQuery('');
     };
 
     const toggleMultiBook = (book) => {
@@ -507,8 +514,27 @@ export default function SalesPage() {
                                 </Button>
                             </div>
 
+                            <div className="relative">
+                                <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
+                                <Input
+                                    placeholder="بحث في القائمة..."
+                                    value={multiBookQuery}
+                                    onChange={e => setMultiBookQuery(e.target.value)}
+                                    className="pr-9 pl-9"
+                                />
+                                {multiBookQuery && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setMultiBookQuery('')}
+                                        className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-red-500"
+                                    >
+                                        <X size={16} />
+                                    </button>
+                                )}
+                            </div>
+
                             <div className="max-h-[200px] overflow-y-auto border rounded-xl divide-y bg-white">
-                                {books.map(book => (
+                                {filteredMultiBooks.map(book => (
                                     <div
                                         key={book.id}
                                         onClick={() => toggleMultiBook(book)} className="p-3 flex items-center justify-between hover:bg-gray-50 cursor-pointer">

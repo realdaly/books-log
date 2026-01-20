@@ -49,6 +49,7 @@ export default function OtherStoresPage() {
 
     // Combobox Query
     const [bookQuery, setBookQuery] = useState('');
+    const [multiBookQuery, setMultiBookQuery] = useState('');
 
     const fetchData = useCallback(async () => {
         try {
@@ -93,6 +94,11 @@ export default function OtherStoresPage() {
     const filteredBooks = bookQuery === ''
         ? books
         : books.filter((book) => normalizeArabic(book.title).includes(normalizeArabic(bookQuery)));
+
+    const filteredMultiBooks =
+        multiBookQuery === ''
+            ? books
+            : books.filter((book) => normalizeArabic(book.title).includes(normalizeArabic(multiBookQuery)));
 
     const filteredTransactions = transactions.filter(t => {
         const searchOk = normalizeArabic(t.book_title).includes(normalizeArabic(searchTerm));
@@ -211,6 +217,7 @@ export default function OtherStoresPage() {
         setIsMultiMode(false);
         setSelectedMultiBooks([]);
         setBookQuery("");
+        setMultiBookQuery("");
     };
 
     const toggleMultiBook = (book) => {
@@ -398,7 +405,7 @@ export default function OtherStoresPage() {
             <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editId ? "تعديل حركة" : (isMultiMode ? "إضافة حركات متعددة" : "إضافة حركة")} maxWidth={isMultiMode ? "max-w-4xl" : "max-w-lg"}>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     {!editId && (
-                        <div className="flex items-center justify-between bg-primary/5 p-2 rounded-lg mb-4">
+                        <div className="flex items-center justify-between rounded-lg mb-4">
                             <span className="text-sm font-bold text-primary">إضافة عدة كتب؟</span>
                             <button
                                 type="button"
@@ -481,8 +488,26 @@ export default function OtherStoresPage() {
                                         {selectedMultiBooks.length === books.length ? "إلغاء تحديد الكل" : "تحديد الكل"}
                                     </Button>
                                 </div>
-                                <div className="max-h-[200px] overflow-y-auto border rounded-xl divide-y bg-white custom-scrollbar">
-                                    {books.map(book => (
+                                <div className="relative mb-2">
+                                    <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
+                                    <Input
+                                        placeholder="بحث في القائمة..."
+                                        value={multiBookQuery}
+                                        onChange={e => setMultiBookQuery(e.target.value)}
+                                        className="pr-9 pl-9"
+                                    />
+                                    {multiBookQuery && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setMultiBookQuery('')}
+                                            className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-red-500"
+                                        >
+                                            <X size={16} />
+                                        </button>
+                                    )}
+                                </div>
+                                <div className="max-h-[120px] overflow-y-auto border rounded-xl divide-y bg-white custom-scrollbar">
+                                    {filteredMultiBooks.map(book => (
                                         <div key={book.id} className="p-3 flex items-center justify-between hover:bg-gray-50 cursor-pointer" onClick={() => toggleMultiBook(book)}>
                                             <div className="flex items-center gap-3">
                                                 <input
