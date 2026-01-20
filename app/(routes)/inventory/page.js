@@ -1,23 +1,32 @@
 "use client";
-import { useEffect, useState, useCallback } from "react";
+import { Component, useEffect, useState, useCallback } from "react";
 import { getDb } from "../../lib/db";
 import { normalizeArabic } from "../../lib/utils";
 import { Card, Input } from "../../components/ui/Base";
 import { Loader2, Search, X, Check, Filter } from "lucide-react";
+import { PaginationControls } from "../../components/ui/PaginationControls";
 import Link from "next/link";
 
 export default function InventoryPage() {
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [isFetching, setIsFetching] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
     const [publisherName, setPublisherName] = useState("");
     const [successMap, setSuccessMap] = useState({});
     const [remainingFilter, setRemainingFilter] = useState("all"); // all, low, high
     const [isFilterOpen, setIsFilterOpen] = useState(false);
 
+    // Pagination
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const ITEMS_PER_PAGE = 50;
+
+
     const fetchData = useCallback(async () => {
+
         try {
-            setLoading(true);
+            setIsFetching(true);
             const db = await getDb();
 
             const config = await db.select("SELECT publisher_name FROM config ORDER BY id DESC LIMIT 1");
@@ -25,29 +34,78 @@ export default function InventoryPage() {
                 setPublisherName(config[0].publisher_name);
             }
 
-            // Fetch books with Institution transaction stats
-            const rows = await db.select(`
-        SELECT 
-           v.*,
-           b.total_printed,
-           b.sent_to_institution,
-           b.loss_manual
-        FROM vw_inventory_central v
-        JOIN book b ON b.id = v.book_id
-        ORDER BY v.book_title ASC
-      `);
+            // Build Query Conditions
+            let whereClauses = [];
+            let params = [];
 
+            if (searchTerm) {
+                whereClauses.push("v.book_title LIKE '%' || $1 || '%'");
+                params.push(searchTerm);
+            }
+
+            if (remainingFilter === 'low') {
+                whereClauses.push("(v.remaining_institution IS NOT NULL AND v.remaining_institution <= 11)");
+            } else if (remainingFilter === 'high') {
+                whereClauses.push("(v.remaining_institution IS NULL OR v.remaining_institution > 11)");
+            }
+
+            const whereSQL = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : "";
+
+            // Count Total
+            // Note: We need to handle parameters correctly.
+            // Since explicit param binding with dynamic substitution can be tricky in the provided db wrapper if it doesn't support named params easily or mixed arrays.
+            // We will inject values for simplicity or stick to the array if the wrapper supports it.
+            // Assuming db.select supports ($1) style.
+
+            // Re-map params for Count query if needed (usually just same params).
+            const countQuery = `
+                SELECT COUNT(*) as count 
+                FROM vw_inventory_central v
+                JOIN book b ON b.id = v.book_id
+                ${whereSQL}
+            `;
+            const countResult = await db.select(countQuery, params);
+            const totalItems = countResult[0]?.count || 0;
+            setTotalPages(Math.ceil(totalItems / ITEMS_PER_PAGE));
+
+            const offset = (page - 1) * ITEMS_PER_PAGE;
+
+            // Fetch Data
+            const dataQuery = `
+                SELECT 
+                   v.*,
+                   b.total_printed,
+                   b.sent_to_institution,
+                   b.loss_manual
+                FROM vw_inventory_central v
+                JOIN book b ON b.id = v.book_id
+                ${whereSQL}
+                ORDER BY v.book_title ASC
+                LIMIT ${ITEMS_PER_PAGE} OFFSET ${offset}
+            `;
+
+            const rows = await db.select(dataQuery, params);
             setData(rows);
         } catch (err) {
             console.error("Failed to load inventory:", err);
         } finally {
             setLoading(false);
+            setIsFetching(false);
         }
-    }, []);
+    }, [page, searchTerm, remainingFilter]);
+
 
     useEffect(() => {
-        fetchData();
+        const timer = setTimeout(() => {
+            fetchData();
+        }, 300);
+        return () => clearTimeout(timer);
     }, [fetchData]);
+
+    // Reset page when filters change
+    useEffect(() => {
+        setPage(1);
+    }, [searchTerm, remainingFilter]);
 
     const updateField = async (id, field, value) => {
         const numVal = Math.max(0, parseInt(value) || 0);
@@ -99,18 +157,7 @@ export default function InventoryPage() {
         }
     };
 
-    const filteredData = data.filter(r => {
-        const matchesSearch = normalizeArabic(r.book_title).includes(normalizeArabic(searchTerm));
-
-        let matchesFilter = true;
-        if (remainingFilter === 'low') {
-            matchesFilter = (r.remaining_institution || 0) <= 11;
-        } else if (remainingFilter === 'high') {
-            matchesFilter = (r.remaining_institution || 0) > 11;
-        }
-
-        return matchesSearch && matchesFilter;
-    });
+    const filteredData = data;
 
     if (loading && data.length === 0) {
         return <div className="flex justify-center items-center h-full"><Loader2 className="animate-spin text-secondary" size={48} /></div>;
@@ -305,7 +352,17 @@ export default function InventoryPage() {
                         </div>
                     )}
                 </div>
+
             </Card>
-        </div>
+
+            {/* Pagination Controls */}
+            <PaginationControls
+                page={page}
+                totalPages={totalPages}
+                setPage={setPage}
+                isLoading={isFetching}
+            />
+        </div >
     );
 }
+

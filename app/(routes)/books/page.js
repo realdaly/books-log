@@ -5,6 +5,7 @@ import { normalizeArabic } from "../../lib/utils";
 import { Button, Input, Textarea } from "../../components/ui/Base";
 import { Modal } from "../../components/ui/Modal";
 import { Loader2, Plus, Trash2, Edit2, Image as ImageIcon, BarChart3, BookOpenText, Search, X, Settings, Tag, Filter, Check, ChevronsUpDown } from "lucide-react";
+import { PaginationControls } from "../../components/ui/PaginationControls";
 import { ask, open, message } from '@tauri-apps/plugin-dialog';
 import { readFile } from '@tauri-apps/plugin-fs';
 import { Combobox, ComboboxInput, ComboboxButton, ComboboxOptions, ComboboxOption, Transition } from '@headlessui/react';
@@ -15,7 +16,12 @@ const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#6b7280']; // Emera
 
 export default function BooksPage() {
     const [books, setBooks] = useState([]);
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const ITEMS_PER_PAGE = 50;
+
     const [loading, setLoading] = useState(true);
+    const [isFetching, setIsFetching] = useState(false);
     const [detailsLoading, setDetailsLoading] = useState(false);
     const [detailsBook, setDetailsBook] = useState(null);
     const [bookStats, setBookStats] = useState(null);
@@ -75,7 +81,14 @@ export default function BooksPage() {
     // Fetch Books
     const fetchData = async () => {
         try {
+            setIsFetching(true);
             const db = await getDb();
+            // Fetch books with Institution transaction stats
+            const countResult = await db.select("SELECT COUNT(*) as count FROM book");
+            const totalItems = countResult[0]?.count || 0;
+            setTotalPages(Math.ceil(totalItems / ITEMS_PER_PAGE));
+
+            const offset = (page - 1) * ITEMS_PER_PAGE;
             // Fetch books with Institution transaction stats
             const rows = await db.select(`
                 SELECT 
@@ -103,6 +116,7 @@ export default function BooksPage() {
                 LEFT JOIN book_category cat ON bcl.category_id = cat.id
                 GROUP BY b.id
                 ORDER BY b.title ASC
+                LIMIT ${ITEMS_PER_PAGE} OFFSET ${offset}
             `);
 
             const normalizedRows = rows.map(r => ({
@@ -119,12 +133,13 @@ export default function BooksPage() {
             console.error(err);
         } finally {
             setLoading(false);
+            setIsFetching(false);
         }
     };
 
     useEffect(() => {
         fetchData();
-    }, []);
+    }, [page]);
 
     // --- Image Handling ---
     const handleImageUpload = async () => {
@@ -576,138 +591,151 @@ export default function BooksPage() {
                 </button>
             </div>
 
+
+
+            {/* Pagination Controls */}
+            {/* Pagination Controls */}
+            <PaginationControls
+                page={page}
+                totalPages={totalPages}
+                setPage={setPage}
+                isLoading={isFetching}
+            />
+
             {/* --- Stats Detail Modal --- */}
-            {detailsBook && (
-                <div onClick={() => setDetailsBook(null)} className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200 cursor-pointer">
-                    <div onClick={(e) => e.stopPropagation()} className="cursor-default bg-white rounded-[2rem] shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col md:flex-row animate-in zoom-in-95 duration-200 relative">
-                        <button onClick={() => setDetailsBook(null)} className="absolute top-4 left-4 z-10 bg-white/80 p-2 rounded-full hover:bg-white shadow-sm transition-all md:text-gray-500 hover:text-black">
-                            ✕
-                        </button>
+            {
+                detailsBook && (
+                    <div onClick={() => setDetailsBook(null)} className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200 cursor-pointer">
+                        <div onClick={(e) => e.stopPropagation()} className="cursor-default bg-white rounded-[2rem] shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col md:flex-row animate-in zoom-in-95 duration-200 relative">
+                            <button onClick={() => setDetailsBook(null)} className="absolute top-4 left-4 z-10 bg-white/80 p-2 rounded-full hover:bg-white shadow-sm transition-all md:text-gray-500 hover:text-black">
+                                ✕
+                            </button>
 
-                        {/* Left Side: Image & Key Info */}
-                        <div className="w-full md:w-1/3 bg-gray-50 p-6 flex flex-col items-center justify-center text-center border-l border-gray-100 overflow-y-auto">
-                            <div className="w-56 min-h-80 rounded-xl shadow-lg run-in mb-6 bg-white relative group overflow-hidden">
-                                {detailsBook.cover_image ? (
-                                    <img src={detailsBook.cover_image} alt="Cover" className="w-full h-full object-cover" />
-                                ) : (
-                                    <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-400">
-                                        <BookOpenText size={48} />
+                            {/* Left Side: Image & Key Info */}
+                            <div className="w-full md:w-1/3 bg-gray-50 p-6 flex flex-col items-center justify-center text-center border-l border-gray-100 overflow-y-auto">
+                                <div className="w-56 min-h-80 rounded-xl shadow-lg run-in mb-6 bg-white relative group overflow-hidden">
+                                    {detailsBook.cover_image ? (
+                                        <img src={detailsBook.cover_image} alt="Cover" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-400">
+                                            <BookOpenText size={48} />
+                                        </div>
+                                    )}
+                                </div>
+                                <h2 className="text-2xl font-black text-gray-800 mb-2 leading-tight">{detailsBook.title}</h2>
+                                <p className="text-gray-500 text-sm mb-6 max-w-xs mx-auto">{detailsBook.notes || "لا توجد ملاحظات إضافية"}</p>
+
+                                <div className="grid grid-cols-2 gap-4 w-full">
+                                    <div className="bg-white p-3 rounded-xl shadow-sm border border-gray-100">
+                                        <div className="text-xs text-gray-400 font-bold mb-1">العدد المطبوع</div>
+                                        <div className="text-xl font-black text-primary">{detailsBook.total_printed}</div>
+                                    </div>
+                                    <div className="bg-white p-3 rounded-xl shadow-sm border border-gray-100">
+                                        <div className="text-xs text-gray-400 font-bold mb-1">سعر النسخة</div>
+                                        <div className="text-xl font-black text-emerald-600">{Number(detailsBook.unit_price).toLocaleString()}</div>
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-wrap gap-2 mt-4 justify-center">
+                                    {detailsBook.category_names && detailsBook.category_names.length > 0 ? (
+                                        detailsBook.category_names.map((cat, idx) => (
+                                            <span key={idx} className="bg-emerald-50 text-emerald-700 text-xs px-2 py-1 rounded-md border border-emerald-100 font-bold">
+                                                {cat}
+                                            </span>
+                                        ))
+                                    ) : (
+                                        <span className="text-xs text-gray-400">لا توجد تصنيفات</span>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Right Side: Charts & Stats */}
+                            <div className="w-full md:w-2/3 p-8 overflow-y-auto">
+                                <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                                    <BarChart3 className="text-primary" />
+                                    إحصائيات الكتاب
+                                </h3>
+
+                                {detailsLoading ? (
+                                    <div className="h-64 flex items-center justify-center"><Loader2 className="animate-spin text-primary" /></div>
+                                ) : bookStats && (
+                                    <div className="space-y-8">
+                                        {/* Summary Grid */}
+                                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                                            <div className="p-4 rounded-2xl bg-emerald-50 text-emerald-900">
+                                                <div className="text-sm font-bold opacity-70">مجموع المتبقي</div>
+                                                <div className="text-3xl font-black mt-1">{bookStats.currentStock}</div>
+                                            </div>
+                                            <div className="p-4 rounded-2xl bg-blue-50 text-blue-900">
+                                                <div className="text-sm font-bold opacity-70">إجمالي المباع</div>
+                                                <div className="text-3xl font-black mt-1">{bookStats.totalSold}</div>
+                                            </div>
+                                            <div className="p-4 rounded-2xl bg-amber-50 text-amber-900">
+                                                <div className="text-sm font-bold opacity-70">إجمالي المهداة</div>
+                                                <div className="text-3xl font-black mt-1">{bookStats.totalGifted}</div>
+                                            </div>
+                                            <div className="p-4 rounded-2xl bg-purple-50 text-purple-900">
+                                                <div className="text-sm font-bold opacity-70">مخازن أخرى</div>
+                                                <div className="text-3xl font-black mt-1">{bookStats.otherTotal}</div>
+                                            </div>
+                                            <div className="p-4 rounded-2xl bg-teal-50 text-teal-900 col-span-2 lg:col-span-4 flex justify-between items-center">
+                                                <div className="text-sm font-bold opacity-70">إجمالي الأرباح (المبيعات)</div>
+                                                <div className="text-2xl font-black">{Number(bookStats.totalRevenue).toLocaleString()} دينار عراقي</div>
+                                            </div>
+                                        </div>
+
+                                        {/* Chart Area */}
+                                        <div className="bg-white rounded-2xl border p-6 shadow-sm">
+                                            <h4 className="font-bold text-gray-600 mb-4 text-sm">توزيع النسخ المطبوعة</h4>
+                                            <div className="h-64 w-full">
+                                                <ResponsiveContainer width="100%" height="100%">
+                                                    <PieChart>
+                                                        <Pie
+                                                            data={chartData}
+                                                            cx="50%"
+                                                            cy="50%"
+                                                            innerRadius={60}
+                                                            outerRadius={100}
+                                                            paddingAngle={5}
+                                                            dataKey="value"
+                                                        >
+                                                            {chartData.map((entry, index) => (
+                                                                <Cell key={`cell - ${index} `} fill={COLORS[index % COLORS.length]} />
+                                                            ))}
+                                                        </Pie>
+                                                        <RechartsTooltip />
+                                                        <Legend />
+                                                    </PieChart>
+                                                </ResponsiveContainer>
+                                            </div>
+                                        </div>
+
+                                        {/* Extra Info */}
+                                        <div className="grid grid-cols-2 gap-4 text-sm text-gray-500">
+                                            <div className="flex justify-between border-b py-2">
+                                                <span>نسخ واصلة للمؤسسة</span>
+                                                <span className="font-bold text-gray-800">{bookStats.sentInst}</span>
+                                            </div>
+                                            <div className="flex justify-between border-b py-2">
+                                                <span>استعارات (كتب خارجية)</span>
+                                                <span className="font-bold text-gray-800">{bookStats.realLoaned}</span>
+                                            </div>
+                                            <div className="flex justify-between border-b py-2">
+                                                <span>قيد البيع (لم يكتمل)</span>
+                                                <span className="font-bold text-gray-800">{bookStats.realPending}</span>
+                                            </div>
+                                            <div className="flex justify-between border-b py-2">
+                                                <span>مفقود / تالف</span>
+                                                <span className="font-bold text-gray-800">{bookStats.manualLoss}</span>
+                                            </div>
+                                        </div>
                                     </div>
                                 )}
                             </div>
-                            <h2 className="text-2xl font-black text-gray-800 mb-2 leading-tight">{detailsBook.title}</h2>
-                            <p className="text-gray-500 text-sm mb-6 max-w-xs mx-auto">{detailsBook.notes || "لا توجد ملاحظات إضافية"}</p>
-
-                            <div className="grid grid-cols-2 gap-4 w-full">
-                                <div className="bg-white p-3 rounded-xl shadow-sm border border-gray-100">
-                                    <div className="text-xs text-gray-400 font-bold mb-1">العدد المطبوع</div>
-                                    <div className="text-xl font-black text-primary">{detailsBook.total_printed}</div>
-                                </div>
-                                <div className="bg-white p-3 rounded-xl shadow-sm border border-gray-100">
-                                    <div className="text-xs text-gray-400 font-bold mb-1">سعر النسخة</div>
-                                    <div className="text-xl font-black text-emerald-600">{Number(detailsBook.unit_price).toLocaleString()}</div>
-                                </div>
-                            </div>
-
-                            <div className="flex flex-wrap gap-2 mt-4 justify-center">
-                                {detailsBook.category_names && detailsBook.category_names.length > 0 ? (
-                                    detailsBook.category_names.map((cat, idx) => (
-                                        <span key={idx} className="bg-emerald-50 text-emerald-700 text-xs px-2 py-1 rounded-md border border-emerald-100 font-bold">
-                                            {cat}
-                                        </span>
-                                    ))
-                                ) : (
-                                    <span className="text-xs text-gray-400">لا توجد تصنيفات</span>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Right Side: Charts & Stats */}
-                        <div className="w-full md:w-2/3 p-8 overflow-y-auto">
-                            <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-                                <BarChart3 className="text-primary" />
-                                إحصائيات الكتاب
-                            </h3>
-
-                            {detailsLoading ? (
-                                <div className="h-64 flex items-center justify-center"><Loader2 className="animate-spin text-primary" /></div>
-                            ) : bookStats && (
-                                <div className="space-y-8">
-                                    {/* Summary Grid */}
-                                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                                        <div className="p-4 rounded-2xl bg-emerald-50 text-emerald-900">
-                                            <div className="text-sm font-bold opacity-70">مجموع المتبقي</div>
-                                            <div className="text-3xl font-black mt-1">{bookStats.currentStock}</div>
-                                        </div>
-                                        <div className="p-4 rounded-2xl bg-blue-50 text-blue-900">
-                                            <div className="text-sm font-bold opacity-70">إجمالي المباع</div>
-                                            <div className="text-3xl font-black mt-1">{bookStats.totalSold}</div>
-                                        </div>
-                                        <div className="p-4 rounded-2xl bg-amber-50 text-amber-900">
-                                            <div className="text-sm font-bold opacity-70">إجمالي المهداة</div>
-                                            <div className="text-3xl font-black mt-1">{bookStats.totalGifted}</div>
-                                        </div>
-                                        <div className="p-4 rounded-2xl bg-purple-50 text-purple-900">
-                                            <div className="text-sm font-bold opacity-70">مخازن أخرى</div>
-                                            <div className="text-3xl font-black mt-1">{bookStats.otherTotal}</div>
-                                        </div>
-                                        <div className="p-4 rounded-2xl bg-teal-50 text-teal-900 col-span-2 lg:col-span-4 flex justify-between items-center">
-                                            <div className="text-sm font-bold opacity-70">إجمالي الأرباح (المبيعات)</div>
-                                            <div className="text-2xl font-black">{Number(bookStats.totalRevenue).toLocaleString()} دينار عراقي</div>
-                                        </div>
-                                    </div>
-
-                                    {/* Chart Area */}
-                                    <div className="bg-white rounded-2xl border p-6 shadow-sm">
-                                        <h4 className="font-bold text-gray-600 mb-4 text-sm">توزيع النسخ المطبوعة</h4>
-                                        <div className="h-64 w-full">
-                                            <ResponsiveContainer width="100%" height="100%">
-                                                <PieChart>
-                                                    <Pie
-                                                        data={chartData}
-                                                        cx="50%"
-                                                        cy="50%"
-                                                        innerRadius={60}
-                                                        outerRadius={100}
-                                                        paddingAngle={5}
-                                                        dataKey="value"
-                                                    >
-                                                        {chartData.map((entry, index) => (
-                                                            <Cell key={`cell - ${index} `} fill={COLORS[index % COLORS.length]} />
-                                                        ))}
-                                                    </Pie>
-                                                    <RechartsTooltip />
-                                                    <Legend />
-                                                </PieChart>
-                                            </ResponsiveContainer>
-                                        </div>
-                                    </div>
-
-                                    {/* Extra Info */}
-                                    <div className="grid grid-cols-2 gap-4 text-sm text-gray-500">
-                                        <div className="flex justify-between border-b py-2">
-                                            <span>نسخ واصلة للمؤسسة</span>
-                                            <span className="font-bold text-gray-800">{bookStats.sentInst}</span>
-                                        </div>
-                                        <div className="flex justify-between border-b py-2">
-                                            <span>استعارات (كتب خارجية)</span>
-                                            <span className="font-bold text-gray-800">{bookStats.realLoaned}</span>
-                                        </div>
-                                        <div className="flex justify-between border-b py-2">
-                                            <span>قيد البيع (لم يكتمل)</span>
-                                            <span className="font-bold text-gray-800">{bookStats.realPending}</span>
-                                        </div>
-                                        <div className="flex justify-between border-b py-2">
-                                            <span>مفقود / تالف</span>
-                                            <span className="font-bold text-gray-800">{bookStats.manualLoss}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* Add/Edit Modal */}
             <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editId ? "تعديل بيانات الكتاب" : "إضافة كتاب جديد"} maxWidth="max-w-6xl">
@@ -924,6 +952,6 @@ export default function BooksPage() {
                     </div>
                 </div>
             </Modal>
-        </div>
+        </div >
     );
 }

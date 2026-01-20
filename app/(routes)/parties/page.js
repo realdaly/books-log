@@ -5,6 +5,7 @@ import { normalizeArabic } from "../../lib/utils";
 import { Card, Button, Input, Textarea } from "../../components/ui/Base";
 import { Modal } from "../../components/ui/Modal";
 import { Loader2, Plus, Trash2, Edit2, Eye, Image as ImageIcon, Tag, Filter, Settings, Search, X, Check, ChevronsUpDown } from "lucide-react";
+import { PaginationControls } from "../../components/ui/PaginationControls";
 import { Combobox, ComboboxInput, ComboboxButton, ComboboxOptions, ComboboxOption, Transition } from '@headlessui/react';
 import html2canvas from "html2canvas";
 import { NotesCell } from "../../components/ui/NotesCell";
@@ -13,8 +14,12 @@ import { writeFile } from '@tauri-apps/plugin-fs';
 
 export default function PartiesPage() {
     const [parties, setParties] = useState([]);
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const ITEMS_PER_PAGE = 50;
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [isFetching, setIsFetching] = useState(false);
 
     // CRUD State
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -49,8 +54,15 @@ export default function PartiesPage() {
 
     const fetchData = useCallback(async () => {
         try {
+            setIsFetching(true);
             const db = await getDb();
             // Fetch Parties with their Category IDs and Names
+            // Fetch Parties with their Category IDs and Names
+            const countResult = await db.select("SELECT COUNT(*) as count FROM party");
+            const totalItems = countResult[0]?.count || 0;
+            setTotalPages(Math.ceil(totalItems / ITEMS_PER_PAGE));
+
+            const offset = (page - 1) * ITEMS_PER_PAGE;
             const partiesRows = await db.select(`
                 SELECT 
                     p.*,
@@ -61,6 +73,7 @@ export default function PartiesPage() {
                 LEFT JOIN party_category pc ON pcl.category_id = pc.id
                 GROUP BY p.id
                 ORDER BY p.id DESC
+                LIMIT ${ITEMS_PER_PAGE} OFFSET ${offset}
             `);
 
             // Normalize to arrays
@@ -80,12 +93,13 @@ export default function PartiesPage() {
             console.error(err);
         } finally {
             setLoading(false);
+            setIsFetching(false);
         }
-    }, []);
+    }, [page]);
 
     useEffect(() => {
         fetchData();
-    }, [fetchData]);
+    }, [page]);
 
     const handleAddCategory = async (e) => {
         e.preventDefault();
@@ -503,6 +517,14 @@ export default function PartiesPage() {
                     </table>
                 </div>
             </Card>
+
+            {/* Pagination Controls */}
+            <PaginationControls
+                page={page}
+                totalPages={totalPages}
+                setPage={setPage}
+                isLoading={isFetching}
+            />
 
             {/* Add/Edit Modal */}
             <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editId ? "تعديل جهة" : "إضافة جهة"}>

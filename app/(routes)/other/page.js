@@ -6,15 +6,24 @@ import { Card, Button, Input, Textarea } from "../../components/ui/Base";
 import { Modal } from "../../components/ui/Modal";
 import { DateInput } from "../../components/ui/DateInput";
 import { Combobox, ComboboxInput, ComboboxButton, ComboboxOptions, ComboboxOption, Transition } from '@headlessui/react';
-import { Loader2, Plus, Trash2, Edit2, Check, ChevronsUpDown, Filter, Settings, Tag, Search, X } from "lucide-react";
+import {
+    Loader2, Plus, Trash2, Edit2, Search, X, Check, ChevronsUpDown, Filter, Settings, Tag
+} from "lucide-react";
+import { PaginationControls } from "../../components/ui/PaginationControls";
 import { ask, message } from '@tauri-apps/plugin-dialog';
 import { NotesCell } from "../../components/ui/NotesCell";
 
 export default function OtherStoresPage() {
     const [transactions, setTransactions] = useState([]);
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const ITEMS_PER_PAGE = 50;
+
     const [books, setBooks] = useState([]);
     const [categories, setCategories] = useState([]);
+
     const [loading, setLoading] = useState(true);
+    const [isFetching, setIsFetching] = useState(false);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [formData, setFormData] = useState({
@@ -53,7 +62,15 @@ export default function OtherStoresPage() {
 
     const fetchData = useCallback(async () => {
         try {
+            setIsFetching(true);
             const db = await getDb();
+
+            // Count total
+            const countResult = await db.select("SELECT COUNT(*) as count FROM other_transaction");
+            const totalItems = countResult[0]?.count || 0;
+            setTotalPages(Math.ceil(totalItems / ITEMS_PER_PAGE));
+
+            const offset = (page - 1) * ITEMS_PER_PAGE;
             const rows = await db.select(`
                 SELECT 
                     ot.id, ot.qty, ot.tx_date, ot.notes,
@@ -66,6 +83,7 @@ export default function OtherStoresPage() {
                 LEFT JOIN other_category oc ON otcl.category_id = oc.id
                 GROUP BY ot.id
                 ORDER BY ot.tx_date DESC, ot.id DESC
+                LIMIT ${ITEMS_PER_PAGE} OFFSET ${offset}
             `);
             const normalizedRows = rows.map(r => ({
                 ...r,
@@ -84,8 +102,9 @@ export default function OtherStoresPage() {
             console.error(err);
         } finally {
             setLoading(false);
+            setIsFetching(false);
         }
-    }, []);
+    }, [page]);
 
     useEffect(() => {
         fetchData();
@@ -93,12 +112,12 @@ export default function OtherStoresPage() {
 
     const filteredBooks = bookQuery === ''
         ? books
-        : books.filter((book) => normalizeArabic(book.title).includes(normalizeArabic(bookQuery)));
+        : books.filter((book) => normalizeArabic(book.title).includes(normalizeArabic(bookQuery))).slice(0, 50);
 
     const filteredMultiBooks =
         multiBookQuery === ''
             ? books
-            : books.filter((book) => normalizeArabic(book.title).includes(normalizeArabic(multiBookQuery)));
+            : books.filter((book) => normalizeArabic(book.title).includes(normalizeArabic(multiBookQuery))).slice(0, 50);
 
     const filteredTransactions = transactions.filter(t => {
         const searchOk = normalizeArabic(t.book_title).includes(normalizeArabic(searchTerm));
@@ -400,6 +419,14 @@ export default function OtherStoresPage() {
                     </table>
                 </div>
             </Card>
+
+            {/* Pagination Controls */}
+            <PaginationControls
+                page={page}
+                totalPages={totalPages}
+                setPage={setPage}
+                isLoading={isFetching}
+            />
 
             {/* Add/Edit Modal */}
             <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editId ? "تعديل حركة" : (isMultiMode ? "إضافة حركات متعددة" : "إضافة حركة")} maxWidth={isMultiMode ? "max-w-4xl" : "max-w-lg"}>

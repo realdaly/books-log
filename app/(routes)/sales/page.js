@@ -6,15 +6,24 @@ import { Card, Button, Input, Textarea } from "../../components/ui/Base";
 import { Modal } from "../../components/ui/Modal";
 import { DateInput } from "../../components/ui/DateInput";
 import { Combobox, ComboboxInput, ComboboxButton, ComboboxOptions, ComboboxOption } from '@headlessui/react';
-import { Loader2, Plus, Trash2, Edit2, Check, ChevronsUpDown, Filter, Search, X } from "lucide-react";
+import {
+    Loader2, Plus, GripVertical, Trash2, Edit2, Search, X, Check, ChevronsUpDown, Filter, Printer, Download, Share2
+} from "lucide-react";
+import { PaginationControls } from "../../components/ui/PaginationControls";
 import { ask } from '@tauri-apps/plugin-dialog';
 import { NotesCell } from "../../components/ui/NotesCell";
 
 export default function SalesPage() {
     const [transactions, setTransactions] = useState([]);
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const ITEMS_PER_PAGE = 50;
+
     const [books, setBooks] = useState([]);
     const [parties, setParties] = useState([]);
+
     const [loading, setLoading] = useState(true);
+    const [isFetching, setIsFetching] = useState(false);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [formData, setFormData] = useState({
@@ -47,19 +56,27 @@ export default function SalesPage() {
 
     const fetchData = useCallback(async () => {
         try {
+            setIsFetching(true);
             const db = await getDb();
 
+            // Count total
+            const countResult = await db.select("SELECT COUNT(*) as count FROM \"transaction\" WHERE type = 'sale'");
+            const totalItems = countResult[0]?.count || 0;
+            setTotalPages(Math.ceil(totalItems / ITEMS_PER_PAGE));
+
+            const offset = (page - 1) * ITEMS_PER_PAGE;
             const rows = await db.select(`
-        SELECT 
-          t.id, t.qty, t.unit_price, t.total_price, t.receipt_no, t.tx_date, t.notes, t.state,
-          b.title as book_title, b.id as book_id,
-          p.name as party_name, p.id as party_id
-        FROM "transaction" t
-        JOIN book b ON t.book_id = b.id
-        LEFT JOIN party p ON t.party_id = p.id
-        WHERE t.type = 'sale'
-        ORDER BY t.tx_date DESC, t.id DESC
-      `);
+                SELECT 
+                  t.id, t.qty, t.unit_price, t.total_price, t.receipt_no, t.tx_date, t.notes, t.state,
+                  b.title as book_title, b.id as book_id,
+                  p.name as party_name, p.id as party_id
+                FROM "transaction" t
+                JOIN book b ON t.book_id = b.id
+                LEFT JOIN party p ON t.party_id = p.id
+                WHERE t.type = 'sale'
+                ORDER BY t.tx_date DESC, t.id DESC
+                LIMIT ${ITEMS_PER_PAGE} OFFSET ${offset}
+            `);
 
             setTransactions(rows);
 
@@ -72,8 +89,9 @@ export default function SalesPage() {
             console.error(err);
         } finally {
             setLoading(false);
+            setIsFetching(false);
         }
-    }, []);
+    }, [page]);
 
     useEffect(() => {
         fetchData();
@@ -85,19 +103,19 @@ export default function SalesPage() {
             ? parties
             : parties.filter((party) => {
                 return normalizeArabic(party.name).includes(normalizeArabic(query))
-            });
+            }).slice(0, 50);
 
     const filteredBooks =
         bookQuery === ''
             ? books
             : books.filter((book) => {
                 return normalizeArabic(book.title).includes(normalizeArabic(bookQuery))
-            });
+            }).slice(0, 50);
 
     const filteredMultiBooks =
         multiBookQuery === ''
             ? books
-            : books.filter((book) => normalizeArabic(book.title).includes(normalizeArabic(multiBookQuery)));
+            : books.filter((book) => normalizeArabic(book.title).includes(normalizeArabic(multiBookQuery))).slice(0, 50);
 
     const handleQtyPriceChange = (field, val) => {
         const newForm = { ...formData, [field]: val };
@@ -359,7 +377,7 @@ export default function SalesPage() {
                                 <th className="p-4 border-l border-primary-foreground/10 text-center w-10">
                                     <input
                                         type="checkbox"
-                                        className="w-4 h-4 rounded border-primary-foreground/20 accent-white"
+                                        className="w-4 h-4 rounded border-primary-foreground/10 accent-white"
                                         checked={transactions.length > 0 && selectedIds.length === transactions.length}
                                         onChange={toggleSelectAll}
                                     />
@@ -422,6 +440,14 @@ export default function SalesPage() {
                     </table>
                 </div>
             </Card>
+
+            {/* Pagination Controls */}
+            <PaginationControls
+                page={page}
+                totalPages={totalPages}
+                setPage={setPage}
+                isLoading={isFetching}
+            />
 
             <Modal
                 isOpen={isModalOpen}
