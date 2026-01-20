@@ -54,7 +54,24 @@ export default function OtherStoresPage() {
 
     // Filters
     const [filterCategoryIds, setFilterCategoryIds] = useState([]);
-    const [searchTerm, setSearchTerm] = useState("");
+
+    // Search
+    const [query, setQuery] = useState("");
+    const [debouncedQuery, setDebouncedQuery] = useState("");
+
+    // Debounce Query
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedQuery(query);
+            setPage(1); // Reset page on new search
+        }, 500);
+        return () => clearTimeout(handler);
+    }, [query]);
+
+    // Reset page on filter change
+    useEffect(() => {
+        setPage(1);
+    }, [filterCategoryIds]);
 
     // Combobox Query
     const [bookQuery, setBookQuery] = useState('');
@@ -65,12 +82,40 @@ export default function OtherStoresPage() {
             setIsFetching(true);
             const db = await getDb();
 
+            // Build Where Clause
+            let whereClause = "";
+            let params = [];
+
+            if (debouncedQuery) {
+                const paramIdx = params.length + 1;
+                // Arabic normalization
+                whereClause += ` AND REPLACE(REPLACE(REPLACE(b.title, 'أ', 'ا'), 'إ', 'ا'), 'آ', 'ا') LIKE '%' || $${paramIdx} || '%' `;
+                params.push(debouncedQuery.replace(/[أإآ]/g, 'ا'));
+            }
+
+            if (filterCategoryIds.length > 0) {
+                for (const catId of filterCategoryIds) {
+                    whereClause += ` AND EXISTS (SELECT 1 FROM other_transaction_category_link otcl_check WHERE otcl_check.transaction_id = ot.id AND otcl_check.category_id = ${catId}) `;
+                }
+            }
+
+            // Fix prefix
+            const finalWhere = whereClause ? `WHERE 1=1 ${whereClause}` : "";
+
             // Count total
-            const countResult = await db.select("SELECT COUNT(*) as count FROM other_transaction");
+            const countQuery = `
+                SELECT COUNT(*) as count 
+                FROM other_transaction ot
+                JOIN book b ON ot.book_id = b.id
+                ${finalWhere}
+            `;
+
+            const countResult = await db.select(countQuery, params);
             const totalItems = countResult[0]?.count || 0;
             setTotalPages(Math.ceil(totalItems / ITEMS_PER_PAGE));
 
             const offset = (page - 1) * ITEMS_PER_PAGE;
+
             const rows = await db.select(`
                 SELECT 
                     ot.id, ot.qty, ot.tx_date, ot.notes,
@@ -81,10 +126,12 @@ export default function OtherStoresPage() {
                 JOIN book b ON ot.book_id = b.id
                 LEFT JOIN other_transaction_category_link otcl ON ot.id = otcl.transaction_id
                 LEFT JOIN other_category oc ON otcl.category_id = oc.id
+                ${finalWhere}
                 GROUP BY ot.id
                 ORDER BY ot.tx_date DESC, ot.id DESC
                 LIMIT ${ITEMS_PER_PAGE} OFFSET ${offset}
-            `);
+            `, params);
+
             const normalizedRows = rows.map(r => ({
                 ...r,
                 category_names: r.category_names ? r.category_names.split(',') : [],
@@ -104,7 +151,7 @@ export default function OtherStoresPage() {
             setLoading(false);
             setIsFetching(false);
         }
-    }, [page]);
+    }, [page, debouncedQuery, filterCategoryIds]);
 
     useEffect(() => {
         fetchData();
@@ -119,12 +166,7 @@ export default function OtherStoresPage() {
             ? books
             : books.filter((book) => normalizeArabic(book.title).includes(normalizeArabic(multiBookQuery))).slice(0, 50);
 
-    const filteredTransactions = transactions.filter(t => {
-        const searchOk = normalizeArabic(t.book_title).includes(normalizeArabic(searchTerm));
-        if (filterCategoryIds.length === 0) return searchOk;
-        // AND logic for filter categories
-        return searchOk && filterCategoryIds.every(fid => t.category_ids.includes(fid));
-    });
+
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -205,10 +247,10 @@ export default function OtherStoresPage() {
     };
 
     const toggleSelectAll = () => {
-        if (selectedIds.length === filteredTransactions.length) {
+        if (selectedIds.length === transactions.length) {
             setSelectedIds([]);
         } else {
-            setSelectedIds(filteredTransactions.map(t => t.id));
+            setSelectedIds(transactions.map(t => t.id));
         }
     };
 
@@ -328,12 +370,12 @@ export default function OtherStoresPage() {
                             <Input
                                 placeholder="بحث عن حركة..."
                                 className="pr-10 pl-10 w-full"
-                                value={searchTerm}
-                                onChange={e => setSearchTerm(e.target.value)}
+                                value={query}
+                                onChange={e => setQuery(e.target.value)}
                             />
-                            {searchTerm && (
+                            {query && (
                                 <button
-                                    onClick={() => setSearchTerm("")}
+                                    onClick={() => setQuery("")}
                                     className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-red-500 transition-colors"
                                 >
                                     <X size={16} />
@@ -379,7 +421,7 @@ export default function OtherStoresPage() {
                         <thead className="bg-primary text-primary-foreground font-bold sticky top-0 z-10 shadow-md">
                             <tr>
                                 <th className="p-4 border-l border-primary-foreground/10 text-center w-10">
-                                    <input type="checkbox" checked={filteredTransactions.length > 0 && selectedIds.length === filteredTransactions.length} onChange={toggleSelectAll} className="w-4 h-4 rounded accent-white" />
+                                    <input type="checkbox" checked={transactions.length > 0 && selectedIds.length === transactions.length} onChange={toggleSelectAll} className="w-4 h-4 rounded accent-white" />
                                 </th>
                                 <th className="p-4 border-l border-primary-foreground/10 w-full text-right">اسم الكتاب</th>
                                 <th className="p-4 border-l border-primary-foreground/10 text-center whitespace-nowrap">العدد</th>
@@ -390,7 +432,7 @@ export default function OtherStoresPage() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
-                            {filteredTransactions.map(t => (
+                            {transactions.map(t => (
                                 <tr key={t.id} className={`odd:bg-muted/30 even:bg-white hover:bg-primary/5 transition-colors ${selectedIds.includes(t.id) ? 'bg-primary/10' : ''}`}>
                                     <td className="p-4 text-center"><input type="checkbox" checked={selectedIds.includes(t.id)} onChange={() => toggleSelect(t.id)} className="w-4 h-4 rounded text-primary" /></td>
                                     <td className="p-4 font-bold text-foreground">

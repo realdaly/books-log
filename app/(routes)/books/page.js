@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { getDb } from "../../lib/db";
 import { normalizeArabic } from "../../lib/utils";
 import { Button, Input, Textarea } from "../../components/ui/Base";
@@ -26,6 +26,7 @@ export default function BooksPage() {
     const [detailsBook, setDetailsBook] = useState(null);
     const [bookStats, setBookStats] = useState(null);
     const [query, setQuery] = useState("");
+    const [debouncedQuery, setDebouncedQuery] = useState("");
     const [editId, setEditId] = useState(null);
     const [filterCategoryIds, setFilterCategoryIds] = useState([]);
     const [manageCategoriesOpen, setManageCategoriesOpen] = useState(false);
@@ -52,20 +53,19 @@ export default function BooksPage() {
             );
     }, [categoryQuery, categories]);
 
-    const filteredBooks = useMemo(() => {
-        let result = books;
+    // Debounce Query
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedQuery(query);
+            setPage(1); // Reset page on new search
+        }, 500);
+        return () => clearTimeout(handler);
+    }, [query]);
 
-        if (query) {
-            const normalizedQuery = normalizeArabic(query);
-            result = result.filter(b => normalizeArabic(b.title).includes(normalizedQuery));
-        }
-
-        if (filterCategoryIds.length > 0) {
-            result = result.filter(b => filterCategoryIds.every(id => b.category_ids.includes(id)));
-        }
-
-        return result;
-    }, [books, query, filterCategoryIds]);
+    // Reset page on filter change
+    useEffect(() => {
+        setPage(1);
+    }, [filterCategoryIds]);
 
     // Handle ESC key to close details
     useEffect(() => {
@@ -79,23 +79,58 @@ export default function BooksPage() {
     }, []);
 
     // Fetch Books
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         try {
             setIsFetching(true);
             const db = await getDb();
-            // Fetch books with Institution transaction stats
-            const countResult = await db.select("SELECT COUNT(*) as count FROM book");
+
+            // Prepare Where Clause
+            let whereClause = "";
+            let params = [];
+
+            if (debouncedQuery) {
+                const paramIdx = params.length + 1;
+                whereClause += ` AND REPLACE(REPLACE(REPLACE(b.title, 'أ', 'ا'), 'إ', 'ا'), 'آ', 'ا') LIKE '%' || $${paramIdx} || '%' `;
+                params.push(debouncedQuery.replace(/[أإآ]/g, 'ا'));
+            }
+
+            // NOTE: Filtering by categories via GROUP_CONCAT in SQL directly is tricky with LIMIT/OFFSET without subqueries.
+            // A simpler approach for category filtering with pagination is using HAVING or EXISTS.
+            // However, since we are doing LEFT JOINs and grouping, we can filter in the HAVING clause for categories if needed,
+            // or better, filter using a subquery/EXISTS for better performance.
+            // AND EXISTS (SELECT 1 FROM book_category_link bcl2 WHERE bcl2.book_id = b.id AND bcl2.category_id IN (...))
+
+            if (filterCategoryIds.length > 0) {
+                // Using dynamic SQL for IN clause due to limitation in simple param binding for arrays in some drivers, 
+                // but assuming we can pass parameters safely.
+                // We will construct the EXISTS clauses.
+
+                for (const catId of filterCategoryIds) {
+                    whereClause += ` AND EXISTS (SELECT 1 FROM book_category_link bcl_check WHERE bcl_check.book_id = b.id AND bcl_check.category_id = ${catId}) `;
+                }
+            }
+
+            // Remove first " AND " if exists (though we started with 1=1 trick usually, here we append to nothing so we need to fix prefix)
+            // Actually we can start with WHERE 1=1
+            const finalWhere = whereClause ? `WHERE 1=1 ${whereClause}` : "";
+
+            // Count Query
+            const countQuery = `SELECT COUNT(*) as count FROM book b ${finalWhere}`;
+            // For count with search, we just count rows in book table matching the title/category criteria.
+            // Does not need the large joins.
+
+            const countResult = await db.select(countQuery, params);
             const totalItems = countResult[0]?.count || 0;
             setTotalPages(Math.ceil(totalItems / ITEMS_PER_PAGE));
 
             const offset = (page - 1) * ITEMS_PER_PAGE;
-            // Fetch books with Institution transaction stats
+
+            // Fetch books
             const rows = await db.select(`
                 SELECT 
                     b.id, b.title, b.cover_image, b.notes, b.total_printed, b.sent_to_institution, b.loss_manual, b.unit_price, b.created_at, b.updated_at,
                     COALESCE(ot.other_qty, 0) as other_stores_total,
                     
-                    -- Institution Aggregates (Transactions)
                     COALESCE(sales.sold_qty, 0) as sold_inst,
                     COALESCE(gifts.gifted_qty, 0) as gifted_inst,
                     COALESCE(loans.loaned_qty, 0) as loaned_inst,
@@ -114,10 +149,11 @@ export default function BooksPage() {
                 LEFT JOIN vw_book_pending_sales_qty pending ON pending.book_id = b.id
                 LEFT JOIN book_category_link bcl ON b.id = bcl.book_id
                 LEFT JOIN book_category cat ON bcl.category_id = cat.id
+                ${finalWhere}
                 GROUP BY b.id
                 ORDER BY b.title ASC
                 LIMIT ${ITEMS_PER_PAGE} OFFSET ${offset}
-            `);
+            `, params);
 
             const normalizedRows = rows.map(r => ({
                 ...r,
@@ -127,6 +163,7 @@ export default function BooksPage() {
 
             setBooks(normalizedRows);
 
+            // Fetch categories only once if empty (usually)
             const catRows = await db.select("SELECT * FROM book_category ORDER BY name ASC");
             setCategories(catRows);
         } catch (err) {
@@ -135,11 +172,11 @@ export default function BooksPage() {
             setLoading(false);
             setIsFetching(false);
         }
-    };
+    }, [page, debouncedQuery, filterCategoryIds]);
 
     useEffect(() => {
         fetchData();
-    }, [page]);
+    }, [fetchData]);
 
     // --- Image Handling ---
     const handleImageUpload = async () => {
@@ -476,7 +513,7 @@ export default function BooksPage() {
                     <input
                         type="checkbox"
                         className="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer accent-emerald-600"
-                        checked={filteredBooks.length > 0 && selectedIds.length === filteredBooks.length}
+                        checked={books.length > 0 && selectedIds.length === books.length}
                         onChange={toggleSelectAll}
                     />
                     <span className="text-xs font-bold text-gray-500 cursor-pointer select-none" onClick={toggleSelectAll}>الكل</span>
@@ -515,7 +552,7 @@ export default function BooksPage() {
 
             {/* Book Grid view */}
             <div className="flex-1 overflow-y-auto grid grid-cols-2 md:grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-4 md:gap-8 pl-2 content-start">
-                {filteredBooks.map(book => (
+                {books.map(book => (
                     <div key={book.id} className="group relative perspective-1000">
                         <div className="relative w-full aspect-[2/3] transition-all duration-300 group-hover:shadow-2xl rounded-lg overflow-hidden bg-white shadow-md border border-gray-200">
 

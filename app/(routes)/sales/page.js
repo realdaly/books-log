@@ -47,6 +47,19 @@ export default function SalesPage() {
     const [bookQuery, setBookQuery] = useState('');
     const [multiBookQuery, setMultiBookQuery] = useState('');
 
+    // Search
+    const [searchQuery, setSearchQuery] = useState("");
+    const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+
+    // Debounce Query
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedSearchQuery(searchQuery);
+            setPage(1); // Reset page on new search
+        }, 500);
+        return () => clearTimeout(handler);
+    }, [searchQuery]);
+
     // Quick Add Party State
     const [isAddPartyOpen, setIsAddPartyOpen] = useState(false);
     const [newPartyForm, setNewPartyForm] = useState({ name: "", phone: "", address: "", notes: "" });
@@ -59,12 +72,48 @@ export default function SalesPage() {
             setIsFetching(true);
             const db = await getDb();
 
+            // Build Where Clause
+            let whereClause = "WHERE t.type = 'sale'";
+            let params = [];
+
+            if (debouncedSearchQuery) {
+                // Determine parameter index
+                const paramIdx = params.length + 1;
+                // Arabic normalization: Replace Alef variants with bare Alef
+                whereClause += ` AND (
+                    REPLACE(REPLACE(REPLACE(b.title, 'أ', 'ا'), 'إ', 'ا'), 'آ', 'ا') LIKE '%' || $${paramIdx} || '%' 
+                    OR 
+                    REPLACE(REPLACE(REPLACE(p.name, 'أ', 'ا'), 'إ', 'ا'), 'آ', 'ا') LIKE '%' || $${paramIdx} || '%'
+                    OR 
+                    t.receipt_no LIKE '%' || $${paramIdx} || '%'
+                )`;
+                // Normalize input: turn all alefs to 'ا'
+                const normalizedQuery = debouncedSearchQuery.replace(/[أإآ]/g, 'ا');
+                params.push(normalizedQuery);
+            }
+
+            if (filterStatus.length > 0) {
+                if (filterStatus.includes('pending')) {
+                    whereClause += " AND t.state = 'pending'";
+                } else {
+                    // Logic for other filters if any... 
+                }
+            }
+
             // Count total
-            const countResult = await db.select("SELECT COUNT(*) as count FROM \"transaction\" WHERE type = 'sale'");
+            const countQuery = `
+                SELECT COUNT(*) as count 
+                FROM "transaction" t
+                JOIN book b ON t.book_id = b.id
+                LEFT JOIN party p ON t.party_id = p.id
+                ${whereClause}
+            `;
+            const countResult = await db.select(countQuery, params);
             const totalItems = countResult[0]?.count || 0;
             setTotalPages(Math.ceil(totalItems / ITEMS_PER_PAGE));
 
             const offset = (page - 1) * ITEMS_PER_PAGE;
+
             const rows = await db.select(`
                 SELECT 
                   t.id, t.qty, t.unit_price, t.total_price, t.receipt_no, t.tx_date, t.notes, t.state,
@@ -73,10 +122,10 @@ export default function SalesPage() {
                 FROM "transaction" t
                 JOIN book b ON t.book_id = b.id
                 LEFT JOIN party p ON t.party_id = p.id
-                WHERE t.type = 'sale'
+                ${whereClause}
                 ORDER BY t.tx_date DESC, t.id DESC
                 LIMIT ${ITEMS_PER_PAGE} OFFSET ${offset}
-            `);
+            `, params);
 
             setTransactions(rows);
 
@@ -91,7 +140,7 @@ export default function SalesPage() {
             setLoading(false);
             setIsFetching(false);
         }
-    }, [page]);
+    }, [page, debouncedSearchQuery, filterStatus]);
 
     useEffect(() => {
         fetchData();
@@ -312,12 +361,9 @@ export default function SalesPage() {
         }
     };
 
+
     if (loading) return <Loader2 className="animate-spin" />;
 
-    const filteredTransactions = transactions.filter(t => {
-        if (filterStatus.length === 0) return true;
-        return filterStatus.includes(t.state);
-    });
 
     return (
         <div className="space-y-6 h-full flex flex-col">
@@ -332,9 +378,30 @@ export default function SalesPage() {
                             </Button>
                         )}
                     </div>
-                    <Button onClick={() => { resetForm(); setEditId(null); setIsModalOpen(true); }}>
-                        <Plus className="ml-2" size={18} /> إضافة بيع
-                    </Button>
+
+                    <div className="flex items-center gap-2">
+                        <div className="relative w-full md:w-64 group">
+                            <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" size={18} />
+                            <Input
+                                placeholder="بحث في المبيعات..."
+                                className="pr-10 pl-10 w-full"
+                                value={searchQuery}
+                                onChange={e => setSearchQuery(e.target.value)}
+                            />
+                            {searchQuery && (
+                                <button
+                                    onClick={() => setSearchQuery("")}
+                                    className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-red-500 transition-colors"
+                                >
+                                    <X size={16} />
+                                </button>
+                            )}
+                        </div>
+
+                        <Button onClick={() => { resetForm(); setEditId(null); setIsModalOpen(true); }}>
+                            <Plus className="ml-2" size={18} /> إضافة بيع
+                        </Button>
+                    </div>
                 </div>
 
                 {/* Status Filter Bar */}
@@ -395,7 +462,7 @@ export default function SalesPage() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
-                            {filteredTransactions.map((t, idx) => (
+                            {transactions.map((t, idx) => (
                                 <tr key={t.id} className={`odd:bg-muted/30 even:bg-white hover:bg-primary/5 transition-colors ${selectedIds.includes(t.id) ? 'bg-primary/10' : ''}`}>
                                     <td className="p-4 text-center border-l border-border/50 w-10">
                                         <input
@@ -429,7 +496,7 @@ export default function SalesPage() {
                                     </td>
                                 </tr>
                             ))}
-                            {filteredTransactions.length === 0 && (
+                            {transactions.length === 0 && (
                                 <tr>
                                     <td colSpan="12" className="p-8 text-center text-muted-foreground">
                                         لا توجد بيانات

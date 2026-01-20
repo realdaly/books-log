@@ -43,6 +43,19 @@ export default function GiftsPage() {
     const [bookQuery, setBookQuery] = useState('');
     const [multiBookQuery, setMultiBookQuery] = useState('');
 
+    // Search
+    const [searchQuery, setSearchQuery] = useState("");
+    const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+
+    // Debounce Query
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedSearchQuery(searchQuery);
+            setPage(1); // Reset page on new search
+        }, 500);
+        return () => clearTimeout(handler);
+    }, [searchQuery]);
+
     // Quick Add Party State
     const [isAddPartyOpen, setIsAddPartyOpen] = useState(false);
     const [newPartyForm, setNewPartyForm] = useState({ name: "", phone: "", address: "", notes: "" });
@@ -52,12 +65,39 @@ export default function GiftsPage() {
             setIsFetching(true);
             const db = await getDb();
 
+            // Build Where Clause
+            let whereClause = "WHERE t.type = 'gift'";
+            let params = [];
+
+            if (debouncedSearchQuery) {
+                // Determine parameter index
+                const paramIdx = params.length + 1;
+                // Arabic normalization: Replace Alef variants with bare Alef
+                whereClause += ` AND (
+                    REPLACE(REPLACE(REPLACE(b.title, 'أ', 'ا'), 'إ', 'ا'), 'آ', 'ا') LIKE '%' || $${paramIdx} || '%' 
+                    OR 
+                    REPLACE(REPLACE(REPLACE(p.name, 'أ', 'ا'), 'إ', 'ا'), 'آ', 'ا') LIKE '%' || $${paramIdx} || '%'
+                )`;
+                // Normalize input: turn all alefs to 'ا'
+                const normalizedQuery = debouncedSearchQuery.replace(/[أإآ]/g, 'ا');
+                params.push(normalizedQuery);
+            }
+
             // Count total items
-            const countResult = await db.select("SELECT COUNT(*) as count FROM \"transaction\" WHERE type = 'gift'");
+            const countQuery = `
+                SELECT COUNT(*) as count 
+                FROM "transaction" t
+                JOIN book b ON t.book_id = b.id
+                LEFT JOIN party p ON t.party_id = p.id
+                ${whereClause}
+            `;
+
+            const countResult = await db.select(countQuery, params);
             const totalItems = countResult[0]?.count || 0;
             setTotalPages(Math.ceil(totalItems / ITEMS_PER_PAGE));
 
             const offset = (page - 1) * ITEMS_PER_PAGE;
+
             const rows = await db.select(`
                 SELECT 
                   t.id, t.qty, t.tx_date, t.notes,
@@ -66,10 +106,10 @@ export default function GiftsPage() {
                 FROM "transaction" t
                 JOIN book b ON t.book_id = b.id
                 LEFT JOIN party p ON t.party_id = p.id
-                WHERE t.type = 'gift'
+                ${whereClause}
                 ORDER BY t.tx_date DESC, t.id DESC
                 LIMIT ${ITEMS_PER_PAGE} OFFSET ${offset}
-            `);
+            `, params);
 
             setTransactions(rows);
 
@@ -85,7 +125,7 @@ export default function GiftsPage() {
             setLoading(false);
             setIsFetching(false);
         }
-    }, [page]);
+    }, [page, debouncedSearchQuery]);
 
     useEffect(() => {
         fetchData();
@@ -272,9 +312,29 @@ export default function GiftsPage() {
                         </Button>
                     )}
                 </div>
-                <Button onClick={() => { resetForm(); setEditId(null); setIsModalOpen(true); }}>
-                    <Plus className="ml-2" size={18} /> إضافة إهداء
-                </Button>
+
+                <div className="flex items-center gap-2">
+                    <div className="relative w-full md:w-64 group">
+                        <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" size={18} />
+                        <Input
+                            placeholder="بحث عن كتاب أو جهة..."
+                            className="pr-10 pl-10 w-full"
+                            value={searchQuery}
+                            onChange={e => setSearchQuery(e.target.value)}
+                        />
+                        {searchQuery && (
+                            <button
+                                onClick={() => setSearchQuery("")}
+                                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-red-500 transition-colors"
+                            >
+                                <X size={16} />
+                            </button>
+                        )}
+                    </div>
+                    <Button onClick={() => { resetForm(); setEditId(null); setIsModalOpen(true); }}>
+                        <Plus className="ml-2" size={18} /> إضافة إهداء
+                    </Button>
+                </div>
             </div>
 
             <Card className="flex-1 p-0 overflow-hidden border-0 shadow-lg bg-white/40">

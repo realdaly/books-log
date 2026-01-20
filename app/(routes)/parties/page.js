@@ -14,6 +14,8 @@ import { writeFile } from '@tauri-apps/plugin-fs';
 
 export default function PartiesPage() {
     const [parties, setParties] = useState([]);
+    const [query, setQuery] = useState('');
+    const [debouncedQuery, setDebouncedQuery] = useState('');
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const ITEMS_PER_PAGE = 50;
@@ -46,6 +48,20 @@ export default function PartiesPage() {
     // Filters
     const [filterCategoryIds, setFilterCategoryIds] = useState([]);
 
+    // Debounce Query
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedQuery(query);
+            setPage(1); // Reset page on new search
+        }, 500);
+        return () => clearTimeout(handler);
+    }, [query]);
+
+    // Reset page on filter change
+    useEffect(() => {
+        setPage(1);
+    }, [filterCategoryIds]);
+
     // Details State
     const [detailsOpen, setDetailsOpen] = useState(false);
     const [selectedParty, setSelectedParty] = useState(null);
@@ -56,13 +72,37 @@ export default function PartiesPage() {
         try {
             setIsFetching(true);
             const db = await getDb();
-            // Fetch Parties with their Category IDs and Names
-            // Fetch Parties with their Category IDs and Names
-            const countResult = await db.select("SELECT COUNT(*) as count FROM party");
+
+            // Build Where Clause
+            let whereClause = "";
+            let params = [];
+
+            if (debouncedQuery) {
+                const paramIdx = params.length + 1;
+                // Arabic normalization
+                whereClause += ` AND REPLACE(REPLACE(REPLACE(p.name, 'أ', 'ا'), 'إ', 'ا'), 'آ', 'ا') LIKE '%' || $${paramIdx} || '%' `;
+                params.push(debouncedQuery.replace(/[أإآ]/g, 'ا'));
+            }
+
+            if (filterCategoryIds.length > 0) {
+                for (const catId of filterCategoryIds) {
+                    whereClause += ` AND EXISTS (SELECT 1 FROM party_category_link pcl_check WHERE pcl_check.party_id = p.id AND pcl_check.category_id = ${catId}) `;
+                }
+            }
+
+            // Fix prefix
+            const finalWhere = whereClause ? `WHERE 1=1 ${whereClause}` : "";
+
+            // Count
+            const countQuery = `SELECT COUNT(*) as count FROM party p ${finalWhere}`;
+            const countResult = await db.select(countQuery, params);
             const totalItems = countResult[0]?.count || 0;
             setTotalPages(Math.ceil(totalItems / ITEMS_PER_PAGE));
 
             const offset = (page - 1) * ITEMS_PER_PAGE;
+
+            // Limit and Offset in Sql
+            // Note: params used in WHERE clause for search.
             const partiesRows = await db.select(`
                 SELECT 
                     p.*,
@@ -71,10 +111,11 @@ export default function PartiesPage() {
                 FROM party p
                 LEFT JOIN party_category_link pcl ON p.id = pcl.party_id
                 LEFT JOIN party_category pc ON pcl.category_id = pc.id
+                ${finalWhere}
                 GROUP BY p.id
                 ORDER BY p.id DESC
                 LIMIT ${ITEMS_PER_PAGE} OFFSET ${offset}
-            `);
+            `, params);
 
             // Normalize to arrays
             const partiesWithCats = partiesRows.map(p => ({
@@ -95,11 +136,11 @@ export default function PartiesPage() {
             setLoading(false);
             setIsFetching(false);
         }
-    }, [page]);
+    }, [page, debouncedQuery, filterCategoryIds]);
 
     useEffect(() => {
         fetchData();
-    }, [page]);
+    }, [fetchData]);
 
     const handleAddCategory = async (e) => {
         e.preventDefault();
@@ -339,20 +380,7 @@ export default function PartiesPage() {
         }
     };
 
-    const filteredTxs = partyTransactions.filter(t => filterType === "all" || t.type === filterType);
-
-    const [searchTerm, setSearchTerm] = useState("");
-
-    const filteredParties = parties.filter(p => {
-        const searchOk = normalizeArabic(p.name).includes(normalizeArabic(searchTerm));
-        if (filterCategoryIds.length === 0) return searchOk;
-
-        // AND logic (must have ALL selected categories)
-        // User requested: "I want the item to never show if I picked a category in the filter that it doesn't have."
-        const catOk = p.categoryIds && filterCategoryIds.every(fid => p.categoryIds.includes(fid));
-
-        return searchOk && catOk;
-    });
+    const [searchTerm, setSearchTerm] = useState(""); /* Keeping for modal internal usage if needed, but likely main bar uses query */
 
     const handleUpdateCategory = async (e) => {
         e.preventDefault();
@@ -386,6 +414,8 @@ export default function PartiesPage() {
 
     if (loading && !detailsOpen) return <div className="flex justify-center items-center h-full"><Loader2 className="animate-spin text-primary" size={48} /></div>;
 
+    const filteredTxs = partyTransactions.filter(t => filterType === 'all' || t.type === filterType);
+
     return (
         <div className="space-y-6 h-full flex flex-col">
             <div className="flex flex-col gap-4">
@@ -406,12 +436,12 @@ export default function PartiesPage() {
                             <Input
                                 placeholder="بحث عن جهة..."
                                 className="pr-10 pl-10 w-full"
-                                value={searchTerm}
-                                onChange={e => setSearchTerm(e.target.value)}
+                                value={query}
+                                onChange={e => setQuery(e.target.value)}
                             />
-                            {searchTerm && (
+                            {query && (
                                 <button
-                                    onClick={() => setSearchTerm("")}
+                                    onClick={() => setQuery("")}
                                     className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-red-500 transition-colors"
                                 >
                                     <X size={16} />
@@ -460,7 +490,7 @@ export default function PartiesPage() {
                                     <input
                                         type="checkbox"
                                         className="w-4 h-4 rounded border-primary-foreground/20 accent-white"
-                                        checked={filteredParties.length > 0 && selectedIds.length === filteredParties.length}
+                                        checked={parties.length > 0 && selectedIds.length === parties.length}
                                         onChange={toggleSelectAll}
                                     />
                                 </th>
@@ -473,7 +503,7 @@ export default function PartiesPage() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
-                            {filteredParties.map(p => (
+                            {parties.map(p => (
                                 <tr key={p.id} className={`odd:bg-muted/30 even:bg-white hover:bg-primary/5 transition-colors ${selectedIds.includes(p.id) ? 'bg-primary/10' : ''}`}>
                                     <td className="p-4 text-center border-l border-border/50 w-10">
                                         <input
@@ -506,7 +536,7 @@ export default function PartiesPage() {
                                     </td>
                                 </tr>
                             ))}
-                            {filteredParties.length === 0 && (
+                            {parties.length === 0 && (
                                 <tr>
                                     <td colSpan="7" className="p-8 text-center text-muted-foreground">
                                         لا توجد بيانات
