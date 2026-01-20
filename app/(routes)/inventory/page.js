@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback } from "react";
 import { getDb } from "../../lib/db";
 import { normalizeArabic } from "../../lib/utils";
 import { Card, Input } from "../../components/ui/Base";
-import { Loader2, Search, X, Check } from "lucide-react";
+import { Loader2, Search, X, Check, Filter } from "lucide-react";
 import Link from "next/link";
 
 export default function InventoryPage() {
@@ -12,6 +12,8 @@ export default function InventoryPage() {
     const [searchTerm, setSearchTerm] = useState("");
     const [publisherName, setPublisherName] = useState("");
     const [successMap, setSuccessMap] = useState({});
+    const [remainingFilter, setRemainingFilter] = useState("all"); // all, low, high
+    const [isFilterOpen, setIsFilterOpen] = useState(false);
 
     const fetchData = useCallback(async () => {
         try {
@@ -97,9 +99,18 @@ export default function InventoryPage() {
         }
     };
 
-    const filteredData = data.filter(r =>
-        normalizeArabic(r.book_title).includes(normalizeArabic(searchTerm))
-    );
+    const filteredData = data.filter(r => {
+        const matchesSearch = normalizeArabic(r.book_title).includes(normalizeArabic(searchTerm));
+
+        let matchesFilter = true;
+        if (remainingFilter === 'low') {
+            matchesFilter = (r.remaining_institution || 0) <= 11;
+        } else if (remainingFilter === 'high') {
+            matchesFilter = (r.remaining_institution || 0) > 11;
+        }
+
+        return matchesSearch && matchesFilter;
+    });
 
     if (loading && data.length === 0) {
         return <div className="flex justify-center items-center h-full"><Loader2 className="animate-spin text-secondary" size={48} /></div>;
@@ -142,7 +153,42 @@ export default function InventoryPage() {
                                 <th className="p-4 min-w-[150px] rounded-tr-lg">عنوان الكتاب</th>
                                 <th className="p-4 text-center w-[75px] border-r border-primary-foreground/10">المطبوع</th>
                                 <th className="p-4 text-center w-[75px] border-r border-primary-foreground/10">الواصل</th>
-                                <th className="p-4 text-center w-[75px] border-r border-primary-foreground/10 font-bold">المتبقي</th>
+                                <th className="p-4 text-center w-[75px] border-r border-primary-foreground/10 font-bold relative group/header">
+                                    <div className="flex items-center justify-center gap-1">
+                                        المتبقي
+                                        <button
+                                            onClick={() => setIsFilterOpen(!isFilterOpen)}
+                                            className={`p-0.5 rounded hover:bg-white/20 transition-colors ${remainingFilter !== 'all' ? 'text-blue-200' : 'text-primary-foreground/50 hover:text-white'}`}
+                                        >
+                                            <Filter size={14} fill={remainingFilter !== 'all' ? "currentColor" : "none"} />
+                                        </button>
+                                    </div>
+                                    {isFilterOpen && (
+                                        <>
+                                            <div className="fixed inset-0 z-20" onClick={() => setIsFilterOpen(false)} />
+                                            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-32 bg-white rounded-md shadow-xl border z-30 overflow-hidden text-right">
+                                                <button
+                                                    onClick={() => { setRemainingFilter('all'); setIsFilterOpen(false); }}
+                                                    className={`w-full px-4 py-2 text-sm hover:bg-gray-100 transition-colors ${remainingFilter === 'all' ? 'font-bold text-primary bg-primary/5' : 'text-gray-700'}`}
+                                                >
+                                                    الكل
+                                                </button>
+                                                <button
+                                                    onClick={() => { setRemainingFilter('low'); setIsFilterOpen(false); }}
+                                                    className={`w-full px-4 py-2 text-sm hover:bg-gray-100 transition-colors ${remainingFilter === 'low' ? 'font-bold text-primary bg-primary/5' : 'text-gray-700'}`}
+                                                >
+                                                    نافد
+                                                </button>
+                                                <button
+                                                    onClick={() => { setRemainingFilter('high'); setIsFilterOpen(false); }}
+                                                    className={`w-full px-4 py-2 text-sm hover:bg-gray-100 transition-colors ${remainingFilter === 'high' ? 'font-bold text-primary bg-primary/5' : 'text-gray-700'}`}
+                                                >
+                                                    متوفر
+                                                </button>
+                                            </div>
+                                        </>
+                                    )}
+                                </th>
                                 <th className="p-4 text-center w-[75px] border-r border-primary-foreground/10 text-orange-300">طور البيع</th>
                                 <th className="p-4 text-center w-[75px] border-r border-primary-foreground/10">المباع</th>
                                 <th className="p-4 text-center w-[75px] border-r border-primary-foreground/10">المهداة</th>
@@ -201,7 +247,13 @@ export default function InventoryPage() {
                                         </td>
 
                                         {/* Computed: Remaining Inst */}
-                                        <td className="p-3 text-center font-bold text-primary border-l border-border/50">{row.remaining_institution}</td>
+                                        {/* Computed: Remaining Inst */}
+                                        <td className={`p-3 text-center font-bold border-l border-border/50 ${(row.remaining_institution || 0) <= 11
+                                            ? "bg-red-500/20 text-red-700 font-black"
+                                            : "text-primary"
+                                            }`}>
+                                            {row.remaining_institution}
+                                        </td>
 
                                         {/* Pending Sale (طور البيع) - Transaction based */}
                                         <td className="p-3 text-center text-foreground border-l border-border/50">{row.pending_institution || '-'}</td>
