@@ -67,6 +67,7 @@ export default function PartiesPage() {
     const [selectedParty, setSelectedParty] = useState(null);
     const [partyTransactions, setPartyTransactions] = useState([]);
     const [filterType, setFilterType] = useState("all");
+    const [saleStatusFilter, setSaleStatusFilter] = useState([]); // ['pending'] or ['final']
 
     const fetchData = useCallback(async () => {
         try {
@@ -414,7 +415,13 @@ export default function PartiesPage() {
 
     /* if (loading && !detailsOpen) return <div className="flex justify-center items-center h-full"><Loader2 className="animate-spin text-primary" size={48} /></div>; */
 
-    const filteredTxs = partyTransactions.filter(t => filterType === 'all' || t.type === filterType);
+    const filteredTxs = partyTransactions.filter(t => {
+        if (filterType !== 'all' && t.type !== filterType) return false;
+        if (filterType === 'sale' && saleStatusFilter.length > 0) {
+            return saleStatusFilter.includes(t.state);
+        }
+        return true;
+    });
 
     return (
         <div className="space-y-6 h-full flex flex-col">
@@ -733,6 +740,33 @@ export default function PartiesPage() {
                         </Button>
                     </div>
 
+                    {/* Sales Status Filter - Only Visible when Sale is Selected */}
+                    {filterType === 'sale' && (
+                        <div className="flex items-center gap-2 pb-2">
+                            <span className="text-xs font-bold text-gray-500">حالة البيع:</span>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => setSaleStatusFilter(prev => prev.includes('final') ? [] : ['final'])}
+                                    className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${saleStatusFilter.includes('final')
+                                        ? "bg-primary text-white border-primary shadow-sm"
+                                        : "bg-white text-gray-600 border-gray-200 hover:border-primary/50"
+                                        }`}
+                                >
+                                    مكتمل
+                                </button>
+                                <button
+                                    onClick={() => setSaleStatusFilter(prev => prev.includes('pending') ? [] : ['pending'])}
+                                    className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${saleStatusFilter.includes('pending')
+                                        ? "bg-primary text-white border-primary shadow-sm"
+                                        : "bg-white text-gray-600 border-gray-200 hover:border-primary/50"
+                                        }`}
+                                >
+                                    طور البيع
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
                     <div id="pdf-export-content" className="p-1">
                         {/* Hidden title for PDF only */}
                         <div className="hidden pdf-only flex flex-col items-center mb-8 border-b-2 border-primary pb-6">
@@ -758,9 +792,13 @@ export default function PartiesPage() {
                                     {filteredTxs.map(t => (
                                         <tr key={t.id} className="hover:bg-primary/5 transition-colors group">
                                             <td className="p-4 border-l border-border/50 text-center">
-                                                {t.type === 'sale' && <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-black">بيع</span>}
+                                                {t.type === 'sale' && (
+                                                    t.state === 'pending'
+                                                        ? <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-black">طور البيع</span>
+                                                        : <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-black">مكتمل</span>
+                                                )}
                                                 {t.type === 'gift' && <span className="px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-black">اهداء</span>}
-                                                {t.type === 'loan' && <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-black">استعارة</span>}
+                                                {t.type === 'loan' && <span className="px-3 py-1 rounded-full bg-indigo-100 text-indigo-800 text-xs font-black">استعارة</span>}
                                             </td>
                                             <td className="p-4 font-bold text-foreground border-l border-border/50 group-hover:text-primary transition-colors">{t.book_title}</td>
                                             <td className="p-4 font-black text-center border-l border-border/50 text-primary text-base">{t.qty}</td>
