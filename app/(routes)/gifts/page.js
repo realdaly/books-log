@@ -113,7 +113,7 @@ export default function GiftsPage() {
 
             setTransactions(rows);
 
-            const booksData = await db.select("SELECT id, title FROM book ORDER BY id DESC");
+            const booksData = await db.select("SELECT id, title FROM book ORDER BY title ASC");
             setBooks(booksData);
 
             const partiesData = await db.select("SELECT id, name FROM party ORDER BY id DESC");

@@ -30,11 +30,14 @@ export function DateInput({ value, onChange, className, required }) {
         }
     };
 
+    const handleBlur = () => {
+        updateValue(day, month, year);
+    };
+
     const handleDayChange = (e) => {
         const val = e.target.value.replace(/\D/g, "").slice(0, 2);
         if (val === "" || (parseInt(val) >= 1 && parseInt(val) <= 31)) {
             setDay(val);
-            updateValue(val, month, year);
         }
     };
 
@@ -42,14 +45,12 @@ export function DateInput({ value, onChange, className, required }) {
         const val = e.target.value.replace(/\D/g, "").slice(0, 2);
         if (val === "" || (parseInt(val) >= 1 && parseInt(val) <= 12)) {
             setMonth(val);
-            updateValue(day, val, year);
         }
     };
 
     const handleYearChange = (e) => {
         const val = e.target.value.replace(/\D/g, "").slice(0, 4);
         setYear(val);
-        updateValue(day, month, val);
     };
 
     const openPicker = () => {
@@ -73,6 +74,7 @@ export function DateInput({ value, onChange, className, required }) {
                 onFocus={(e) => e.target.select()}
                 className="w-8 border-none bg-transparent p-0 text-center focus:outline-none placeholder:text-muted-foreground/50"
                 required={required}
+                onBlur={handleBlur}
             />
             <span className="text-muted-foreground/50 px-1">/</span>
             <input
@@ -83,6 +85,7 @@ export function DateInput({ value, onChange, className, required }) {
                 onFocus={(e) => e.target.select()}
                 className="w-8 border-none bg-transparent p-0 text-center focus:outline-none placeholder:text-muted-foreground/50"
                 required={required}
+                onBlur={handleBlur}
             />
             <span className="text-muted-foreground/50 px-1">/</span>
             <input
@@ -93,6 +96,7 @@ export function DateInput({ value, onChange, className, required }) {
                 onFocus={(e) => e.target.select()}
                 className="w-12 border-none bg-transparent p-0 text-center focus:outline-none placeholder:text-muted-foreground/50"
                 required={required}
+                onBlur={handleBlur}
             />
 
             <div className="flex-1" />
