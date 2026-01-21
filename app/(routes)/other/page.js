@@ -525,7 +525,7 @@ export default function OtherStoresPage() {
                                                     />
                                                 </div>
                                             </ComboboxButton>
-                                            <ComboboxOptions className="absolute mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-50">
+                                            <ComboboxOptions className="absolute mt-1 max-h-44 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-50">
                                                 {filteredBooks.length === 0 && bookQuery !== '' ? (
                                                     <div className="relative cursor-default select-none px-4 py-2 text-gray-700 font-bold">
                                                         لا توجد بيانات.
@@ -640,6 +640,8 @@ export default function OtherStoresPage() {
                                             <ComboboxInput
                                                 className="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-gray-900 focus:ring-0 text-right font-bold"
                                                 displayValue={() => ""}
+                                                onFocus={(e) => e.target.select()}
+                                                onClick={(e) => e.target.select()}
                                                 onChange={(event) => setCategoryQuery(event.target.value)}
                                                 placeholder="اختر التصنيفات..."
                                             />
@@ -657,7 +659,7 @@ export default function OtherStoresPage() {
                                             leaveTo="opacity-0"
                                             afterLeave={() => setCategoryQuery('')}
                                         >
-                                            <ComboboxOptions className="absolute mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-50 custom-scrollbar">
+                                            <ComboboxOptions className="absolute mt-1 max-h-32 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-50 custom-scrollbar">
                                                 {filteredComboboxCategories.length === 0 && categoryQuery !== '' ? (
                                                     <div className="relative cursor-default select-none py-2 px-4 text-gray-700">
                                                         لا توجد نتائج.

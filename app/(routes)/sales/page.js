@@ -751,6 +751,7 @@ export default function SalesPage() {
                                                 className="w-full border-none py-3 pl-3 pr-10 text-sm leading-5 text-gray-900 focus:ring-0 text-right"
                                                 displayValue={(party) => party?.name || ''}
                                                 onFocus={(e) => e.target.select()}
+                                                onClick={(e) => e.target.select()}
                                                 onChange={(event) => setQuery(event.target.value)}
                                                 placeholder="ابحث عن جهة..."
                                             />

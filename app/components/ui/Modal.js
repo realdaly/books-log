@@ -4,7 +4,7 @@ import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react';
 import { X } from "lucide-react";
 import { Button } from "./Base";
 
-export function Modal({ isOpen, onClose, title, children, maxWidth = "max-w-lg" }) {
+export function Modal({ isOpen, onClose, title, children, maxWidth = "max-w-lg", maxHeight = "max-h-[90vh]" }) {
     const [canClose, setCanClose] = useState(false);
 
     useEffect(() => {
@@ -45,7 +45,7 @@ export function Modal({ isOpen, onClose, title, children, maxWidth = "max-w-lg" 
             <div className="fixed inset-0 flex w-screen items-center justify-center p-4">
                 {/* Panel */}
                 <DialogPanel
-                    className={`w-full ${maxWidth} transform rounded-2xl bg-white p-0 text-right shadow-2xl border border-border transition duration-300 ease-out data-[closed]:scale-95 data-[closed]:opacity-0 max-h-[90vh] flex flex-col`}
+                    className={`w-full ${maxWidth} ${maxHeight} transform rounded-2xl bg-white p-0 text-right shadow-2xl border border-border transition duration-300 ease-out data-[closed]:scale-95 data-[closed]:opacity-0 flex flex-col`}
                     dir="rtl"
                 >
                     <div className="flex justify-between items-center p-6 border-b bg-muted/20 shrink-0">
