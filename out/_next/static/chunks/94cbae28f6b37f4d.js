@@ -17,6 +17,9 @@
       -- العدد الكلي الواصل للمؤسسة
       "sent_to_institution" INTEGER NOT NULL DEFAULT 0,
 
+      -- الترتيب
+      "display_order" INTEGER DEFAULT 0,
+
       "created_at" TEXT DEFAULT (date('now')),
       "updated_at" TEXT DEFAULT (date('now')),
 

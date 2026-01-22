@@ -51,6 +51,17 @@ export function DateInput({ value, onChange, className, required }) {
     const handleYearChange = (e) => {
         const val = e.target.value.replace(/\D/g, "").slice(0, 4);
         setYear(val);
+        // Immediate update if year is complete
+        if (val.length === 4) {
+            updateValue(day, month, val);
+        }
+    };
+
+    const handleKeyDown = (e) => {
+        if (e.key === "Enter") {
+            // Force update on Enter before form submission
+            updateValue(day, month, year);
+        }
     };
 
     const openPicker = () => {
@@ -71,6 +82,7 @@ export function DateInput({ value, onChange, className, required }) {
                 placeholder="DD"
                 value={day}
                 onChange={handleDayChange}
+                onKeyDown={handleKeyDown}
                 onFocus={(e) => e.target.select()}
                 className="w-8 border-none bg-transparent p-0 text-center focus:outline-none placeholder:text-muted-foreground/50"
                 required={required}
@@ -82,6 +94,7 @@ export function DateInput({ value, onChange, className, required }) {
                 placeholder="MM"
                 value={month}
                 onChange={handleMonthChange}
+                onKeyDown={handleKeyDown}
                 onFocus={(e) => e.target.select()}
                 className="w-8 border-none bg-transparent p-0 text-center focus:outline-none placeholder:text-muted-foreground/50"
                 required={required}
@@ -93,6 +106,7 @@ export function DateInput({ value, onChange, className, required }) {
                 placeholder="YYYY"
                 value={year}
                 onChange={handleYearChange}
+                onKeyDown={handleKeyDown}
                 onFocus={(e) => e.target.select()}
                 className="w-12 border-none bg-transparent p-0 text-center focus:outline-none placeholder:text-muted-foreground/50"
                 required={required}
