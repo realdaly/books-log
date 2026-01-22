@@ -1,0 +1,122 @@
+"use client";
+import React from 'react';
+import Link from "next/link";
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { Check, GripVertical } from "lucide-react";
+
+export function SortableInventoryRow({ row, updateField, successMap }) {
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: row.book_id });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        zIndex: isDragging ? 10 : 'auto',
+        position: isDragging ? 'relative' : 'static',
+    };
+
+    return (
+        <tr
+            ref={setNodeRef}
+            style={style}
+            className={`odd:bg-muted/30 even:bg-white hover:bg-primary/5 transition-colors group ${isDragging ? 'shadow-lg bg-white/90' : ''}`}
+        >
+            {/* Drag Handle */}
+            <td className="p-3 text-center w-[40px] border-l border-border/50 text-gray-400 cursor-grab active:cursor-grabbing hover:text-primary" {...attributes} {...listeners}>
+                <GripVertical size={16} />
+            </td>
+
+            <td className="p-3 font-bold text-foreground border-l border-border/50">{row.book_title}</td>
+
+            {/* Editable: Total Printed */}
+            <td className="p-2 text-center border-l border-border/50">
+                <div className="relative flex justify-center">
+                    <input
+                        type="number"
+                        min="0"
+                        className="w-14 p-1 text-center bg-transparent border border-transparent hover:border-input rounded-lg focus:bg-white focus:border-primary focus:ring-1 focus:ring-primary transition-all font-medium text-foreground"
+                        defaultValue={row.total_printed}
+                        onBlur={e => updateField(row.book_id, 'total_printed', e.target.value)}
+                        onFocus={e => e.target.select()}
+                        onKeyDown={(e) => e.key === 'Enter' && e.target.blur()}
+                    />
+                    {successMap && successMap[`${row.book_id}_total_printed`] && (
+                        <div className="absolute -top-4 bg-white/90 backdrop-blur border border-emerald-200 shadow-sm rounded-full px-1.5 py-0.5 flex items-center gap-0.5 animate-in fade-in zoom-in slide-in-from-bottom-2">
+                            <Check size={10} className="text-emerald-600" />
+                            <span className="text-[10px] font-bold text-emerald-600">تم</span>
+                        </div>
+                    )}
+                </div>
+            </td>
+
+            {/* Editable: Sent to Inst */}
+            <td className="p-2 text-center border-l border-border/50">
+                <div className="relative flex justify-center">
+                    <input
+                        type="number"
+                        min="0"
+                        className="w-14 p-1 text-center bg-transparent border border-transparent hover:border-input rounded-lg focus:bg-white focus:border-primary focus:ring-1 focus:ring-primary transition-all font-medium text-foreground"
+                        defaultValue={row.sent_to_institution}
+                        onBlur={e => updateField(row.book_id, 'sent_to_institution', e.target.value)}
+                        onFocus={e => e.target.select()}
+                        onKeyDown={(e) => e.key === 'Enter' && e.target.blur()}
+                    />
+                    {successMap && successMap[`${row.book_id}_sent_to_institution`] && (
+                        <div className="absolute -top-4 bg-white/90 backdrop-blur border border-emerald-200 shadow-sm rounded-full px-1.5 py-0.5 flex items-center gap-0.5 animate-in fade-in zoom-in slide-in-from-bottom-2">
+                            <Check size={10} className="text-emerald-600" />
+                            <span className="text-[10px] font-bold text-emerald-600">تم</span>
+                        </div>
+                    )}
+                </div>
+            </td>
+
+            {/* Computed: Remaining Inst */}
+            <td className={`p-3 text-center font-bold border-l border-border/50 ${(row.remaining_institution || 0) <= 11
+                ? "bg-red-500/20 text-red-700 font-black"
+                : "text-primary"
+                }`}>
+                {row.remaining_institution}
+            </td>
+
+            {/* Pending Sale */}
+            <td className="p-3 text-center text-foreground border-l border-border/50">{row.pending_institution || '-'}</td>
+
+            {/* Inst Stats */}
+            <td className="p-3 text-center text-foreground border-l border-border/50">{row.sold_institution}</td>
+            <td className="p-3 text-center text-foreground border-l border-border/50">{row.gifted_institution}</td>
+            <td className="p-3 text-center text-foreground border-l border-border/50">{row.loaned_institution}</td>
+
+            {/* Editable: Manual Loss */}
+            <td className="p-2 text-center border-l border-border/50">
+                <div className="relative flex justify-center">
+                    <input
+                        type="number"
+                        min="0"
+                        className="w-14 p-1 text-center bg-transparent border border-transparent hover:border-input rounded-lg focus:bg-white focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all font-medium text-foreground"
+                        defaultValue={row.loss_manual}
+                        onBlur={e => updateField(row.book_id, 'loss_manual', e.target.value)}
+                        onFocus={e => e.target.select()}
+                        onKeyDown={(e) => e.key === 'Enter' && e.target.blur()}
+                    />
+                    {successMap && successMap[`${row.book_id}_loss_manual`] && (
+                        <div className="absolute -top-4 bg-white/90 backdrop-blur border border-emerald-200 shadow-sm rounded-full px-1.5 py-0.5 flex items-center gap-0.5 animate-in fade-in zoom-in slide-in-from-bottom-2">
+                            <Check size={10} className="text-emerald-600" />
+                            <span className="text-[10px] font-bold text-emerald-600">تم</span>
+                        </div>
+                    )}
+                </div>
+                {row.loss_institution > 0 && <div className="text-[10px] text-red-500 font-bold mt-0.5">+{row.loss_institution}</div>}
+            </td>
+
+            {/* Other Stores Total */}
+            <td className="p-3 text-center font-bold text-foreground border-l border-border/50 border-r border-primary-foreground/10">
+                <Link href={`/other?book_id=${row.book_id}`} className="hover:underline">{row.other_stores_total}</Link>
+            </td>
+
+            {/* Total Remaining - DARKER CELL */}
+            <td className="p-3 text-center font-black text-lg text-primary bg-black/[0.1] group-hover:bg-primary/20 transition-colors border-l border-border/50">
+                {row.remaining_total}
+            </td>
+        </tr>
+    );
+}

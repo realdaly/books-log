@@ -52,6 +52,11 @@ async function ensureSchema(db) {
         if (!columnNames.includes("cover_image")) {
             await db.execute("ALTER TABLE book ADD COLUMN cover_image TEXT");
         }
+        if (!columnNames.includes("display_order")) {
+            await db.execute("ALTER TABLE book ADD COLUMN display_order INTEGER DEFAULT 0");
+            // Basic initialization for existing rows
+            await db.execute("UPDATE book SET display_order = id WHERE display_order = 0");
+        }
 
         // Transaction table migrations
         const txColumns = await db.select("SELECT name FROM pragma_table_info('transaction')");

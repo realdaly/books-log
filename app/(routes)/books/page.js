@@ -10,9 +10,15 @@ import { ask, open, message } from '@tauri-apps/plugin-dialog';
 import { readFile } from '@tauri-apps/plugin-fs';
 import { Combobox, ComboboxInput, ComboboxButton, ComboboxOptions, ComboboxOption, Transition } from '@headlessui/react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, Legend } from 'recharts';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, rectSortingStrategy } from '@dnd-kit/sortable';
+import { SortableBookCard } from "../../components/SortableBookCard";
 
 // Modern Color Palette for Charts
 const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#6b7280']; // Emerald, Blue, Amber, Red, Gray
+
+
+
 
 export default function BooksPage() {
     const [books, setBooks] = useState([]);
@@ -78,6 +84,59 @@ export default function BooksPage() {
         return () => window.removeEventListener("keydown", handleKeyDown);
     }, []);
 
+    // DnD Sensors
+    const sensors = useSensors(
+        useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+        useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+    );
+
+    const handleDragEnd = async (event) => {
+        const { active, over } = event;
+        if (active.id !== over.id) {
+            setBooks((items) => {
+                const oldIndex = items.findIndex((i) => i.id === active.id);
+                const newIndex = items.findIndex((i) => i.id === over.id);
+                const newOrder = arrayMove(items, oldIndex, newIndex);
+
+                // Update DB
+                updateDisplayOrder(newOrder);
+
+                return newOrder;
+            });
+        }
+    };
+
+    const updateDisplayOrder = async (items) => {
+        try {
+            const db = await getDb();
+            // We can do this efficiently with a transaction or batch update
+            // Strategy: Just update the display_order for all items in the current view based on their index
+            // Note: This only reorders the current page. Global reordering with pagination is complex.
+            // Assumption: User drags within the page. We assign order based on global offset?
+            // Simplified: Just update the order of dragged items relative to each other?
+            // Let's use a loop for now for simplicity.
+
+            // To maintain global order across pages, we need to know the 'start' index of this page.
+            const startOrder = (page - 1) * ITEMS_PER_PAGE;
+
+            // NOTE: If we want true reordering, we should probably update the DB integers.
+            // Let's iterate and update. 
+
+            for (let i = 0; i < items.length; i++) {
+                const book = items[i];
+                // Update order to be consistent with visual order
+                // You might want to use a large gap or just sequential
+                // Using offset + i to keep it consistent with pagination
+                await db.execute("UPDATE book SET display_order = $1 WHERE id = $2", [startOrder + i + 1, book.id]);
+            }
+
+        } catch (e) {
+            console.error("Failed to update order", e);
+        }
+    };
+
+    // Fetch Books
+
     // Fetch Books
     const fetchData = useCallback(async () => {
         try {
@@ -128,7 +187,7 @@ export default function BooksPage() {
             // Fetch books
             const rows = await db.select(`
                 SELECT 
-                    b.id, b.title, b.cover_image, b.notes, b.total_printed, b.sent_to_institution, b.loss_manual, b.unit_price, b.created_at, b.updated_at,
+                    b.id, b.title, b.cover_image, b.notes, b.total_printed, b.sent_to_institution, b.loss_manual, b.unit_price, b.created_at, b.updated_at, b.display_order,
                     COALESCE(ot.other_qty, 0) as other_stores_total,
                     
                     COALESCE(sales.sold_qty, 0) as sold_inst,
@@ -151,7 +210,7 @@ export default function BooksPage() {
                 LEFT JOIN book_category cat ON bcl.category_id = cat.id
                 ${finalWhere}
                 GROUP BY b.id
-                ORDER BY b.title ASC
+                ORDER BY b.display_order ASC, b.id DESC
                 LIMIT ${ITEMS_PER_PAGE} OFFSET ${offset}
             `, params);
 
@@ -551,89 +610,49 @@ export default function BooksPage() {
             </div>
 
             {/* Book Grid view */}
-            <div className="flex-1 overflow-y-auto grid grid-cols-2 md:grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-4 md:gap-8 pl-2 content-start">
-                {loading && (
-                    <div className="col-span-full flex flex-col items-center justify-center h-64 text-muted-foreground">
-                        <Loader2 className="animate-spin mb-4 text-primary" size={48} />
-                        <p className="font-bold text-lg">جاري تحميل الكتب...</p>
-                    </div>
-                )}
-                {!loading && books.map(book => (
-                    <div key={book.id} className="group relative perspective-1000">
-                        <div className="relative w-full aspect-[2/3] transition-all duration-300 group-hover:shadow-2xl rounded-lg overflow-hidden bg-white shadow-md border border-gray-200">
-
-                            {/* Book Cover */}
-                            <div className="absolute inset-0 bg-gray-100 flex items-center justify-center overflow-hidden">
-
-                                {/* Selection Checkbox */}
-                                <div className={`absolute top-3 left-3 z-20 ${selectedIds.includes(book.id) ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity duration-200`}>
-                                    <input
-                                        type="checkbox"
-                                        checked={selectedIds.includes(book.id)}
-                                        onClick={(e) => e.stopPropagation()}
-                                        onChange={() => toggleSelect(book.id)}
-                                        className="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary shadow-lg cursor-pointer accent-emerald-600"
-                                    />
-                                </div>
-
-                                {book.cover_image ? (
-                                    <img
-                                        src={book.cover_image}
-                                        alt={book.title}
-                                        className="w-full h-full object-cover"
-                                    />
-                                ) : (
-                                    <div className="flex flex-col items-center justify-center text-gray-400 p-4 text-center">
-                                        <BookOpenText size={48} className="mb-2" />
-                                        <span className="text-xs font-medium line-clamp-2">{book.title}</span>
-                                    </div>
-                                )}
-
-                                {/* Overlay Gradient & Actions */}
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
-                                    <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
-                                        <h3 className="text-white font-bold text-lg leading-tight mb-1 line-clamp-2 drop-shadow-md">{book.title}</h3>
-                                        <p className="text-gray-300 text-xs mb-3">مطبوع: {book.total_printed}</p>
-
-                                        <div className="flex gap-2 justify-between items-center">
-                                            <Button size="sm" variant="secondary" className="h-8 text-xs flex-1 bg-white/90 hover:bg-white text-black border-0" onClick={() => openDetails(book)}>
-                                                <BarChart3 size={14} className="ml-1" /> التفاصيل
-                                            </Button>
-                                            <div className="flex gap-2">
-                                                <button onClick={(e) => { e.stopPropagation(); openEdit(book); }} className="bg-white/20 hover:bg-white p-1.5 rounded-full text-white hover:text-blue-600 transition-colors backdrop-blur-sm"><Edit2 size={16} /></button>
-                                                <button onClick={(e) => { e.stopPropagation(); handleDelete(book.id); }} className="bg-white/20 hover:bg-white p-1.5 rounded-full text-white hover:text-red-600 transition-colors backdrop-blur-sm"><Trash2 size={16} /></button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                            </div>
-
-                            {/* Price Tag (Always Visible) */}
-                            {Number(book.unit_price) > 0 && (
-                                <div className="absolute top-3 right-3 bg-emerald-500/80 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-1 rounded-md shadow-sm z-10">
-                                    {Number(book.unit_price).toLocaleString()}
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Shelf Shadow Effect */}
-                        <div className="absolute -bottom-4 left-4 right-4 h-4 bg-black/20 blur-xl rounded-[100%] opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                    </div>
-                ))}
-
-                {/* Add New Book Card */}
-                {!loading && <button
-                    onClick={() => { setEditId(null); resetForm(); setIsModalOpen(true); }}
-                    className="group relative w-full aspect-[2/3] rounded-xl border-2 border-dashed border-gray-300 hover:border-primary hover:bg-primary/5 flex flex-col items-center justify-center gap-3 transition-all duration-300"
+            <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+            >
+                <SortableContext
+                    items={books}
+                    strategy={rectSortingStrategy}
                 >
-                    <div className="w-16 h-16 rounded-full bg-gray-100 group-hover:bg-white flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform text-gray-400 group-hover:text-primary">
-                        <Plus size={32} />
-                    </div>
-                    <span className="font-bold text-gray-400 group-hover:text-primary text-sm">إضافة كتاب جديد</span>
-                </button>}
-            </div>
+                    <div className="flex-1 overflow-y-auto grid grid-cols-2 md:grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-4 md:gap-8 pl-2 content-start">
+                        {loading && (
+                            <div className="col-span-full flex flex-col items-center justify-center h-64 text-muted-foreground">
+                                <Loader2 className="animate-spin mb-4 text-primary" size={48} />
+                                <p className="font-bold text-lg">جاري تحميل الكتب...</p>
+                            </div>
+                        )}
+                        {!loading && books.map((book) => (
+                            <SortableBookCard
+                                key={book.id}
+                                book={book}
+                                onClick={() => toggleSelect(book.id)}
+                                selectedIds={selectedIds}
+                                toggleSelect={toggleSelect}
+                                openDetails={openDetails}
+                                openEdit={openEdit}
+                                handleDelete={handleDelete}
+                            />
+                        ))}
 
+
+                        {/* Add New Book Card */}
+                        {!loading && <button
+                            onClick={() => { setEditId(null); resetForm(); setIsModalOpen(true); }}
+                            className="group relative w-full aspect-[2/3] rounded-xl border-2 border-dashed border-gray-300 hover:border-primary hover:bg-primary/5 flex flex-col items-center justify-center gap-3 transition-all duration-300"
+                        >
+                            <div className="w-16 h-16 rounded-full bg-gray-100 group-hover:bg-white flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform text-gray-400 group-hover:text-primary">
+                                <Plus size={32} />
+                            </div>
+                            <span className="font-bold text-gray-400 group-hover:text-primary text-sm">إضافة كتاب جديد</span>
+                        </button>}
+                    </div>
+                </SortableContext>
+            </DndContext>
 
 
             {/* Pagination Controls */}
