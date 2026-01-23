@@ -209,9 +209,11 @@ export default function PartiesPage() {
             }
 
             setIsModalOpen(false);
-            setEditId(null);
-            setFormData({ name: "", phone: "", address: "", notes: "" });
-            setFormCategoryIds([]);
+            setTimeout(() => {
+                setEditId(null);
+                setFormData({ name: "", phone: "", address: "", notes: "" });
+                setFormCategoryIds([]);
+            }, 300);
             fetchData();
         } catch (err) {
             console.error(err);

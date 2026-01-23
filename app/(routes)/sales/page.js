@@ -227,8 +227,10 @@ export default function SalesPage() {
             }
 
             setIsModalOpen(false);
-            setEditId(null);
-            resetForm();
+            setTimeout(() => {
+                setEditId(null);
+                resetForm();
+            }, 300);
             fetchData();
         } catch (err) {
             alert("Error saving: " + err.message);

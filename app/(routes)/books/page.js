@@ -435,8 +435,10 @@ export default function BooksPage() {
                 }
             }
             setIsModalOpen(false);
-            setEditId(null);
-            resetForm();
+            setTimeout(() => {
+                setEditId(null);
+                resetForm();
+            }, 300);
             fetchData();
         } catch (err) {
             console.error(err);
