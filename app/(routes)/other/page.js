@@ -266,6 +266,7 @@ export default function OtherStoresPage() {
             notes: row.notes || ""
         });
         setEditId(row.id);
+        setIsMultiMode(false);
         setIsModalOpen(true);
     };
 

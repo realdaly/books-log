@@ -320,6 +320,7 @@ export default function SalesPage() {
             is_pending: row.state === 'pending'
         });
         setEditId(row.id);
+        setIsMultiMode(false);
         setIsModalOpen(true);
     };
 
@@ -611,10 +612,10 @@ export default function SalesPage() {
                             </div>
                         </div>
                     ) : (
-                        <div className="space-y-4">
-                            <div className="flex justify-between items-center bg-gray-50 p-3 rounded-lg border border-dashed border-gray-300">
+                        <div className="space-y-3">
+                            <div className="flex justify-between items-center bg-gray-50 p-1 px-3 rounded-lg">
                                 <span className="text-sm font-bold">اختر الكتب المراد بيعها:</span>
-                                <Button type="button" variant="outline" size="sm" onClick={selectAllBooks}>
+                                <Button className="h-5 px-1 md:h-7 md:px-2" type="button" variant="outline" size="sm" onClick={selectAllBooks}>
                                     {selectedMultiBooks.length === books.length ? "إلغاء تحديد الكل" : "تحديد الكل"}
                                 </Button>
                             </div>
@@ -638,7 +639,7 @@ export default function SalesPage() {
                                 )}
                             </div>
 
-                            <div className="max-h-[200px] overflow-y-auto border rounded-xl divide-y bg-white">
+                            <div className="max-h-[110px] overflow-y-auto border rounded-xl divide-y bg-white">
                                 {filteredMultiBooks.map(book => (
                                     <div
                                         key={book.id}

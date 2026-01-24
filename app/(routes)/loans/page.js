@@ -264,6 +264,7 @@ export default function LoansPage() {
             notes: row.notes || ""
         });
         setEditId(row.id);
+        setIsMultiMode(false);
         setIsModalOpen(true);
     };
 
