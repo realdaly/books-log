@@ -15,7 +15,7 @@ import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, r
 import { SortableBookCard } from "../../components/SortableBookCard";
 
 // Modern Color Palette for Charts
-const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#6b7280']; // Emerald, Blue, Amber, Red, Gray
+const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#6b7280', '#8b5cf6']; // Emerald, Blue, Amber, Red, Gray, Purple
 
 
 
@@ -301,7 +301,13 @@ export default function BooksPage() {
                 realSold + realGifted + realLoaned + realLoss + realPending +
                 manualLoss + otherTotal;
 
-            const currentStock = Math.max(0, totalPrinted - totalOutflows);
+            const institutionOutflows =
+                realSold + realGifted + realLoaned + realLoss + realPending +
+                manualLoss;
+
+            const remainingInstitution = sentInst - institutionOutflows;
+
+            const currentStock = totalPrinted - totalOutflows;
 
             setBookStats({
                 totalPrinted,
@@ -313,6 +319,7 @@ export default function BooksPage() {
                 sentInst,
                 otherTotal,
                 currentStock,
+                remainingInstitution, // New field for "Actual Remaining"
                 totalRevenue
             });
 
@@ -521,12 +528,13 @@ export default function BooksPage() {
 
     const chartData = useMemo(() => {
         if (!bookStats) return [];
+        // Hardcoded colors to ensure stability regardless of filtering
         return [
-            { name: 'مخازن أخرى', value: bookStats.otherTotal },
-            { name: 'مجموع المتبقي', value: bookStats.currentStock },
-            { name: 'مباع', value: bookStats.totalSold },
-            { name: 'اهداء', value: bookStats.totalGifted },
-            { name: 'تالف/مفقود', value: bookStats.manualLoss },
+            { name: 'اهداء', value: bookStats.totalGifted, color: '#f59e0b' },    // Amber
+            { name: 'مباع', value: bookStats.totalSold, color: '#3b82f6' },      // Blue
+            { name: 'استعارات', value: bookStats.realLoaned, color: '#6b7280' }, // Gray (Requested)
+            { name: 'مخازن أخرى', value: bookStats.otherTotal, color: '#10b981' }, // Emerald
+            { name: 'تالف/مفقود', value: bookStats.manualLoss, color: '#ef4444' }, // Red (Requested)
         ].filter(d => d.value > 0);
     }, [bookStats]);
 
@@ -669,7 +677,7 @@ export default function BooksPage() {
             {/* --- Stats Detail Modal --- */}
             {
                 detailsBook && (
-                    <div onClick={() => setDetailsBook(null)} className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200 cursor-pointer">
+                    <div onClick={() => setDetailsBook(null)} className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200 cursor-pointer !m-0">
                         <div onClick={(e) => e.stopPropagation()} className="cursor-default bg-white rounded-[2rem] shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col md:flex-row animate-in zoom-in-95 duration-200 relative">
                             <button onClick={() => setDetailsBook(null)} className="absolute top-4 left-4 z-10 bg-white/80 p-2 rounded-full hover:bg-white shadow-sm transition-all md:text-gray-500 hover:text-black">
                                 ✕
@@ -686,7 +694,7 @@ export default function BooksPage() {
                                         </div>
                                     )}
                                 </div>
-                                <h2 className="text-2xl font-black text-gray-800 mb-2 leading-tight">{detailsBook.title}</h2>
+                                <h2 className="text-xl font-black text-gray-800 mb-2 leading-tight">{detailsBook.title}</h2>
                                 <p className="text-gray-500 text-sm mb-6 max-w-xs mx-auto">{detailsBook.notes || "لا توجد ملاحظات إضافية"}</p>
 
                                 <div className="grid grid-cols-2 gap-4 w-full">
@@ -727,8 +735,8 @@ export default function BooksPage() {
                                         {/* Summary Grid */}
                                         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                                             <div className="p-4 rounded-2xl bg-emerald-50 text-emerald-900">
-                                                <div className="text-sm font-bold opacity-70">مجموع المتبقي</div>
-                                                <div className="text-3xl font-black mt-1">{bookStats.currentStock}</div>
+                                                <div className="text-sm font-bold opacity-70">المتبقي الفعلي</div>
+                                                <div className="text-3xl font-black mt-1">{bookStats.remainingInstitution}</div>
                                             </div>
                                             <div className="p-4 rounded-2xl bg-blue-50 text-blue-900">
                                                 <div className="text-sm font-bold opacity-70">إجمالي المباع</div>
@@ -750,7 +758,7 @@ export default function BooksPage() {
 
                                         {/* Chart Area */}
                                         <div className="bg-white rounded-2xl border p-6 shadow-sm">
-                                            <h4 className="font-bold text-gray-600 mb-4 text-sm">توزيع النسخ المطبوعة</h4>
+                                            <h4 className="font-bold text-gray-600 mb-4 text-sm">توزيع نسخ الكتاب</h4>
                                             <div className="h-64 w-full">
                                                 <ResponsiveContainer width="100%" height="100%">
                                                     <PieChart>
@@ -764,13 +772,21 @@ export default function BooksPage() {
                                                             dataKey="value"
                                                         >
                                                             {chartData.map((entry, index) => (
-                                                                <Cell key={`cell - ${index} `} fill={COLORS[index % COLORS.length]} />
+                                                                <Cell key={`cell-${index}`} fill={entry.color} />
                                                             ))}
                                                         </Pie>
-                                                        <RechartsTooltip />
-                                                        <Legend />
+                                                        <RechartsTooltip formatter={(value) => Number(value).toLocaleString()} />
                                                     </PieChart>
                                                 </ResponsiveContainer>
+                                            </div>
+                                            {/* Custom Legend to ensure correct order */}
+                                            <div className="flex flex-wrap justify-center gap-4 mt-4 px-4">
+                                                {chartData.map((entry, index) => (
+                                                    <div key={index} className="flex items-center gap-2 text-xs font-bold text-gray-600">
+                                                        <span className="w-3 h-3 rounded-full" style={{ backgroundColor: entry.color }}></span>
+                                                        <span>{entry.name}</span>
+                                                    </div>
+                                                ))}
                                             </div>
                                         </div>
 
@@ -797,7 +813,7 @@ export default function BooksPage() {
                                 )}
                             </div>
                         </div>
-                    </div>
+                    </div >
                 )
             }
 
