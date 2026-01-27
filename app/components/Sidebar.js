@@ -12,7 +12,8 @@ import {
     Settings,
     Book,
     Menu,
-    Layers
+    Layers,
+    Building2
 } from "lucide-react";
 import { cn } from "../lib/utils";
 import { Button } from "./ui/Base";
@@ -26,7 +27,8 @@ const navItems = [
     { name: "سجل البيع", href: "/sales", icon: ShoppingCart },
     { name: "الجهات", href: "/parties", icon: Users },
     { name: "الكتب", href: "/books", icon: Library },
-    { name: "مخازن أخرى", href: "/other", icon: Layers },
+    { name: "مخازن أخرى", href: "/stores", icon: Layers },
+    { name: "فروع أخرى", href: "/branches", icon: Building2 },
     { name: "الإعدادات", href: "/settings", icon: Settings },
 ];
 

@@ -197,10 +197,6 @@ export default function InventoryPage() {
 
     const filteredData = data;
 
-    /* if (loading && data.length === 0) {
-        return <div className="flex justify-center items-center h-full"><Loader2 className="animate-spin text-secondary" size={48} /></div>;
-    } */
-
     return (
         <div className="space-y-6 h-full flex flex-col">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -285,7 +281,8 @@ export default function InventoryPage() {
                                     <th className="p-4 text-center w-[75px] border-r border-primary-foreground/10">المهداة</th>
                                     <th className="p-4 text-center w-[75px] border-r border-primary-foreground/10">المستعار</th>
                                     <th className="p-4 text-center w-[75px] border-r border-primary-foreground/10 text-red-200">المفقود</th>
-                                    <th className="p-4 text-center w-[75px] border-r border-primary-foreground/10">مخازن أخرى</th>
+                                    <th className="p-4 text-center w-[75px] border-r border-primary-foreground/10 text-amber-200">مخازن أخرى</th>
+                                    <th className="p-4 text-center w-[75px] border-r border-primary-foreground/10 text-orange-200">فروع أخرى</th>
                                     <th className="p-4 text-center w-[75px] font-black text-white rounded-tl-lg bg-black/40 border-r border-primary-foreground/10">المتبقي الكلي</th>
                                 </tr>
                             </thead>

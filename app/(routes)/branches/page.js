@@ -359,7 +359,7 @@ export default function OtherStoresPage() {
             <div className="flex flex-col gap-4">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div className="flex items-center gap-4">
-                        <h1 className="text-xl md:text-3xl font-bold text-primary">سجل المخازن الأخرى</h1>
+                        <h1 className="text-xl md:text-3xl font-bold text-primary">سجل الفروع الأخرى</h1>
                         {selectedIds.length > 0 && (
                             <Button variant="destructive" size="sm" onClick={handleBulkDelete}>
                                 <Trash2 className="ml-2" size={16} />
@@ -426,10 +426,11 @@ export default function OtherStoresPage() {
                                 <th className="p-4 border-l border-primary-foreground/10 text-center w-10">
                                     <input type="checkbox" checked={transactions.length > 0 && selectedIds.length === transactions.length} onChange={toggleSelectAll} className="w-4 h-4 rounded accent-white" />
                                 </th>
-                                <th className="p-4 border-l border-primary-foreground/10 w-full text-right">اسم الكتاب</th>
-                                <th className="p-4 border-l border-primary-foreground/10 text-center whitespace-nowrap">العدد</th>
-                                <th className="p-4 border-l border-primary-foreground/10 w-[250px] text-right whitespace-nowrap">التصنيفات</th>
-                                <th className="p-4 border-l border-primary-foreground/10 text-center whitespace-nowrap">التاريخ</th>
+                                <th className="p-4 border-l border-primary-foreground/10 whitespace-nowrap w-max">ت</th>
+                                <th className="p-4 border-l border-primary-foreground/10 whitespace-nowrap text-center">التاريخ</th>
+                                <th className="p-4 border-l border-primary-foreground/10 whitespace-nowrap text-center">العدد</th>
+                                <th className="p-4 border-l border-primary-foreground/10 w-1/2 text-right">اسم الكتاب</th>
+                                <th className="p-4 border-l border-primary-foreground/10 w-[200px] text-right whitespace-nowrap">التصنيفات</th>
                                 <th className="p-4 border-l border-primary-foreground/10 w-[210px] text-right whitespace-nowrap">ملاحظات</th>
                                 <th className="p-4 text-center">إجراءات</th>
                             </tr>
@@ -437,7 +438,7 @@ export default function OtherStoresPage() {
                         <tbody className="divide-y divide-border">
                             {loading && (
                                 <tr>
-                                    <td colSpan="7" className="p-12 text-center text-muted-foreground">
+                                    <td colSpan="8" className="p-12 text-center text-muted-foreground">
                                         <div className="flex flex-col items-center justify-center gap-2">
                                             <Loader2 className="animate-spin text-primary" size={32} />
                                             <span className="text-sm font-medium">جاري تحديث البيانات...</span>
@@ -447,19 +448,21 @@ export default function OtherStoresPage() {
                             )}
                             {!loading && transactions.length === 0 && (
                                 <tr>
-                                    <td colSpan="7" className="p-8 text-center text-muted-foreground">
+                                    <td colSpan="8" className="p-8 text-center text-muted-foreground">
                                         لا توجد بيانات
                                     </td>
                                 </tr>
                             )}
-                            {!loading && transactions.map(t => (
+                            {!loading && transactions.map((t, idx) => (
                                 <tr key={t.id} className={`odd:bg-muted/30 even:bg-white hover:bg-primary/5 transition-colors ${selectedIds.includes(t.id) ? 'bg-primary/10' : ''}`}>
                                     <td className="p-4 text-center"><input type="checkbox" checked={selectedIds.includes(t.id)} onChange={() => toggleSelect(t.id)} className="w-4 h-4 rounded text-primary" /></td>
+                                    <td className="p-4 text-center text-muted-foreground border-l border-border/50">{idx + 1}</td>
+                                    <td className="p-4 text-center text-muted-foreground border-l border-border/50 tracking-tighter">{t.tx_date?.split('-').reverse().join('/')}</td>
+                                    <td className="p-4 text-center font-bold text-primary border-l border-border/50">{t.qty}</td>
                                     <td className="p-4 font-bold text-foreground">
                                         <div>{t.book_title}</div>
                                     </td>
-                                    <td className="p-4 text-center text-primary text-base">{t.qty}</td>
-                                    <td className="p-4 w-[250px]">
+                                    <td className="p-4 w-[200px]">
                                         <div className="flex flex-wrap gap-1 overflow-hidden h-6">
                                             {t.category_names.map((name, idx) => (
                                                 <span key={idx} className="px-1.5 py-0.5 bg-gray-100 text-gray-600 text-[10px] rounded border border-gray-200 whitespace-nowrap">{name}</span>
@@ -467,7 +470,6 @@ export default function OtherStoresPage() {
                                             {t.category_names.length === 0 && <span className="text-gray-400 text-xs">-</span>}
                                         </div>
                                     </td>
-                                    <td className="p-4 text-center text-muted-foreground">{t.tx_date?.split('-').reverse().join('/')}</td>
                                     <td className="p-4 text-muted-foreground w-[210px] whitespace-nowrap overflow-hidden text-ellipsis">
                                         <NotesCell text={t.notes} />
                                     </td>

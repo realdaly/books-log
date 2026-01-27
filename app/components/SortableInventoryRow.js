@@ -15,6 +15,12 @@ export function SortableInventoryRow({ row, updateField, successMap }) {
         position: isDragging ? 'relative' : 'static',
     };
 
+    const printed = row.total_printed || 0;
+    const received = row.sent_to_institution || 0;
+    const expected = Math.max(0, printed - received);
+    const logged = row.other_stores_total || 0;
+    const branchDiff = Math.max(0, expected - logged);
+
     return (
         <tr
             ref={setNodeRef}
@@ -108,9 +114,16 @@ export function SortableInventoryRow({ row, updateField, successMap }) {
                 {row.loss_institution > 0 && <div className="text-[10px] text-red-500 font-bold mt-0.5">+{row.loss_institution}</div>}
             </td>
 
-            {/* Other Stores Total */}
-            <td className="p-3 text-center font-bold text-foreground border-l border-border/50 border-r border-primary-foreground/10">
-                <Link href={`/other?book_id=${row.book_id}`} className="hover:underline">{row.other_stores_total}</Link>
+            {/* New Stores (Makhazen) */}
+            <td className="p-3 text-center text-foreground border-l border-l-border/50 border-r border-r-primary-foreground/10">
+                <Link href={`/stores?book_id=${row.book_id}`} className="hover:underline">{row.store_institution || 0}</Link>
+            </td>
+
+            {/* Other Stores Total (Renamed to Branches) - Calculated Value */}
+            <td className="p-3 text-center font-bold text-foreground border-l border-l-border/50 border-r border-r-primary-foreground/10">
+                <Link href={`/branches?book_id=${row.book_id}`} className="hover:underline" title={`متبقي من المطبوع (${expected}) - حركات الفروع الأخرى (${logged}) = ${branchDiff}`}>
+                    {branchDiff}
+                </Link>
             </td>
 
             {/* Total Remaining - DARKER CELL */}

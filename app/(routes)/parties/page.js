@@ -265,10 +265,10 @@ export default function PartiesPage() {
     };
 
     const toggleSelectAll = () => {
-        if (selectedIds.length === filteredParties.length) {
+        if (selectedIds.length === parties.length) {
             setSelectedIds([]);
         } else {
-            setSelectedIds(filteredParties.map(p => p.id));
+            setSelectedIds(parties.map(p => p.id));
         }
     };
 

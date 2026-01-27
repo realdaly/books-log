@@ -282,6 +282,7 @@ export default function BooksPage() {
             const lossDetail = await db.select("SELECT SUM(qty) as total FROM `transaction` WHERE book_id=$1 AND type='loss'", [book.id]);
             const pending = await db.select("SELECT SUM(qty) as total FROM `transaction` WHERE book_id=$1 AND type='sale' AND state='pending'", [book.id]);
             const other = await db.select("SELECT COALESCE(SUM(qty), 0) as total FROM other_transaction WHERE book_id=$1", [book.id]);
+            const stores = await db.select("SELECT SUM(qty) as total FROM `transaction` WHERE book_id=$1 AND type='store'", [book.id]);
             const revenueResult = await db.select("SELECT COALESCE(SUM(COALESCE(total_price, qty * COALESCE(unit_price, 0))), 0) as total FROM `transaction` WHERE book_id=$1 AND type='sale' AND state='final'", [book.id]);
 
             const realSold = sales[0]?.total || 0;
@@ -290,6 +291,7 @@ export default function BooksPage() {
             const realLoss = lossDetail[0]?.total || 0;
             const realPending = pending[0]?.total || 0;
             const otherTotal = other[0]?.total || 0;
+            const storeInstitution = stores[0]?.total || 0;
             const totalRevenue = revenueResult[0]?.total || 0;
 
             const manualLoss = book.loss_manual || 0;
@@ -299,11 +301,11 @@ export default function BooksPage() {
             // Calculations
             const totalOutflows =
                 realSold + realGifted + realLoaned + realLoss + realPending +
-                manualLoss + otherTotal;
+                manualLoss + otherTotal + storeInstitution;
 
             const institutionOutflows =
                 realSold + realGifted + realLoaned + realLoss + realPending +
-                manualLoss;
+                manualLoss + storeInstitution;
 
             const remainingInstitution = sentInst - institutionOutflows;
 
@@ -318,6 +320,7 @@ export default function BooksPage() {
                 manualLoss,
                 sentInst,
                 otherTotal,
+                storeInstitution,
                 currentStock,
                 remainingInstitution, // New field for "Actual Remaining"
                 totalRevenue
@@ -460,10 +463,10 @@ export default function BooksPage() {
     };
 
     const toggleSelectAll = () => {
-        if (selectedIds.length === filteredBooks.length && filteredBooks.length > 0) {
+        if (selectedIds.length === books.length && books.length > 0) {
             setSelectedIds([]);
         } else {
-            setSelectedIds(filteredBooks.map(b => b.id));
+            setSelectedIds(books.map(b => b.id));
         }
     };
 
@@ -533,7 +536,8 @@ export default function BooksPage() {
             { name: 'اهداء', value: bookStats.totalGifted, color: '#f59e0b' },    // Amber
             { name: 'مباع', value: bookStats.totalSold, color: '#3b82f6' },      // Blue
             { name: 'استعارات', value: bookStats.realLoaned, color: '#6b7280' }, // Gray (Requested)
-            { name: 'مخازن أخرى', value: bookStats.otherTotal, color: '#10b981' }, // Emerald
+            { name: 'مخازن أخرى', value: bookStats.storeInstitution, color: '#6366f1' }, // Indigo
+            { name: 'فروع أخرى', value: bookStats.otherTotal, color: '#10b981' }, // Emerald
             { name: 'تالف/مفقود', value: bookStats.manualLoss, color: '#ef4444' }, // Red (Requested)
         ].filter(d => d.value > 0);
     }, [bookStats]);
@@ -746,8 +750,12 @@ export default function BooksPage() {
                                                 <div className="text-sm font-bold opacity-70">إجمالي المهداة</div>
                                                 <div className="text-3xl font-black mt-1">{bookStats.totalGifted}</div>
                                             </div>
-                                            <div className="p-4 rounded-2xl bg-purple-50 text-purple-900">
+                                            <div className="p-4 rounded-2xl bg-indigo-50 text-indigo-900">
                                                 <div className="text-sm font-bold opacity-70">مخازن أخرى</div>
+                                                <div className="text-3xl font-black mt-1">{bookStats.storeInstitution}</div>
+                                            </div>
+                                            <div className="p-4 rounded-2xl bg-orange-50 text-orange-900">
+                                                <div className="text-sm font-bold opacity-70">فروع أخرى</div>
                                                 <div className="text-3xl font-black mt-1">{bookStats.otherTotal}</div>
                                             </div>
                                             <div className="p-4 rounded-2xl bg-teal-50 text-teal-900 col-span-2 lg:col-span-4 flex justify-between items-center">

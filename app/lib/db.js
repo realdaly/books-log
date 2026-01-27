@@ -115,6 +115,25 @@ async function ensureSchema(db) {
             );
         `);
 
+        // Store Categories (Transactions)
+        await db.execute(`
+            CREATE TABLE IF NOT EXISTS "store_category" (
+                "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                "name" VARCHAR(255) NOT NULL,
+                UNIQUE("name")
+            );
+        `);
+
+        await db.execute(`
+            CREATE TABLE IF NOT EXISTS "store_category_link" (
+                "transaction_id" INTEGER NOT NULL,
+                "category_id" INTEGER NOT NULL,
+                PRIMARY KEY ("transaction_id", "category_id"),
+                FOREIGN KEY ("transaction_id") REFERENCES "transaction" ("id") ON DELETE CASCADE,
+                FOREIGN KEY ("category_id") REFERENCES "store_category" ("id") ON DELETE CASCADE
+            );
+        `);
+
     } catch (e) {
         console.error("Schema check/migration error:", e);
     }

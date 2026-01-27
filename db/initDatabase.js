@@ -250,10 +250,25 @@ export default async function initDatabase(db) {
   `);
 
   // -------------------------
+  // Store quantities (New Feature)
+  // -------------------------
+  await db.execute("DROP VIEW IF EXISTS vw_book_store_qty");
+  await db.execute(`
+    CREATE VIEW IF NOT EXISTS "vw_book_store_qty" AS
+    SELECT
+      t.book_id,
+      SUM(t.qty) AS store_qty
+    FROM "transaction" t
+    WHERE t.type = 'store' AND t.state != 'canceled'
+    GROUP BY t.book_id;
+  `);
+
+  // -------------------------
   // Central inventory view
   // Important:
   // - Canceled does not count anywhere
   // -------------------------
+  await db.execute("DROP VIEW IF EXISTS vw_inventory_central");
   await db.execute(`
     CREATE VIEW IF NOT EXISTS "vw_inventory_central" AS
     SELECT
@@ -278,6 +293,11 @@ export default async function initDatabase(db) {
         SELECT loaned_qty FROM vw_book_loans_qty
         WHERE book_id=bk.id
       ), 0) AS loaned_institution,
+      
+      COALESCE((
+        SELECT store_qty FROM vw_book_store_qty
+        WHERE book_id=bk.id
+      ), 0) AS store_institution,
 
       COALESCE((
         SELECT loss_qty FROM vw_book_loss_qty
@@ -295,6 +315,7 @@ export default async function initDatabase(db) {
         - COALESCE((SELECT sold_qty   FROM vw_book_sales_qty WHERE book_id=bk.id), 0)
         - COALESCE((SELECT gifted_qty FROM vw_book_gifts_qty WHERE book_id=bk.id), 0)
         - COALESCE((SELECT loaned_qty FROM vw_book_loans_qty WHERE book_id=bk.id), 0)
+        - COALESCE((SELECT store_qty  FROM vw_book_store_qty WHERE book_id=bk.id), 0) -- New Store Deduction
         - COALESCE((SELECT loss_qty   FROM vw_book_loss_qty  WHERE book_id=bk.id), 0)
         - COALESCE((SELECT pending_qty FROM vw_book_pending_sales_qty WHERE book_id=bk.id), 0)
         - COALESCE(bk.loss_manual, 0)
@@ -312,6 +333,7 @@ export default async function initDatabase(db) {
         - COALESCE((SELECT sold_qty FROM vw_book_sales_qty WHERE book_id=bk.id), 0)
         - COALESCE((SELECT gifted_qty FROM vw_book_gifts_qty WHERE book_id=bk.id), 0)
         - COALESCE((SELECT loaned_qty FROM vw_book_loans_qty WHERE book_id=bk.id), 0)
+        - COALESCE((SELECT store_qty FROM vw_book_store_qty WHERE book_id=bk.id), 0) -- New Store Deduction
         - COALESCE((SELECT loss_qty FROM vw_book_loss_qty WHERE book_id=bk.id), 0)
         - COALESCE((SELECT pending_qty FROM vw_book_pending_sales_qty WHERE book_id=bk.id), 0)
         - COALESCE(bk.loss_manual, 0)
