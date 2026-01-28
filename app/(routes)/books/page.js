@@ -73,16 +73,20 @@ export default function BooksPage() {
         setPage(1);
     }, [filterCategoryIds]);
 
-    // Handle ESC key to close details
+    // Handle ESC key to close details or clear selection
     useEffect(() => {
         const handleKeyDown = (e) => {
             if (e.key === "Escape") {
-                setDetailsBook(null);
+                if (detailsBook) {
+                    setDetailsBook(null);
+                } else if (selectedIds.length > 0) {
+                    setSelectedIds([]);
+                }
             }
         };
         window.addEventListener("keydown", handleKeyDown);
         return () => window.removeEventListener("keydown", handleKeyDown);
-    }, []);
+    }, [detailsBook, selectedIds]);
 
     // DnD Sensors
     const sensors = useSensors(
@@ -550,9 +554,14 @@ export default function BooksPage() {
                 <div className="flex items-center gap-4">
                     <h1 className="text-2xl md:text-4xl font-black text-primary drop-shadow-sm">مكتبة الكتب</h1>
                     {selectedIds.length > 0 && (
-                        <Button variant="destructive" size="sm" onClick={handleBulkDelete} className="h-7 text-xs px-2 animate-in fade-in zoom-in-50">
-                            <Trash2 size={14} className="ml-1" /> حذف ({selectedIds.length})
-                        </Button>
+                        <div className="flex items-center gap-2 animate-in fade-in zoom-in-50">
+                            <Button variant="destructive" size="sm" onClick={handleBulkDelete} className="h-7 text-xs px-2">
+                                <Trash2 size={14} className="ml-1" /> حذف ({selectedIds.length})
+                            </Button>
+                            <Button variant="ghost" size="sm" onClick={() => setSelectedIds([])} className="h-7 text-xs px-2 text-muted-foreground hover:text-foreground">
+                                <X size={14} className="ml-1" /> الغاء التحديد
+                            </Button>
+                        </div>
                     )}
                 </div>
                 <div className="flex items-center gap-4 flex-1 justify-end">

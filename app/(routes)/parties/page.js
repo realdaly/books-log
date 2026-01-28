@@ -143,6 +143,21 @@ export default function PartiesPage() {
         fetchData();
     }, [fetchData]);
 
+    // Handle ESC key to clear selection
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.key === "Escape") {
+                if (detailsOpen) {
+                    setDetailsOpen(false);
+                } else if (selectedIds.length > 0) {
+                    setSelectedIds([]);
+                }
+            }
+        };
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [detailsOpen, selectedIds]);
+
     const handleAddCategory = async (e) => {
         e.preventDefault();
         if (!newCategoryName.trim()) return;
@@ -432,10 +447,15 @@ export default function PartiesPage() {
                     <div className="flex items-center gap-4">
                         <h1 className="text-xl md:text-3xl font-bold text-primary">الجهات</h1>
                         {selectedIds.length > 0 && (
-                            <Button variant="destructive" size="sm" onClick={handleBulkDelete} className="animate-in fade-in slide-in-from-left-2">
-                                <Trash2 className="ml-2" size={16} />
-                                حذف المحدد ({selectedIds.length})
-                            </Button>
+                            <div className="flex items-center gap-2 animate-in fade-in slide-in-from-left-2">
+                                <Button variant="destructive" size="sm" onClick={handleBulkDelete} className="h-7 text-xs px-2">
+                                    <Trash2 className="ml-2" size={16} />
+                                    حذف المحدد ({selectedIds.length})
+                                </Button>
+                                <Button variant="ghost" size="sm" onClick={() => setSelectedIds([])} className="h-7 text-xs px-2 text-muted-foreground hover:text-foreground">
+                                    <X size={14} className="ml-1" /> الغاء التحديد
+                                </Button>
+                            </div>
                         )}
                     </div>
 

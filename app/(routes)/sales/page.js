@@ -146,6 +146,19 @@ export default function SalesPage() {
         fetchData();
     }, [fetchData]);
 
+    // Handle ESC key to clear selection
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.key === "Escape") {
+                if (selectedIds.length > 0) {
+                    setSelectedIds([]);
+                }
+            }
+        };
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [selectedIds]);
+
     // Derived state for Combobox
     const filteredParties =
         query === ''
@@ -375,10 +388,15 @@ export default function SalesPage() {
                     <div className="flex items-center gap-4">
                         <h1 className="text-xl md:text-3xl font-bold text-primary">سجل البيع</h1>
                         {selectedIds.length > 0 && (
-                            <Button variant="destructive" size="sm" onClick={handleBulkDelete} className="animate-in fade-in slide-in-from-left-2">
-                                <Trash2 className="ml-2" size={16} />
-                                حذف المحدد ({selectedIds.length})
-                            </Button>
+                            <div className="flex items-center gap-2 animate-in fade-in slide-in-from-left-2">
+                                <Button variant="destructive" size="sm" onClick={handleBulkDelete} className="h-7 text-xs px-2">
+                                    <Trash2 className="ml-2" size={16} />
+                                    حذف المحدد ({selectedIds.length})
+                                </Button>
+                                <Button variant="ghost" size="sm" onClick={() => setSelectedIds([])} className="h-7 text-xs px-2 text-muted-foreground hover:text-foreground">
+                                    <X size={14} className="ml-1" /> الغاء التحديد
+                                </Button>
+                            </div>
                         )}
                     </div>
 
@@ -654,7 +672,7 @@ export default function SalesPage() {
                                             <span className="font-bold text-sm">{book.title}</span>
                                         </div>
                                         {selectedMultiBooks.find(b => b.book.id === book.id) && (
-                                            <div className="flex gap-2 items-center">
+                                            <div className="flex gap-2 items-center" onClick={(e) => e.stopPropagation()}>
                                                 <div className="flex flex-col">
                                                     <label className="text-[10px] text-muted-foreground">العدد</label>
                                                     <Input
