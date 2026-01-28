@@ -620,20 +620,20 @@ export default function PartiesPage() {
                                     multiple
                                 >
                                     <div className="relative mt-1">
-                                        <ComboboxButton as="div" className="py-1 relative w-full cursor-default overflow-hidden rounded-lg bg-white text-left shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm border">
+                                        <div className="py-1 relative w-full cursor-default overflow-hidden rounded-lg bg-white text-left shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm border">
                                             <ComboboxInput
                                                 className="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-gray-900 focus:ring-0 text-right font-bold"
                                                 displayValue={() => ""}
                                                 onChange={(event) => setCategoryQuery(event.target.value)}
                                                 placeholder="اختر التصنيفات..."
                                             />
-                                            <div className="absolute inset-y-0 right-0 flex items-center pr-2">
+                                            <ComboboxButton className="absolute inset-y-0 right-0 flex items-center pr-2">
                                                 <ChevronsUpDown
                                                     className="h-5 w-5 text-gray-400"
                                                     aria-hidden="true"
                                                 />
-                                            </div>
-                                        </ComboboxButton>
+                                            </ComboboxButton>
+                                        </div>
                                         <Transition
                                             as="div"
                                             leave="transition ease-in duration-100"

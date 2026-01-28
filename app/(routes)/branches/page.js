@@ -139,7 +139,7 @@ export default function OtherStoresPage() {
             }));
             setTransactions(normalizedRows);
 
-            const booksData = await db.select("SELECT id, title FROM book ORDER BY id DESC");
+            const booksData = await db.select("SELECT id, title FROM book ORDER BY display_order ASC, title ASC");
             setBooks(booksData);
 
             const catRows = await db.select("SELECT * FROM other_category ORDER BY name ASC");
@@ -515,7 +515,7 @@ export default function OtherStoresPage() {
                                 <div className="relative w-full">
                                     <Combobox value={formData.book_id} onChange={(val) => setFormData({ ...formData, book_id: val })} onClose={() => setBookQuery('')}>
                                         <div className="relative mt-1">
-                                            <ComboboxButton as="div" className="relative w-full cursor-default overflow-hidden rounded-lg bg-white text-right shadow-md border focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm py-1">
+                                            <div className="relative w-full cursor-default overflow-hidden rounded-lg bg-white text-right shadow-md border focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm py-1">
                                                 <ComboboxInput
                                                     className="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-gray-900 focus:ring-0 text-right"
                                                     displayValue={b => b?.title || ''}
@@ -523,13 +523,13 @@ export default function OtherStoresPage() {
                                                     onChange={e => setBookQuery(e.target.value)}
                                                     placeholder="اختر كتاباً..."
                                                 />
-                                                <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                                                <ComboboxButton className="absolute inset-y-0 right-0 flex items-center pr-2">
                                                     <ChevronsUpDown
                                                         className="h-5 w-5 text-gray-400"
                                                         aria-hidden="true"
                                                     />
-                                                </div>
-                                            </ComboboxButton>
+                                                </ComboboxButton>
+                                            </div>
                                             <ComboboxOptions className="absolute mt-1 max-h-44 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-50">
                                                 {filteredBooks.length === 0 && bookQuery !== '' ? (
                                                     <div className="relative cursor-default select-none px-4 py-2 text-gray-700 font-bold">
@@ -641,7 +641,7 @@ export default function OtherStoresPage() {
                                     multiple
                                 >
                                     <div className="relative mt-1">
-                                        <ComboboxButton as="div" className="py-1 relative w-full cursor-default overflow-hidden rounded-lg bg-white text-left shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm border">
+                                        <div className="py-1 relative w-full cursor-default overflow-hidden rounded-lg bg-white text-left shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm border">
                                             <ComboboxInput
                                                 className="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-gray-900 focus:ring-0 text-right font-bold"
                                                 displayValue={() => ""}
@@ -650,13 +650,13 @@ export default function OtherStoresPage() {
                                                 onChange={(event) => setCategoryQuery(event.target.value)}
                                                 placeholder="اختر التصنيفات..."
                                             />
-                                            <div className="absolute inset-y-0 right-0 flex items-center pr-2">
+                                            <ComboboxButton className="absolute inset-y-0 right-0 flex items-center pr-2">
                                                 <ChevronsUpDown
                                                     className="h-5 w-5 text-gray-400"
                                                     aria-hidden="true"
                                                 />
-                                            </div>
-                                        </ComboboxButton>
+                                            </ComboboxButton>
+                                        </div>
                                         <Transition
                                             as="div"
                                             leave="transition ease-in duration-100"

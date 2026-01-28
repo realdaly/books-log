@@ -145,7 +145,15 @@
       SUM(ot.qty) AS other_qty
     FROM "other_transaction" ot
     GROUP BY ot.book_id;
-  `),await t.execute(`
+  `),await t.execute("DROP VIEW IF EXISTS vw_book_store_qty"),await t.execute(`
+    CREATE VIEW IF NOT EXISTS "vw_book_store_qty" AS
+    SELECT
+      t.book_id,
+      SUM(t.qty) AS store_qty
+    FROM "transaction" t
+    WHERE t.type = 'store' AND t.state != 'canceled'
+    GROUP BY t.book_id;
+  `),await t.execute("DROP VIEW IF EXISTS vw_inventory_central"),await t.execute(`
     CREATE VIEW IF NOT EXISTS "vw_inventory_central" AS
     SELECT
       bk.id AS book_id,
@@ -169,6 +177,11 @@
         SELECT loaned_qty FROM vw_book_loans_qty
         WHERE book_id=bk.id
       ), 0) AS loaned_institution,
+      
+      COALESCE((
+        SELECT store_qty FROM vw_book_store_qty
+        WHERE book_id=bk.id
+      ), 0) AS store_institution,
 
       COALESCE((
         SELECT loss_qty FROM vw_book_loss_qty
@@ -186,6 +199,7 @@
         - COALESCE((SELECT sold_qty   FROM vw_book_sales_qty WHERE book_id=bk.id), 0)
         - COALESCE((SELECT gifted_qty FROM vw_book_gifts_qty WHERE book_id=bk.id), 0)
         - COALESCE((SELECT loaned_qty FROM vw_book_loans_qty WHERE book_id=bk.id), 0)
+        - COALESCE((SELECT store_qty  FROM vw_book_store_qty WHERE book_id=bk.id), 0) -- New Store Deduction
         - COALESCE((SELECT loss_qty   FROM vw_book_loss_qty  WHERE book_id=bk.id), 0)
         - COALESCE((SELECT pending_qty FROM vw_book_pending_sales_qty WHERE book_id=bk.id), 0)
         - COALESCE(bk.loss_manual, 0)
@@ -203,6 +217,7 @@
         - COALESCE((SELECT sold_qty FROM vw_book_sales_qty WHERE book_id=bk.id), 0)
         - COALESCE((SELECT gifted_qty FROM vw_book_gifts_qty WHERE book_id=bk.id), 0)
         - COALESCE((SELECT loaned_qty FROM vw_book_loans_qty WHERE book_id=bk.id), 0)
+        - COALESCE((SELECT store_qty FROM vw_book_store_qty WHERE book_id=bk.id), 0) -- New Store Deduction
         - COALESCE((SELECT loss_qty FROM vw_book_loss_qty WHERE book_id=bk.id), 0)
         - COALESCE((SELECT pending_qty FROM vw_book_pending_sales_qty WHERE book_id=bk.id), 0)
         - COALESCE(bk.loss_manual, 0)
