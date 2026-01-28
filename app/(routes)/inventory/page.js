@@ -5,7 +5,6 @@ import { normalizeArabic } from "../../lib/utils";
 import { Card, Input } from "../../components/ui/Base";
 import { Loader2, Search, X, Check, Filter } from "lucide-react";
 import { PaginationControls } from "../../components/ui/PaginationControls";
-import Link from "next/link";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { SortableInventoryRow } from "../../components/SortableInventoryRow";
@@ -76,8 +75,11 @@ export default function InventoryPage() {
             let params = [];
 
             if (searchTerm) {
-                whereClauses.push("v.book_title LIKE '%' || $1 || '%'");
-                params.push(searchTerm);
+                // Determine parameter index
+                const paramIdx = params.length + 1;
+                whereClauses.push(`REPLACE(REPLACE(REPLACE(v.book_title, 'أ', 'ا'), 'إ', 'ا'), 'آ', 'ا') LIKE '%' || $${paramIdx} || '%'`);
+                const normalizedQuery = searchTerm.replace(/[أإآ]/g, 'ا');
+                params.push(normalizedQuery);
             }
 
             if (remainingFilter === 'low') {
@@ -282,7 +284,7 @@ export default function InventoryPage() {
                                     <th className="p-4 text-center w-[75px] border-r border-primary-foreground/10">المستعار</th>
                                     <th className="p-4 text-center w-[75px] border-r border-primary-foreground/10 text-red-200">المفقود</th>
                                     <th className="p-4 text-center w-[75px] border-r border-primary-foreground/10 text-amber-200">مخازن أخرى</th>
-                                    <th className="p-4 text-center w-[75px] border-r border-primary-foreground/10 text-orange-200">فروع أخرى</th>
+                                    <th className="p-4 text-center w-[75px] border-r border-primary-foreground/10 text-orange-200">متبقي الفروع</th>
                                     <th className="p-4 text-center w-[75px] font-black text-white rounded-tl-lg bg-black/40 border-r border-primary-foreground/10">المتبقي الكلي</th>
                                 </tr>
                             </thead>

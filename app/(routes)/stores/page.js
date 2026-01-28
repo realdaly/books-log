@@ -450,7 +450,14 @@ export default function StoresPage() {
                             {loading && <tr><td colSpan="8" className="p-12 text-center text-muted-foreground"><Loader2 className="animate-spin text-primary mx-auto" size={32} /></td></tr>}
                             {!loading && transactions.map((t, idx) => (
                                 <tr key={t.id} className={`odd:bg-muted/30 even:bg-white hover:bg-primary/5 transition-colors ${selectedIds.includes(t.id) ? 'bg-primary/10' : ''}`}>
-                                    <td className="p-4 text-center border-l border-border/50"><input type="checkbox" checked={selectedIds.includes(t.id)} onChange={() => toggleSelect(t.id)} className="w-4 h-4 rounded text-primary" /></td>
+                                    <td className="p-4 text-center border-l border-border/50 cursor-pointer" onClick={() => toggleSelect(t.id)}>
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedIds.includes(t.id)}
+                                            className="w-4 h-4 rounded text-primary pointer-events-none"
+                                            readOnly
+                                        />
+                                    </td>
                                     <td className="p-4 text-center text-muted-foreground border-l border-border/50">{idx + 1}</td>
                                     <td className="p-4 text-center text-muted-foreground border-l border-border/50 tracking-tighter">{t.tx_date?.split('-').reverse().join('/')}</td>
                                     <td className="p-4 text-center font-bold text-primary border-l border-border/50">{t.qty}</td>

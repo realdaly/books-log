@@ -544,12 +544,12 @@ export default function PartiesPage() {
                             )}
                             {!loading && parties.map(p => (
                                 <tr key={p.id} className={`odd:bg-muted/30 even:bg-white hover:bg-primary/5 transition-colors ${selectedIds.includes(p.id) ? 'bg-primary/10' : ''}`}>
-                                    <td className="p-4 text-center border-l border-border/50 w-10">
+                                    <td className="p-4 text-center border-l border-border/50 w-10 cursor-pointer" onClick={() => toggleSelect(p.id)}>
                                         <input
                                             type="checkbox"
-                                            className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+                                            className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary pointer-events-none"
                                             checked={selectedIds.includes(p.id)}
-                                            onChange={() => toggleSelect(p.id)}
+                                            readOnly
                                         />
                                     </td>
                                     <td className="p-4 font-bold text-foreground border-l border-border/50">

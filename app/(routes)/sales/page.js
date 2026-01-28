@@ -495,12 +495,12 @@ export default function SalesPage() {
                             )}
                             {!loading && transactions.map((t, idx) => (
                                 <tr key={t.id} className={`odd:bg-muted/30 even:bg-white hover:bg-primary/5 transition-colors ${selectedIds.includes(t.id) ? 'bg-primary/10' : ''}`}>
-                                    <td className="p-4 text-center border-l border-border/50 w-10">
+                                    <td className="p-4 text-center border-l border-border/50 w-10 cursor-pointer" onClick={() => toggleSelect(t.id)}>
                                         <input
                                             type="checkbox"
-                                            className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+                                            className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary pointer-events-none"
                                             checked={selectedIds.includes(t.id)}
-                                            onChange={() => toggleSelect(t.id)}
+                                            readOnly
                                         />
                                     </td>
                                     <td className="p-4 border-l border-border/50 text-center whitespace-nowrap">
