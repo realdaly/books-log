@@ -326,7 +326,9 @@ export default function BooksPage() {
                 otherTotal,
                 storeInstitution,
                 currentStock,
-                remainingInstitution, // New field for "Actual Remaining"
+                currentStock,
+                remainingInstitution,
+                remainingBranches: Math.max(0, (totalPrinted - sentInst) - otherTotal), // Calculated exactly as in Inventory
                 totalRevenue
             });
 
@@ -539,9 +541,7 @@ export default function BooksPage() {
         return [
             { name: 'اهداء', value: bookStats.totalGifted, color: '#f59e0b' },    // Amber
             { name: 'مباع', value: bookStats.totalSold, color: '#3b82f6' },      // Blue
-            { name: 'استعارات', value: bookStats.realLoaned, color: '#6b7280' }, // Gray (Requested)
             { name: 'مخازن أخرى', value: bookStats.storeInstitution, color: '#6366f1' }, // Indigo
-            { name: 'فروع أخرى', value: bookStats.otherTotal, color: '#10b981' }, // Emerald
             { name: 'تالف/مفقود', value: bookStats.manualLoss, color: '#ef4444' }, // Red (Requested)
         ].filter(d => d.value > 0);
     }, [bookStats]);
@@ -691,7 +691,7 @@ export default function BooksPage() {
             {
                 detailsBook && (
                     <div onClick={() => setDetailsBook(null)} className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200 cursor-pointer !m-0">
-                        <div onClick={(e) => e.stopPropagation()} className="cursor-default bg-white rounded-[2rem] shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col md:flex-row animate-in zoom-in-95 duration-200 relative">
+                        <div onClick={(e) => e.stopPropagation()} className="cursor-default bg-white rounded-[2rem] shadow-2xl w-full max-w-7xl max-h-[90vh] overflow-hidden flex flex-col md:flex-row animate-in zoom-in-95 duration-200 relative">
                             <button onClick={() => setDetailsBook(null)} className="absolute top-4 left-4 z-10 bg-white/80 p-2 rounded-full hover:bg-white shadow-sm transition-all md:text-gray-500 hover:text-black">
                                 ✕
                             </button>
@@ -735,7 +735,7 @@ export default function BooksPage() {
                             </div>
 
                             {/* Right Side: Charts & Stats */}
-                            <div className="w-full md:w-2/3 p-8 overflow-y-auto">
+                            <div className="w-full md:w-4/6 p-8 overflow-y-auto">
                                 <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
                                     <BarChart3 className="text-primary" />
                                     إحصائيات الكتاب
@@ -746,28 +746,37 @@ export default function BooksPage() {
                                 ) : bookStats && (
                                     <div className="space-y-8">
                                         {/* Summary Grid */}
-                                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                                            <div className="p-4 rounded-2xl bg-emerald-50 text-emerald-900">
-                                                <div className="text-sm font-bold opacity-70">المتبقي الفعلي</div>
-                                                <div className="text-3xl font-black mt-1">{bookStats.remainingInstitution}</div>
+                                        <div className="flex flex-col gap-6">
+                                            {/* Top Row: 6 Stats */}
+                                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                                                <div className="text-center p-3 rounded-2xl bg-emerald-50 text-emerald-900 shadow-sm border border-emerald-100/50">
+                                                    <div className="text-xs font-bold opacity-70 whitespace-nowrap">المتبقي الفعلي</div>
+                                                    <div className="text-2xl font-black mt-1">{bookStats.remainingInstitution}</div>
+                                                </div>
+                                                <div className="text-center p-3 rounded-2xl bg-blue-50 text-blue-900 shadow-sm border border-blue-100/50">
+                                                    <div className="text-xs font-bold opacity-70 whitespace-nowrap">إجمالي المباع</div>
+                                                    <div className="text-2xl font-black mt-1">{bookStats.totalSold}</div>
+                                                </div>
+                                                <div className="text-center p-3 rounded-2xl bg-amber-50 text-amber-900 shadow-sm border border-amber-100/50">
+                                                    <div className="text-xs font-bold opacity-70 whitespace-nowrap">إجمالي المهداة</div>
+                                                    <div className="text-2xl font-black mt-1">{bookStats.totalGifted}</div>
+                                                </div>
+                                                <div className="text-center p-3 rounded-2xl bg-gray-50 text-gray-900 shadow-sm border border-gray-100/50">
+                                                    <div className="text-xs font-bold opacity-70 whitespace-nowrap">إجمالي المستعار</div>
+                                                    <div className="text-2xl font-black mt-1">{bookStats.realLoaned}</div>
+                                                </div>
+                                                <div className="text-center p-3 rounded-2xl bg-indigo-50 text-indigo-900 shadow-sm border border-indigo-100/50">
+                                                    <div className="text-xs font-bold opacity-70 whitespace-nowrap">مخازن أخرى</div>
+                                                    <div className="text-2xl font-black mt-1">{bookStats.storeInstitution}</div>
+                                                </div>
+                                                <div className="text-center p-3 rounded-2xl bg-orange-50 text-orange-900 shadow-sm border border-orange-100/50">
+                                                    <div className="text-xs font-bold opacity-70 whitespace-nowrap">فروع أخرى</div>
+                                                    <div className="text-2xl font-black mt-1">{bookStats.otherTotal}</div>
+                                                </div>
                                             </div>
-                                            <div className="p-4 rounded-2xl bg-blue-50 text-blue-900">
-                                                <div className="text-sm font-bold opacity-70">إجمالي المباع</div>
-                                                <div className="text-3xl font-black mt-1">{bookStats.totalSold}</div>
-                                            </div>
-                                            <div className="p-4 rounded-2xl bg-amber-50 text-amber-900">
-                                                <div className="text-sm font-bold opacity-70">إجمالي المهداة</div>
-                                                <div className="text-3xl font-black mt-1">{bookStats.totalGifted}</div>
-                                            </div>
-                                            <div className="p-4 rounded-2xl bg-indigo-50 text-indigo-900">
-                                                <div className="text-sm font-bold opacity-70">مخازن أخرى</div>
-                                                <div className="text-3xl font-black mt-1">{bookStats.storeInstitution}</div>
-                                            </div>
-                                            <div className="p-4 rounded-2xl bg-orange-50 text-orange-900">
-                                                <div className="text-sm font-bold opacity-70">فروع أخرى</div>
-                                                <div className="text-3xl font-black mt-1">{bookStats.otherTotal}</div>
-                                            </div>
-                                            <div className="p-4 rounded-2xl bg-teal-50 text-teal-900 col-span-2 lg:col-span-4 flex justify-between items-center">
+
+                                            {/* Revenue Card (Full Width) */}
+                                            <div className="p-4 rounded-2xl bg-teal-50 text-teal-900 flex justify-between items-center shadow-sm border border-teal-100/50">
                                                 <div className="text-sm font-bold opacity-70">إجمالي الأرباح (المبيعات)</div>
                                                 <div className="text-2xl font-black">{Number(bookStats.totalRevenue).toLocaleString()} دينار عراقي</div>
                                             </div>
@@ -814,8 +823,8 @@ export default function BooksPage() {
                                                 <span className="font-bold text-gray-800">{bookStats.sentInst}</span>
                                             </div>
                                             <div className="flex justify-between border-b py-2">
-                                                <span>استعارات (كتب خارجية)</span>
-                                                <span className="font-bold text-gray-800">{bookStats.realLoaned}</span>
+                                                <span>متبقي الفروع</span>
+                                                <span className="font-bold text-gray-800">{bookStats.remainingBranches}</span>
                                             </div>
                                             <div className="flex justify-between border-b py-2">
                                                 <span>قيد البيع (لم يكتمل)</span>
