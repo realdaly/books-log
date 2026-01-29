@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { getDb } from "../../lib/db";
 import { normalizeArabic } from "../../lib/utils";
 import { Card, Button, Input, Textarea } from "../../components/ui/Base";
@@ -32,7 +32,8 @@ export default function PartiesPage() {
     // Category Management
     const [manageCategoriesOpen, setManageCategoriesOpen] = useState(false);
     const [editingCategory, setEditingCategory] = useState(null);
-    const [categoryQuery, setCategoryQuery] = useState("");
+    const [categoryQuery, setCategoryQuery] = useState('');
+    const comboBtnRef = useRef(null);
 
     const filteredComboboxCategories = useMemo(() => {
         return categoryQuery === ""
@@ -306,7 +307,7 @@ export default function PartiesPage() {
         try {
             const db = await getDb();
             const txs = await db.select(`
-            SELECT t.*, b.title as book_title
+            SELECT t.*, b.title as book_title, b.display_order
             FROM "transaction" t
             JOIN book b ON t.book_id = b.id
             WHERE t.party_id = $1
@@ -432,13 +433,22 @@ export default function PartiesPage() {
 
     /* if (loading && !detailsOpen) return <div className="flex justify-center items-center h-full"><Loader2 className="animate-spin text-primary" size={48} /></div>; */
 
-    const filteredTxs = partyTransactions.filter(t => {
-        if (filterType !== 'all' && t.type !== filterType) return false;
-        if (filterType === 'sale' && saleStatusFilter.length > 0) {
-            return saleStatusFilter.includes(t.state);
+    const filteredTxs = useMemo(() => {
+        let result = partyTransactions.filter(t => {
+            if (filterType !== 'all' && t.type !== filterType) return false;
+            if (filterType === 'sale' && saleStatusFilter.length > 0) {
+                return saleStatusFilter.includes(t.state);
+            }
+            return true;
+        });
+
+        // Sort by manual book order for Gifts and Loans
+        if (filterType === 'gift' || filterType === 'loan') {
+            result.sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
         }
-        return true;
-    });
+
+        return result;
+    }, [partyTransactions, filterType, saleStatusFilter]);
 
     return (
         <div className="space-y-6 h-full flex flex-col">
@@ -639,67 +649,70 @@ export default function PartiesPage() {
                                     onChange={(ids) => setFormCategoryIds(ids)}
                                     multiple
                                 >
-                                    <div className="relative mt-1">
-                                        <div className="py-1 relative w-full cursor-default overflow-hidden rounded-lg bg-white text-left shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm border">
-                                            <ComboboxInput
-                                                className="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-gray-900 focus:ring-0 text-right font-bold"
-                                                displayValue={() => ""}
-                                                onChange={(event) => setCategoryQuery(event.target.value)}
-                                                placeholder="اختر التصنيفات..."
-                                            />
-                                            <ComboboxButton className="absolute inset-y-0 right-0 flex items-center pr-2">
-                                                <ChevronsUpDown
-                                                    className="h-5 w-5 text-gray-400"
-                                                    aria-hidden="true"
+                                    {({ open }) => (
+                                        <div className="relative mt-1">
+                                            <div className="py-1 relative w-full cursor-default overflow-hidden rounded-lg bg-white text-left shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm border">
+                                                <ComboboxInput
+                                                    className="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-gray-900 focus:ring-0 text-right font-bold"
+                                                    displayValue={() => ""}
+                                                    onChange={(event) => setCategoryQuery(event.target.value)}
+                                                    onClick={() => !open && comboBtnRef.current?.click()}
+                                                    placeholder="اختر التصنيفات..."
                                                 />
-                                            </ComboboxButton>
-                                        </div>
-                                        <Transition
-                                            as="div"
-                                            leave="transition ease-in duration-100"
-                                            leaveFrom="opacity-100"
-                                            leaveTo="opacity-0"
-                                            afterLeave={() => setCategoryQuery('')}
-                                        >
-                                            <ComboboxOptions className="absolute mt-1 max-h-24 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-50 custom-scrollbar">
-                                                {filteredComboboxCategories.length === 0 && categoryQuery !== '' ? (
-                                                    <div className="relative cursor-default select-none py-2 px-4 text-gray-700">
-                                                        لا توجد نتائج.
-                                                    </div>
-                                                ) : (
-                                                    filteredComboboxCategories.map((cat) => (
-                                                        <ComboboxOption
-                                                            key={cat.id}
-                                                            className={({ active }) =>
-                                                                `relative cursor-default select-none py-2 pl-4 pr-10 ${active ? 'bg-primary text-white' : 'text-gray-900'
-                                                                }`
-                                                            }
-                                                            value={cat.id}
-                                                        >
-                                                            {({ selected, active }) => (
-                                                                <>
-                                                                    <span
-                                                                        className={`block truncate ${selected ? 'font-bold' : 'font-normal'
-                                                                            }`}
-                                                                    >
-                                                                        {cat.name}
-                                                                    </span>
-                                                                    {selected ? (
+                                                <ComboboxButton ref={comboBtnRef} className="absolute inset-y-0 right-0 flex items-center pr-2">
+                                                    <ChevronsUpDown
+                                                        className="h-5 w-5 text-gray-400"
+                                                        aria-hidden="true"
+                                                    />
+                                                </ComboboxButton>
+                                            </div>
+                                            <Transition
+                                                as="div"
+                                                leave="transition ease-in duration-100"
+                                                leaveFrom="opacity-100"
+                                                leaveTo="opacity-0"
+                                                afterLeave={() => setCategoryQuery('')}
+                                            >
+                                                <ComboboxOptions className="absolute mt-1 max-h-24 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-50 custom-scrollbar">
+                                                    {filteredComboboxCategories.length === 0 && categoryQuery !== '' ? (
+                                                        <div className="relative cursor-default select-none py-2 px-4 text-gray-700">
+                                                            لا توجد نتائج.
+                                                        </div>
+                                                    ) : (
+                                                        filteredComboboxCategories.map((cat) => (
+                                                            <ComboboxOption
+                                                                key={cat.id}
+                                                                className={({ active }) =>
+                                                                    `relative cursor-default select-none py-2 pl-4 pr-10 ${active ? 'bg-primary text-white' : 'text-gray-900'
+                                                                    }`
+                                                                }
+                                                                value={cat.id}
+                                                            >
+                                                                {({ selected, active }) => (
+                                                                    <>
                                                                         <span
-                                                                            className={`absolute inset-y-0 right-0 flex items-center pr-3 ${active ? 'text-white' : 'text-primary'
+                                                                            className={`block truncate ${selected ? 'font-bold' : 'font-normal'
                                                                                 }`}
                                                                         >
-                                                                            <Check className="h-5 w-5" aria-hidden="true" />
+                                                                            {cat.name}
                                                                         </span>
-                                                                    ) : null}
-                                                                </>
-                                                            )}
-                                                        </ComboboxOption>
-                                                    ))
-                                                )}
-                                            </ComboboxOptions>
-                                        </Transition>
-                                    </div>
+                                                                        {selected ? (
+                                                                            <span
+                                                                                className={`absolute inset-y-0 right-0 flex items-center pr-3 ${active ? 'text-white' : 'text-primary'
+                                                                                    }`}
+                                                                            >
+                                                                                <Check className="h-5 w-5" aria-hidden="true" />
+                                                                            </span>
+                                                                        ) : null}
+                                                                    </>
+                                                                )}
+                                                            </ComboboxOption>
+                                                        ))
+                                                    )}
+                                                </ComboboxOptions>
+                                            </Transition>
+                                        </div>
+                                    )}
                                 </Combobox>
                             </div>
                             <Button

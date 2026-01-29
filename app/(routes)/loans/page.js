@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { getDb } from "../../lib/db";
 import { normalizeArabic } from "../../lib/utils";
 import { Card, Button, Input, Textarea } from "../../components/ui/Base";
@@ -15,6 +15,7 @@ import { NotesCell } from "../../components/ui/NotesCell";
 
 export default function LoansPage() {
     const [transactions, setTransactions] = useState([]);
+    const [bookComboRef, partyComboRef] = [useRef(null), useRef(null)];
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const ITEMS_PER_PAGE = 50;
@@ -39,6 +40,13 @@ export default function LoansPage() {
     const [selectedIds, setSelectedIds] = useState([]);
 
     const [query, setQuery] = useState('');
+    const [partyLimit, setPartyLimit] = useState(30);
+
+    // Reset limit on search
+    useEffect(() => {
+        setPartyLimit(30);
+    }, [query]);
+
     const [bookQuery, setBookQuery] = useState('');
     const [multiBookQuery, setMultiBookQuery] = useState('');
 
@@ -72,11 +80,11 @@ export default function LoansPage() {
                 // Determine parameter index
                 const paramIdx = params.length + 1;
                 // Arabic normalization: Replace Alef variants with bare Alef
-                whereClause += ` AND (
-                    REPLACE(REPLACE(REPLACE(b.title, 'أ', 'ا'), 'إ', 'ا'), 'آ', 'ا') LIKE '%' || $${paramIdx} || '%' 
+                whereClause += ` AND(
+    REPLACE(REPLACE(REPLACE(b.title, 'أ', 'ا'), 'إ', 'ا'), 'آ', 'ا') LIKE '%' || $${paramIdx} || '%' 
                     OR 
                     REPLACE(REPLACE(REPLACE(p.name, 'أ', 'ا'), 'إ', 'ا'), 'آ', 'ا') LIKE '%' || $${paramIdx} || '%'
-                )`;
+)`;
                 // Normalize input: turn all alefs to 'ا'
                 const normalizedQuery = debouncedSearchQuery.replace(/[أإآ]/g, 'ا');
                 params.push(normalizedQuery);
@@ -89,7 +97,7 @@ export default function LoansPage() {
                 JOIN book b ON t.book_id = b.id
                 LEFT JOIN party p ON t.party_id = p.id
                 ${whereClause}
-            `;
+`;
             const countResult = await db.select(countQuery, params);
             const totalItems = countResult[0]?.count || 0;
             setTotalPages(Math.ceil(totalItems / ITEMS_PER_PAGE));
@@ -97,17 +105,17 @@ export default function LoansPage() {
             const offset = (page - 1) * ITEMS_PER_PAGE;
 
             const rows = await db.select(`
-                SELECT 
-                  t.id, t.qty, t.notes, t.tx_date,
-                  b.title as book_title, b.id as book_id,
-                  p.name as party_name, p.id as party_id
+SELECT
+t.id, t.qty, t.notes, t.tx_date,
+    b.title as book_title, b.id as book_id,
+    p.name as party_name, p.id as party_id
                 FROM "transaction" t
                 JOIN book b ON t.book_id = b.id
                 LEFT JOIN party p ON t.party_id = p.id
                 ${whereClause}
                 ORDER BY t.tx_date DESC, t.id DESC
                 LIMIT ${ITEMS_PER_PAGE} OFFSET ${offset}
-            `, params);
+`, params);
 
             setTransactions(rows);
 
@@ -147,7 +155,7 @@ export default function LoansPage() {
             ? parties
             : parties.filter((party) => {
                 return normalizeArabic(party.name).includes(normalizeArabic(query))
-            }).slice(0, 50);
+            }); // removed slice(0,50)
 
     const filteredBooks =
         bookQuery === ''
@@ -170,23 +178,23 @@ export default function LoansPage() {
                 const partyId = formData.party_id?.id || formData.party_id;
                 await db.execute(`
           UPDATE "transaction" 
-          SET book_id=$1, party_id=$2, qty=$3, tx_date=$4, notes=$5
-          WHERE id=$6
-        `, [bookId, partyId, formData.qty, formData.tx_date, formData.notes, editId]);
+          SET book_id = $1, party_id = $2, qty = $3, tx_date = $4, notes = $5
+          WHERE id = $6
+    `, [bookId, partyId, formData.qty, formData.tx_date, formData.notes, editId]);
             } else if (isMultiMode) {
                 const partyId = formData.party_id?.id || formData.party_id;
                 for (const book of selectedMultiBooks) {
                     await db.execute(`
-                        INSERT INTO "transaction" (type, state, book_id, party_id, qty, tx_date, notes)
-                        VALUES ('loan', 'final', $1, $2, $3, $4, $5)
-                    `, [book.id, partyId, formData.qty, formData.tx_date, formData.notes]);
+                        INSERT INTO "transaction"(type, state, book_id, party_id, qty, tx_date, notes)
+VALUES('loan', 'final', $1, $2, $3, $4, $5)
+    `, [book.id, partyId, formData.qty, formData.tx_date, formData.notes]);
                 }
             } else {
                 const bookId = formData.book_id?.id || formData.book_id;
                 const partyId = formData.party_id?.id || formData.party_id;
                 await db.execute(`
-          INSERT INTO "transaction" (type, state, book_id, party_id, qty, tx_date, notes)
-          VALUES ('loan', 'final', $1, $2, $3, $4, $5)
+          INSERT INTO "transaction"(type, state, book_id, party_id, qty, tx_date, notes)
+VALUES('loan', 'final', $1, $2, $3, $4, $5)
         `, [bookId, partyId, formData.qty, formData.tx_date, formData.notes]);
             }
 
@@ -390,7 +398,7 @@ export default function LoansPage() {
                                 </tr>
                             )}
                             {!loading && transactions.map((t, idx) => (
-                                <tr key={t.id} className={`odd:bg-muted/30 even:bg-white hover:bg-primary/5 transition-colors ${selectedIds.includes(t.id) ? 'bg-primary/10' : ''}`}>
+                                <tr key={t.id} className={`odd: bg - muted / 30 even: bg - white hover: bg - primary / 5 transition - colors ${selectedIds.includes(t.id) ? 'bg-primary/10' : ''} `}>
                                     <td className="p-4 text-center border-l border-border/50 w-10 cursor-pointer" onClick={() => toggleSelect(t.id)}>
                                         <input
                                             type="checkbox"
@@ -461,60 +469,63 @@ export default function LoansPage() {
                             <label className="block text-sm font-medium mb-1 text-primary">الكتاب</label>
                             <div className="relative w-full">
                                 <Combobox value={formData.book_id} onChange={(val) => setFormData({ ...formData, book_id: val })} onClose={() => setBookQuery('')}>
-                                    <div className="relative mt-1">
-                                        <div className="relative w-full cursor-default overflow-hidden rounded-lg bg-white text-right shadow-md border focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm py-1">
-                                            <ComboboxInput
-                                                className="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-gray-900 focus:ring-0 text-right"
-                                                displayValue={(book) => book?.title || ''}
-                                                onFocus={(e) => e.target.select()}
-                                                onChange={(event) => setBookQuery(event.target.value)}
-                                                placeholder="ابحث عن كتاب..."
-                                            />
-                                            <ComboboxButton className="absolute inset-y-0 right-0 flex items-center pr-2">
-                                                <ChevronsUpDown
-                                                    className="h-5 w-5 text-gray-400"
-                                                    aria-hidden="true"
+                                    {({ open }) => (
+                                        <div className="relative mt-1">
+                                            <div className="relative w-full cursor-default overflow-hidden rounded-lg bg-white text-right shadow-md border focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm py-1">
+                                                <ComboboxInput
+                                                    className="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-gray-900 focus:ring-0 text-right"
+                                                    displayValue={(book) => book?.title || ''}
+                                                    onFocus={(e) => e.target.select()}
+                                                    onClick={() => !open && bookComboRef.current?.click()}
+                                                    onChange={(event) => setBookQuery(event.target.value)}
+                                                    placeholder="ابحث عن كتاب..."
                                                 />
-                                            </ComboboxButton>
-                                        </div>
-                                        <ComboboxOptions className="absolute mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-50">
-                                            {filteredBooks.length === 0 && bookQuery !== '' ? (
-                                                <div className="relative cursor-default select-none px-4 py-2 text-gray-700 font-bold">
-                                                    لا توجد بيانات.
-                                                </div>
-                                            ) : (
-                                                filteredBooks.map((book) => (
-                                                    <ComboboxOption
-                                                        key={book.id}
-                                                        className={({ active }) =>
-                                                            `relative cursor-default select-none py-2 pl-10 pr-4 ${active ? 'bg-primary text-primary-foreground' : 'text-gray-900'
-                                                            }`
-                                                        }
-                                                        value={book}
-                                                    >
-                                                        {({ selected, active }) => (
-                                                            <>
-                                                                <span
-                                                                    className={`block truncate ${selected ? 'font-medium' : 'font-normal'
-                                                                        }`}
-                                                                >
-                                                                    {book.title}
-                                                                </span>
-                                                                {selected ? (
+                                                <ComboboxButton ref={bookComboRef} className="absolute inset-y-0 right-0 flex items-center pr-2">
+                                                    <ChevronsUpDown
+                                                        className="h-5 w-5 text-gray-400"
+                                                        aria-hidden="true"
+                                                    />
+                                                </ComboboxButton>
+                                            </div>
+                                            <ComboboxOptions className="absolute mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-50">
+                                                {filteredBooks.length === 0 && bookQuery !== '' ? (
+                                                    <div className="relative cursor-default select-none px-4 py-2 text-gray-700 font-bold">
+                                                        لا توجد بيانات.
+                                                    </div>
+                                                ) : (
+                                                    filteredBooks.map((book) => (
+                                                        <ComboboxOption
+                                                            key={book.id}
+                                                            className={({ active }) =>
+                                                                `relative cursor-default select-none py-2 pl-10 pr-4 ${active ? 'bg-primary text-primary-foreground' : 'text-gray-900'
+                                                                }`
+                                                            }
+                                                            value={book}
+                                                        >
+                                                            {({ selected, active }) => (
+                                                                <>
                                                                     <span
-                                                                        className={`absolute inset-y-0 left-0 flex items-center pl-3 ${active ? 'text-white' : 'text-primary'
+                                                                        className={`block truncate ${selected ? 'font-medium' : 'font-normal'
                                                                             }`}
                                                                     >
-                                                                        <Check className="h-5 w-5" aria-hidden="true" />
+                                                                        {book.title}
                                                                     </span>
-                                                                ) : null}
-                                                            </>
-                                                        )}
-                                                    </ComboboxOption>
-                                                ))
-                                            )}
-                                        </ComboboxOptions>
-                                    </div>
+                                                                    {selected ? (
+                                                                        <span
+                                                                            className={`absolute inset-y-0 left-0 flex items-center pl-3 ${active ? 'text-white' : 'text-primary'
+                                                                                }`}
+                                                                        >
+                                                                            <Check className="h-5 w-5" aria-hidden="true" />
+                                                                        </span>
+                                                                    ) : null}
+                                                                </>
+                                                            )}
+                                                        </ComboboxOption>
+                                                    ))
+                                                )}
+                                            </ComboboxOptions>
+                                        </div>
+                                    )}
                                 </Combobox>
                             </div>
                         </div>
@@ -569,61 +580,81 @@ export default function LoansPage() {
                         <div className="flex items-center gap-2">
                             <div className="relative w-full">
                                 <Combobox value={formData.party_id} onChange={(val) => setFormData({ ...formData, party_id: val })} onClose={() => setQuery('')}>
-                                    <div className="relative mt-1">
-                                        <div className="relative w-full cursor-default overflow-hidden rounded-lg bg-white text-right shadow-md border focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm py-1">
-                                            <ComboboxInput
-                                                className="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-gray-900 focus:ring-0 text-right"
-                                                displayValue={(party) => party?.name || ''}
-                                                onFocus={(e) => e.target.select()}
-                                                onClick={(e) => e.target.select()}
-                                                onChange={(event) => setQuery(event.target.value)}
-                                                placeholder="ابحث عن جهة..."
-                                            />
-                                            <ComboboxButton className="absolute inset-y-0 right-0 flex items-center pr-2">
-                                                <ChevronsUpDown
-                                                    className="h-5 w-5 text-gray-400"
-                                                    aria-hidden="true"
+                                    {({ open }) => (
+                                        <div className="relative mt-1">
+                                            <div className="relative w-full cursor-default overflow-hidden rounded-lg bg-white text-right shadow-md border focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm py-1">
+                                                <ComboboxInput
+                                                    className="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-gray-900 focus:ring-0 text-right"
+                                                    displayValue={(party) => party?.name || ''}
+                                                    onFocus={(e) => e.target.select()}
+                                                    onClick={() => !open && partyComboRef.current?.click()}
+                                                    onChange={(event) => setQuery(event.target.value)}
+                                                    placeholder="ابحث عن جهة..."
                                                 />
-                                            </ComboboxButton>
-                                        </div>
-                                        <ComboboxOptions className="absolute mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-50">
-                                            {filteredParties.length === 0 && query !== '' ? (
-                                                <div className="relative cursor-default select-none px-4 py-2 text-gray-700">
-                                                    لا توجد نتائج.
-                                                </div>
-                                            ) : (
-                                                filteredParties.map((party) => (
-                                                    <ComboboxOption
-                                                        key={party.id}
-                                                        className={({ active }) =>
-                                                            `relative cursor-default select-none py-2 pl-10 pr-4 ${active ? 'bg-primary text-primary-foreground' : 'text-gray-900'
-                                                            }`
-                                                        }
-                                                        value={party}
-                                                    >
-                                                        {({ selected, active }) => (
-                                                            <>
-                                                                <span
-                                                                    className={`block truncate ${selected ? 'font-medium' : 'font-normal'
-                                                                        }`}
+                                                <ComboboxButton ref={partyComboRef} className="absolute inset-y-0 right-0 flex items-center pr-2">
+                                                    <ChevronsUpDown
+                                                        className="h-5 w-5 text-gray-400"
+                                                        aria-hidden="true"
+                                                    />
+                                                </ComboboxButton>
+                                            </div>
+                                            <ComboboxOptions className="absolute mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-50">
+                                                {filteredParties.length === 0 && query !== '' ? (
+                                                    <div className="relative cursor-default select-none px-4 py-2 text-gray-700">
+                                                        لا توجد نتائج.
+                                                    </div>
+                                                ) : (
+
+                                                    <>
+                                                        {filteredParties.slice(0, partyLimit).map((party) => (
+                                                            <ComboboxOption
+                                                                key={party.id}
+                                                                className={({ active }) =>
+                                                                    `relative cursor-default select-none py-2 pl-10 pr-4 ${active ? 'bg-primary text-primary-foreground' : 'text-gray-900'
+                                                                    }`
+                                                                }
+                                                                value={party}
+                                                            >
+                                                                {({ selected, active }) => (
+                                                                    <>
+                                                                        <span
+                                                                            className={`block truncate ${selected ? 'font-medium' : 'font-normal'
+                                                                                }`}
+                                                                        >
+                                                                            {party.name}
+                                                                        </span>
+                                                                        {selected ? (
+                                                                            <span
+                                                                                className={`absolute inset-y-0 left-0 flex items-center pl-3 ${active ? 'text-white' : 'text-primary'
+                                                                                    }`}
+                                                                            >
+                                                                                <Check className="h-5 w-5" aria-hidden="true" />
+                                                                            </span>
+                                                                        ) : null}
+                                                                    </>
+                                                                )}
+                                                            </ComboboxOption>
+                                                        ))}
+                                                        {filteredParties.length > partyLimit && (
+                                                            <div className="p-1">
+                                                                <button
+                                                                    type="button"
+                                                                    className="w-full text-center py-2 text-sm text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-md font-bold"
+                                                                    onClick={(e) => {
+                                                                        e.preventDefault();
+                                                                        e.stopPropagation();
+                                                                        setPartyLimit(prev => prev + 30);
+                                                                    }}
                                                                 >
-                                                                    {party.name}
-                                                                </span>
-                                                                {selected ? (
-                                                                    <span
-                                                                        className={`absolute inset-y-0 left-0 flex items-center pl-3 ${active ? 'text-white' : 'text-primary'
-                                                                            }`}
-                                                                    >
-                                                                        <Check className="h-5 w-5" aria-hidden="true" />
-                                                                    </span>
-                                                                ) : null}
-                                                            </>
+                                                                    عرض المزيد...
+                                                                </button>
+                                                            </div>
                                                         )}
-                                                    </ComboboxOption>
-                                                ))
-                                            )}
-                                        </ComboboxOptions>
-                                    </div>
+                                                    </>
+                                                )}
+                                            </ComboboxOptions>
+                                        </div>
+                                    )}
                                 </Combobox>
                             </div>
                             <Button type="button" onClick={() => setIsAddPartyOpen(true)} className="mt-1 px-3">
@@ -660,11 +691,12 @@ export default function LoansPage() {
                     </div>
 
                     <Button type="submit" className="w-full">حفظ</Button>
-                </form>
-            </Modal>
+                </form >
+            </Modal >
 
             {/* Quick Add Party Modal */}
-            <Modal isOpen={isAddPartyOpen} onClose={() => setIsAddPartyOpen(false)} title="إضافة جهة جديدة">
+            < Modal isOpen={isAddPartyOpen} onClose={() => setIsAddPartyOpen(false)
+            } title="إضافة جهة جديدة" >
                 <form onSubmit={handleQuickAddParty} className="space-y-4">
                     <div>
                         <label className="block text-sm font-bold mb-1">اسم الجهة</label>
@@ -680,7 +712,7 @@ export default function LoansPage() {
                     </div>
                     <Button type="submit" className="w-full">إضافة</Button>
                 </form>
-            </Modal>
-        </div>
+            </Modal >
+        </div >
     );
 }

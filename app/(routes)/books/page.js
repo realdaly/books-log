@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { getDb } from "../../lib/db";
 import { normalizeArabic } from "../../lib/utils";
 import { Button, Input, Textarea } from "../../components/ui/Base";
@@ -50,6 +50,7 @@ export default function BooksPage() {
     const [newCategoryName, setNewCategoryName] = useState("");
     const [editingCategory, setEditingCategory] = useState(null);
     const [categoryQuery, setCategoryQuery] = useState("");
+    const comboBtnRef = useRef(null);
 
     const filteredComboboxCategories = useMemo(() => {
         return categoryQuery === ""
@@ -798,7 +799,7 @@ export default function BooksPage() {
                                                             dataKey="value"
                                                         >
                                                             {chartData.map((entry, index) => (
-                                                                <Cell key={`cell-${index}`} fill={entry.color} />
+                                                                <Cell key={`cell-${index}`} fill={entry.color} style={{ outline: 'none' }} />
                                                             ))}
                                                         </Pie>
                                                         <RechartsTooltip formatter={(value) => Number(value).toLocaleString()} />
@@ -917,67 +918,70 @@ export default function BooksPage() {
                                             onChange={(ids) => setFormData({ ...formData, categoryIds: ids })}
                                             multiple
                                         >
-                                            <div className="relative mt-1">
-                                                <div className="py-1 relative w-full cursor-default overflow-hidden rounded-lg bg-white text-left shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm border">
-                                                    <ComboboxInput
-                                                        className="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-gray-900 focus:ring-0 text-right font-bold"
-                                                        displayValue={() => ""}
-                                                        onChange={(event) => setCategoryQuery(event.target.value)}
-                                                        placeholder="اختر التصنيفات..."
-                                                    />
-                                                    <ComboboxButton className="absolute inset-y-0 right-0 flex items-center pr-2">
-                                                        <ChevronsUpDown
-                                                            className="h-5 w-5 text-gray-400"
-                                                            aria-hidden="true"
+                                            {({ open }) => (
+                                                <div className="relative mt-1">
+                                                    <div className="py-1 relative w-full cursor-default overflow-hidden rounded-lg bg-white text-left shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm border">
+                                                        <ComboboxInput
+                                                            className="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-gray-900 focus:ring-0 text-right font-bold"
+                                                            displayValue={() => ""}
+                                                            onChange={(event) => setCategoryQuery(event.target.value)}
+                                                            onClick={() => !open && comboBtnRef.current?.click()}
+                                                            placeholder="اختر التصنيفات..."
                                                         />
-                                                    </ComboboxButton>
-                                                </div>
-                                                <Transition
-                                                    as="div" // Fragment causes issues sometimes, div is safer
-                                                    leave="transition ease-in duration-100"
-                                                    leaveFrom="opacity-100"
-                                                    leaveTo="opacity-0"
-                                                    afterLeave={() => setCategoryQuery('')}
-                                                >
-                                                    <ComboboxOptions className="absolute mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-50 custom-scrollbar">
-                                                        {filteredComboboxCategories.length === 0 && categoryQuery !== '' ? (
-                                                            <div className="relative cursor-default select-none py-2 px-4 text-gray-700">
-                                                                لا توجد نتائج.
-                                                            </div>
-                                                        ) : (
-                                                            filteredComboboxCategories.map((cat) => (
-                                                                <ComboboxOption
-                                                                    key={cat.id}
-                                                                    className={({ active }) =>
-                                                                        `relative cursor-default select-none py-2 pl-4 pr-10 ${active ? 'bg-primary text-white' : 'text-gray-900'
-                                                                        }`
-                                                                    }
-                                                                    value={cat.id}
-                                                                >
-                                                                    {({ selected, active }) => (
-                                                                        <>
-                                                                            <span
-                                                                                className={`block truncate ${selected ? 'font-bold' : 'font-normal'
-                                                                                    }`}
-                                                                            >
-                                                                                {cat.name}
-                                                                            </span>
-                                                                            {selected ? (
+                                                        <ComboboxButton ref={comboBtnRef} className="absolute inset-y-0 right-0 flex items-center pr-2">
+                                                            <ChevronsUpDown
+                                                                className="h-5 w-5 text-gray-400"
+                                                                aria-hidden="true"
+                                                            />
+                                                        </ComboboxButton>
+                                                    </div>
+                                                    <Transition
+                                                        as="div" // Fragment causes issues sometimes, div is safer
+                                                        leave="transition ease-in duration-100"
+                                                        leaveFrom="opacity-100"
+                                                        leaveTo="opacity-0"
+                                                        afterLeave={() => setCategoryQuery('')}
+                                                    >
+                                                        <ComboboxOptions className="absolute mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-50 custom-scrollbar">
+                                                            {filteredComboboxCategories.length === 0 && categoryQuery !== '' ? (
+                                                                <div className="relative cursor-default select-none py-2 px-4 text-gray-700">
+                                                                    لا توجد نتائج.
+                                                                </div>
+                                                            ) : (
+                                                                filteredComboboxCategories.map((cat) => (
+                                                                    <ComboboxOption
+                                                                        key={cat.id}
+                                                                        className={({ active }) =>
+                                                                            `relative cursor-default select-none py-2 pl-4 pr-10 ${active ? 'bg-primary text-white' : 'text-gray-900'
+                                                                            }`
+                                                                        }
+                                                                        value={cat.id}
+                                                                    >
+                                                                        {({ selected, active }) => (
+                                                                            <>
                                                                                 <span
-                                                                                    className={`absolute inset-y-0 right-0 flex items-center pr-3 ${active ? 'text-white' : 'text-primary'
+                                                                                    className={`block truncate ${selected ? 'font-bold' : 'font-normal'
                                                                                         }`}
                                                                                 >
-                                                                                    <Check className="h-5 w-5" aria-hidden="true" />
+                                                                                    {cat.name}
                                                                                 </span>
-                                                                            ) : null}
-                                                                        </>
-                                                                    )}
-                                                                </ComboboxOption>
-                                                            ))
-                                                        )}
-                                                    </ComboboxOptions>
-                                                </Transition>
-                                            </div>
+                                                                                {selected ? (
+                                                                                    <span
+                                                                                        className={`absolute inset-y-0 right-0 flex items-center pr-3 ${active ? 'text-white' : 'text-primary'
+                                                                                            }`}
+                                                                                    >
+                                                                                        <Check className="h-5 w-5" aria-hidden="true" />
+                                                                                    </span>
+                                                                                ) : null}
+                                                                            </>
+                                                                        )}
+                                                                    </ComboboxOption>
+                                                                ))
+                                                            )}
+                                                        </ComboboxOptions>
+                                                    </Transition>
+                                                </div>
+                                            )}
                                         </Combobox>
                                     </div>
                                     <Button
