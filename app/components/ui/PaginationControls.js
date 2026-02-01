@@ -4,7 +4,7 @@ export function PaginationControls({ page, totalPages, setPage, isLoading }) {
     if (totalPages <= 1) return null;
 
     return (
-        <div className="flex justify-center items-center gap-4 py-2 mt-auto">
+        <div className="flex justify-center items-center gap-4 mt-auto">
             <button
                 className="flex items-center gap-1 text-sm font-bold text-gray-600 disabled:opacity-50 hover:text-primary transition-colors disabled:cursor-not-allowed"
                 disabled={page === 1 || isLoading}

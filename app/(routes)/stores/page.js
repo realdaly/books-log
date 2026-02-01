@@ -537,7 +537,21 @@ export default function StoresPage() {
                                 <Button type="button" variant="outline" size="sm" onClick={selectAllBooks}>{selectedMultiBooks.length === books.length ? "إلغاء تحديد الكل" : "تحديد الكل"}</Button>
                             </div>
                             <div className="relative">
-                                <Input placeholder="بحث في القائمة..." value={multiBookQuery} onChange={e => setMultiBookQuery(e.target.value)} />
+                                <Input
+                                    placeholder="بحث في القائمة..."
+                                    value={multiBookQuery}
+                                    onChange={e => setMultiBookQuery(e.target.value)}
+                                    className="pl-10"
+                                />
+                                {multiBookQuery && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setMultiBookQuery("")}
+                                        className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors"
+                                    >
+                                        <X size={16} />
+                                    </button>
+                                )}
                             </div>
                             <div className="max-h-[150px] overflow-y-auto border rounded-xl divide-y bg-white custom-scrollbar">
                                 {filteredMultiBooks.map(book => (
