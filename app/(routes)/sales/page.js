@@ -643,7 +643,7 @@ export default function SalesPage() {
                     ) : (
                         <div className="space-y-3">
                             <div className="flex justify-between items-center bg-gray-50 p-1 px-3 rounded-lg">
-                                <span className="text-sm font-bold">اختر الكتب المراد بيعها:</span>
+                                <span className="text-sm font-bold">اختر الكتب المراد بيعها ({selectedMultiBooks.length}):</span>
                                 <Button className="h-5 px-1 md:h-7 md:px-2" type="button" variant="outline" size="sm" onClick={selectAllBooks}>
                                     {selectedMultiBooks.length === books.length ? "إلغاء تحديد الكل" : "تحديد الكل"}
                                 </Button>

@@ -487,7 +487,7 @@ export default function StoresPage() {
             <PaginationControls page={page} totalPages={totalPages} setPage={setPage} isLoading={isFetching} />
 
             <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editId ? "تعديل حركة مخزنية" : "إضافة حركة مخزنية"} maxWidth={isMultiMode ? "max-w-4xl" : "max-w-lg"}>
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-3">
                     {!editId && (
                         <div className="flex items-center justify-between bg-secondary/20 p-2 rounded-lg mb-4">
                             <span className="text-sm font-bold text-primary">إضافة عدة كتب؟</span>
@@ -514,7 +514,7 @@ export default function StoresPage() {
                                             />
                                             <ComboboxButton ref={bookComboRef} className="absolute inset-y-0 right-0 flex items-center pr-2"><ChevronsUpDown className="h-5 w-5 text-gray-400" aria-hidden="true" /></ComboboxButton>
                                         </div>
-                                        <ComboboxOptions className="absolute mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-50">
+                                        <ComboboxOptions className="absolute mt-1 max-h-28 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-50">
                                             {filteredBooks.map((book) => (
                                                 <ComboboxOption key={book.id} className={({ active }) => `relative cursor-default select-none py-2 pl-10 pr-4 ${active ? 'bg-primary text-primary-foreground' : 'text-gray-900'}`} value={book}>
                                                     {({ selected, active }) => (
@@ -533,7 +533,7 @@ export default function StoresPage() {
                     ) : (
                         <div className="space-y-4">
                             <div className="flex justify-between items-center bg-gray-50 p-3 rounded-lg border border-dashed border-gray-300">
-                                <span className="text-sm font-bold text-primary">اختر الكتب:</span>
+                                <span className="text-sm font-bold text-primary">اختر الكتب ({selectedMultiBooks.length}):</span>
                                 <Button type="button" variant="outline" size="sm" onClick={selectAllBooks}>{selectedMultiBooks.length === books.length ? "إلغاء تحديد الكل" : "تحديد الكل"}</Button>
                             </div>
                             <div className="relative">
@@ -553,7 +553,7 @@ export default function StoresPage() {
                                     </button>
                                 )}
                             </div>
-                            <div className="max-h-[150px] overflow-y-auto border rounded-xl divide-y bg-white custom-scrollbar">
+                            <div className="max-h-[120px] overflow-y-auto border rounded-xl divide-y bg-white custom-scrollbar">
                                 {filteredMultiBooks.map(book => (
                                     <div key={book.id} className="p-3 flex items-center justify-between hover:bg-gray-50 cursor-pointer" onClick={() => toggleMultiBook(book)}>
                                         <div className="flex items-center gap-3">
