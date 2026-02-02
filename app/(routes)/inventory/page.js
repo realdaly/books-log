@@ -1,5 +1,5 @@
 "use client";
-import { Component, useEffect, useState, useCallback } from "react";
+import { Component, useEffect, useState, useCallback, useRef } from "react";
 import { getDb } from "../../lib/db";
 import { normalizeArabic } from "../../lib/utils";
 import { Card, Input } from "../../components/ui/Base";
@@ -11,6 +11,7 @@ import { SortableInventoryRow } from "../../components/SortableInventoryRow";
 
 export default function InventoryPage() {
     const [data, setData] = useState([]);
+    const searchInputRef = useRef(null);
     const [loading, setLoading] = useState(true);
     const [isFetching, setIsFetching] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
@@ -211,6 +212,7 @@ export default function InventoryPage() {
                     <div className="relative w-full md:w-80 group">
                         <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" size={18} />
                         <Input
+                            ref={searchInputRef}
                             placeholder="بحث عن كتاب..."
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
@@ -218,7 +220,7 @@ export default function InventoryPage() {
                         />
                         {searchTerm && (
                             <button
-                                onClick={() => setSearchTerm("")}
+                                onClick={() => { setSearchTerm(""); searchInputRef.current?.focus(); }}
                                 className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-red-500 transition-colors"
                             >
                                 <X size={16} />

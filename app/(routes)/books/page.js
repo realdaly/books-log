@@ -22,6 +22,7 @@ const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#6b7280', '#8b5cf6'
 
 export default function BooksPage() {
     const [books, setBooks] = useState([]);
+    const searchInputRef = useRef(null);
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const ITEMS_PER_PAGE = 50;
@@ -569,6 +570,7 @@ export default function BooksPage() {
                     <div className="relative w-full max-w-xs group">
                         <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" size={18} />
                         <Input
+                            ref={searchInputRef}
                             placeholder="بحث عن كتاب..."
                             className="pr-10 pl-10 bg-white shadow-sm border-gray-200 w-full"
                             value={query}
@@ -576,7 +578,7 @@ export default function BooksPage() {
                         />
                         {query && (
                             <button
-                                onClick={() => setQuery("")}
+                                onClick={() => { setQuery(""); searchInputRef.current?.focus(); }}
                                 className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-red-500 transition-colors"
                             >
                                 <X size={16} />

@@ -16,6 +16,7 @@ import { NotesCell } from "../../components/ui/NotesCell";
 export default function SalesPage() {
     const [transactions, setTransactions] = useState([]);
     const [bookComboRef, partyComboRef] = [useRef(null), useRef(null)];
+    const [mainSearchRef, multiBookRef] = [useRef(null), useRef(null)];
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const ITEMS_PER_PAGE = 50;
@@ -51,6 +52,14 @@ export default function SalesPage() {
     useEffect(() => {
         setPartyLimit(30);
     }, [query]);
+
+    useEffect(() => {
+        if (isMultiMode) {
+            setTimeout(() => {
+                multiBookRef.current?.focus();
+            }, 100);
+        }
+    }, [isMultiMode]);
 
     const [bookQuery, setBookQuery] = useState('');
     const [multiBookQuery, setMultiBookQuery] = useState('');
@@ -412,6 +421,7 @@ export default function SalesPage() {
                         <div className="relative w-full md:w-64 group">
                             <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" size={18} />
                             <Input
+                                ref={mainSearchRef}
                                 placeholder="بحث في المبيعات..."
                                 className="pr-10 pl-10 w-full"
                                 value={searchQuery}
@@ -419,7 +429,7 @@ export default function SalesPage() {
                             />
                             {searchQuery && (
                                 <button
-                                    onClick={() => setSearchQuery("")}
+                                    onClick={() => { setSearchQuery(""); mainSearchRef.current?.focus(); }}
                                     className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-red-500 transition-colors"
                                 >
                                     <X size={16} />
@@ -652,6 +662,7 @@ export default function SalesPage() {
                             <div className="relative">
                                 <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
                                 <Input
+                                    ref={multiBookRef}
                                     placeholder="بحث في القائمة..."
                                     value={multiBookQuery}
                                     onChange={e => setMultiBookQuery(e.target.value)}
@@ -660,7 +671,7 @@ export default function SalesPage() {
                                 {multiBookQuery && (
                                     <button
                                         type="button"
-                                        onClick={() => setMultiBookQuery('')}
+                                        onClick={() => { setMultiBookQuery(''); multiBookRef.current?.focus(); }}
                                         className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-red-500"
                                     >
                                         <X size={16} />

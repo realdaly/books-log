@@ -16,6 +16,7 @@ import { NotesCell } from "../../components/ui/NotesCell";
 export default function OtherStoresPage() {
     const [transactions, setTransactions] = useState([]);
     const [bookComboRef, categoryComboRef] = [useRef(null), useRef(null)];
+    const [mainSearchRef, multiBookRef] = [useRef(null), useRef(null)];
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const ITEMS_PER_PAGE = 50;
@@ -68,6 +69,14 @@ export default function OtherStoresPage() {
         }, 500);
         return () => clearTimeout(handler);
     }, [query]);
+
+    useEffect(() => {
+        if (isMultiMode) {
+            setTimeout(() => {
+                multiBookRef.current?.focus();
+            }, 100);
+        }
+    }, [isMultiMode]);
 
     // Reset page on filter change
     useEffect(() => {
@@ -390,6 +399,7 @@ export default function OtherStoresPage() {
                         <div className="relative w-full md:w-64 group">
                             <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" size={18} />
                             <Input
+                                ref={mainSearchRef}
                                 placeholder="بحث عن حركة..."
                                 className="pr-10 pl-10 w-full"
                                 value={query}
@@ -397,7 +407,7 @@ export default function OtherStoresPage() {
                             />
                             {query && (
                                 <button
-                                    onClick={() => setQuery("")}
+                                    onClick={() => { setQuery(""); mainSearchRef.current?.focus(); }}
                                     className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-red-500 transition-colors"
                                 >
                                     <X size={16} />
@@ -611,6 +621,7 @@ export default function OtherStoresPage() {
                                 <div className="relative mb-2">
                                     <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
                                     <Input
+                                        ref={multiBookRef}
                                         placeholder="بحث في القائمة..."
                                         value={multiBookQuery}
                                         onChange={e => setMultiBookQuery(e.target.value)}
@@ -619,7 +630,7 @@ export default function OtherStoresPage() {
                                     {multiBookQuery && (
                                         <button
                                             type="button"
-                                            onClick={() => setMultiBookQuery('')}
+                                            onClick={() => { setMultiBookQuery(''); multiBookRef.current?.focus(); }}
                                             className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-red-500"
                                         >
                                             <X size={16} />

@@ -34,6 +34,7 @@ export default function PartiesPage() {
     const [editingCategory, setEditingCategory] = useState(null);
     const [categoryQuery, setCategoryQuery] = useState('');
     const comboBtnRef = useRef(null);
+    const searchInputRef = useRef(null);
 
     const filteredComboboxCategories = useMemo(() => {
         return categoryQuery === ""
@@ -473,6 +474,7 @@ export default function PartiesPage() {
                         <div className="relative w-full md:w-80 group">
                             <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" size={18} />
                             <Input
+                                ref={searchInputRef}
                                 placeholder="بحث عن جهة..."
                                 className="pr-10 pl-10 w-full"
                                 value={query}
@@ -480,7 +482,7 @@ export default function PartiesPage() {
                             />
                             {query && (
                                 <button
-                                    onClick={() => setQuery("")}
+                                    onClick={() => { setQuery(""); searchInputRef.current?.focus(); }}
                                     className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-red-500 transition-colors"
                                 >
                                     <X size={16} />

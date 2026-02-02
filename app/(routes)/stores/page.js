@@ -18,6 +18,7 @@ export default function StoresPage() {
 
     const [transactions, setTransactions] = useState([]);
     const [bookComboRef, categoryComboRef] = [useRef(null), useRef(null)];
+    const [mainSearchRef, multiBookRef] = [useRef(null), useRef(null)];
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
 
@@ -71,6 +72,14 @@ export default function StoresPage() {
         }, 500);
         return () => clearTimeout(handler);
     }, [searchQuery]);
+
+    useEffect(() => {
+        if (isMultiMode) {
+            setTimeout(() => {
+                multiBookRef.current?.focus();
+            }, 100);
+        }
+    }, [isMultiMode]);
 
     // Ensure Tables Exist (Temporary Fix for Runtime)
     useEffect(() => {
@@ -387,13 +396,14 @@ export default function StoresPage() {
                     <div className="relative w-full md:w-64 group">
                         <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" size={18} />
                         <Input
+                            ref={mainSearchRef}
                             placeholder="بحث عن كتاب أو مخزن..."
                             className="pr-10 pl-10 w-full"
                             value={searchQuery}
                             onChange={e => setSearchQuery(e.target.value)}
                         />
                         {searchQuery && (
-                            <button onClick={() => setSearchQuery("")} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-red-500 transition-colors">
+                            <button onClick={() => { setSearchQuery(""); mainSearchRef.current?.focus(); }} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-red-500 transition-colors">
                                 <X size={16} />
                             </button>
                         )}
@@ -538,6 +548,7 @@ export default function StoresPage() {
                             </div>
                             <div className="relative">
                                 <Input
+                                    ref={multiBookRef}
                                     placeholder="بحث في القائمة..."
                                     value={multiBookQuery}
                                     onChange={e => setMultiBookQuery(e.target.value)}
@@ -546,7 +557,7 @@ export default function StoresPage() {
                                 {multiBookQuery && (
                                     <button
                                         type="button"
-                                        onClick={() => setMultiBookQuery("")}
+                                        onClick={() => { setMultiBookQuery(""); multiBookRef.current?.focus(); }}
                                         className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors"
                                     >
                                         <X size={16} />
