@@ -71,6 +71,13 @@ export default function PartiesPage() {
     const [filterType, setFilterType] = useState("all");
     const [saleStatusFilter, setSaleStatusFilter] = useState([]); // ['pending'] or ['final']
 
+    const prefixMap = {
+        all: 'سجل حركات',
+        sale: 'سجل المباع الى',
+        gift: 'سجل إهداءات',
+        loan: 'سجل استعارات'
+    };
+
     const fetchData = useCallback(async () => {
         try {
             setIsFetching(true);
@@ -327,12 +334,13 @@ export default function PartiesPage() {
         if (!input) return;
 
         try {
-            // Temporarily show PDF-only content
-            const pdfElements = input.querySelectorAll('.pdf-only');
-            pdfElements.forEach(el => el.style.display = 'flex');
-
-            // Clone the element to capture full content without scrollbars
+            // Clone the element FIRST to avoid updating the real DOM (prevents flash)
             const clone = input.cloneNode(true);
+
+            // Show export-only content INSIDE THE CLONE
+            const exportElements = clone.querySelectorAll('.export-only');
+            exportElements.forEach(el => el.style.display = 'flex');
+
             document.body.appendChild(clone);
 
             // Style the clone to be visible to html2canvas but off-screen for the user
@@ -363,9 +371,8 @@ export default function PartiesPage() {
                 logging: false
             });
 
-            // Cleanup clone and restore original view
+            // Cleanup clone
             document.body.removeChild(clone);
-            pdfElements.forEach(el => el.style.display = 'none');
 
             const imgData = canvas.toDataURL('image/jpeg', 0.9);
             const base64Data = imgData.split(',')[1];
@@ -376,17 +383,14 @@ export default function PartiesPage() {
             }
             const byteArray = new Uint8Array(byteNumbers);
 
-            const prefixMap = {
-                all: 'سجل حركات',
-                sale: 'سجل المباع الى',
-                gift: 'سجل اهداءات',
-                loan: 'سجل استعارات'
-            };
             const prefix = prefixMap[filterType] || 'سجل';
+
+            // Sanitize filename (replace slashes and other illegal chars with dash)
+            const safePartyName = (selectedParty?.name || '').replace(/[\/\\:*?"<>|]/g, '-');
 
             const path = await save({
                 filters: [{ name: 'Image', extensions: ['jpg'] }],
-                defaultPath: `${prefix} ${selectedParty?.name} ${new Date().toISOString().split('T')[0]}.jpg`
+                defaultPath: `${prefix} ${safePartyName} ${new Date().toISOString().split('T')[0]}.jpg`
             });
 
             if (path) {
@@ -456,7 +460,7 @@ export default function PartiesPage() {
             <div className="flex flex-col gap-4">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div className="flex items-center gap-4">
-                        <h1 className="text-xl md:text-3xl font-bold text-primary">الجهات</h1>
+                        <h1 className="text-xl md:text-3xl font-bold text-primary">الجهات والأشخاص</h1>
                         {selectedIds.length > 0 && (
                             <div className="flex items-center gap-2 animate-in fade-in slide-in-from-left-2">
                                 <Button variant="destructive" size="sm" onClick={handleBulkDelete} className="h-7 text-xs px-2">
@@ -768,7 +772,7 @@ export default function PartiesPage() {
                         <div className="flex gap-2">
                             <button onClick={() => setFilterType("all")} className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${filterType === 'all' ? 'bg-primary text-primary-foreground shadow-md' : 'bg-white text-muted-foreground hover:bg-gray-100 border'}`}>الكل</button>
                             <button onClick={() => setFilterType("sale")} className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${filterType === 'sale' ? 'bg-primary text-primary-foreground shadow-md' : 'bg-white text-muted-foreground hover:bg-gray-100 border'}`}>بيع</button>
-                            <button onClick={() => setFilterType("gift")} className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${filterType === 'gift' ? 'bg-primary text-primary-foreground shadow-md' : 'bg-white text-muted-foreground hover:bg-gray-100 border'}`}>اهداء</button>
+                            <button onClick={() => setFilterType("gift")} className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${filterType === 'gift' ? 'bg-primary text-primary-foreground shadow-md' : 'bg-white text-muted-foreground hover:bg-gray-100 border'}`}>إهداء</button>
                             <button onClick={() => setFilterType("loan")} className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${filterType === 'loan' ? 'bg-primary text-primary-foreground shadow-md' : 'bg-white text-muted-foreground hover:bg-gray-100 border'}`}>استعارة</button>
                         </div>
                         <Button
@@ -809,12 +813,10 @@ export default function PartiesPage() {
                     )}
 
                     <div id="pdf-export-content" className="p-1">
-                        {/* Hidden title for PDF only */}
-                        <div className="hidden pdf-only flex flex-col items-center mb-8 border-b-2 border-primary pb-6">
-                            <h2 className="text-3xl font-black text-primary mb-2">سجل حركات الكتب</h2>
+                        {/* Hidden title for Export only */}
+                        <div className="hidden export-only flex flex-col items-center pb-6">
+                            <h2 className="text-3xl font-bold text-primary mb-2">{prefixMap[filterType] || 'سجل'} {selectedParty?.name}</h2>
                             <div className="flex gap-8 text-lg font-bold text-gray-700 italic">
-                                <span>الجهة: {selectedParty?.name}</span>
-                                <span>النوع: {filterType === 'all' ? 'الكل' : (filterType === 'sale' ? 'بيع' : (filterType === 'gift' ? 'اهداء' : 'استعارة'))}</span>
                                 <span>التاريخ: {new Date().toLocaleDateString('ar-EG')}</span>
                             </div>
                         </div>
@@ -838,7 +840,7 @@ export default function PartiesPage() {
                                                         ? <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-black">طور البيع</span>
                                                         : <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-black">مكتمل</span>
                                                 )}
-                                                {t.type === 'gift' && <span className="px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-black">اهداء</span>}
+                                                {t.type === 'gift' && <span className="px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-black">إهداء</span>}
                                                 {t.type === 'loan' && <span className="px-3 py-1 rounded-full bg-indigo-100 text-indigo-800 text-xs font-black">استعارة</span>}
                                             </td>
                                             <td className="p-4 font-bold text-foreground border-l border-border/50 group-hover:text-primary transition-colors">{t.book_title}</td>
@@ -865,7 +867,6 @@ export default function PartiesPage() {
             {/* Category Management Modal */}
             <Modal isOpen={manageCategoriesOpen} onClose={() => { setManageCategoriesOpen(false); setEditingCategory(null); }} title="إدارة التصنيفات">
                 <div className="space-y-4">
-                    {/* New Category Input */}
                     {/* New Category Input */}
                     <form onSubmit={handleAddCategory} className="flex items-center gap-2">
                         <Input

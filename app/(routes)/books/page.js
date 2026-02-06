@@ -554,7 +554,7 @@ export default function BooksPage() {
         <div className="space-y-8 h-full flex flex-col pb-8">
             <div className="flex justify-between items-center px-2 flex-wrap gap-4">
                 <div className="flex items-center gap-4">
-                    <h1 className="text-2xl md:text-4xl font-black text-primary drop-shadow-sm">مكتبة الكتب</h1>
+                    <h1 className="text-2xl md:text-3xl font-bold text-primary drop-shadow-sm">مكتبة الكتب</h1>
                     {selectedIds.length > 0 && (
                         <div className="flex items-center gap-2 animate-in fade-in zoom-in-50">
                             <Button variant="destructive" size="sm" onClick={handleBulkDelete} className="h-7 text-xs px-2">

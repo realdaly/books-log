@@ -25,7 +25,7 @@ const navItems = [
     { name: "سجل الإهداء", href: "/gifts", icon: Gift },
     { name: "سجل الاستعارة", href: "/loans", icon: BookOpen },
     { name: "سجل البيع", href: "/sales", icon: ShoppingCart },
-    { name: "الجهات", href: "/parties", icon: Users },
+    { name: "الجهات والأشخاص", href: "/parties", icon: Users },
     { name: "الكتب", href: "/books", icon: Library },
     { name: "مخازن أخرى", href: "/stores", icon: Layers },
     { name: "فروع أخرى", href: "/branches", icon: Building2 },
