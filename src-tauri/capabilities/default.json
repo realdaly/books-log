@@ -20,7 +20,7 @@
       "identifier": "sql:allow-load",
       "allow": [
         {
-          "name": "sqlite:publishing.db",
+          "name": "sqlite:*",
           "request": "*"
         }
       ]
@@ -29,7 +29,7 @@
       "identifier": "sql:allow-execute",
       "allow": [
         {
-          "name": "sqlite:publishing.db",
+          "name": "sqlite:*",
           "request": "*"
         }
       ]
@@ -38,7 +38,7 @@
       "identifier": "sql:allow-select",
       "allow": [
         {
-          "name": "sqlite:publishing.db",
+          "name": "sqlite:*",
           "request": "*"
         }
       ]
@@ -55,6 +55,22 @@
     },
     {
       "identifier": "fs:allow-read-file",
+      "allow": [
+        {
+          "path": "**"
+        }
+      ]
+    },
+    {
+      "identifier": "fs:allow-read-text-file",
+      "allow": [
+        {
+          "path": "**"
+        }
+      ]
+    },
+    {
+      "identifier": "fs:allow-write-text-file",
       "allow": [
         {
           "path": "**"

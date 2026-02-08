@@ -53,10 +53,109 @@ export default function SettingsPage() {
         }
     };
 
+    // Helper to get raw path and options for fs operations
+    const getFsPathOptions = async (dbPathWithPrefix) => {
+        const { BaseDirectory } = await import("@tauri-apps/plugin-fs");
+        if (dbPathWithPrefix === 'sqlite:publishing.db') {
+            return {
+                path: 'publishing.db',
+                options: { baseDir: BaseDirectory.AppData }
+            };
+        }
+        // Absolute path
+        const rawPath = dbPathWithPrefix.replace(/^sqlite:/, '');
+        return {
+            path: rawPath,
+            options: {} // No baseDir for absolute paths
+        };
+    };
+
+    const changeDatabaseLocation = async () => {
+        try {
+            const { open } = await import("@tauri-apps/plugin-dialog");
+            const { copyFile, remove, exists, BaseDirectory, join } = await import("@tauri-apps/plugin-fs");
+            const { getDatabasePath, setDatabasePath } = await import("../../lib/appConfig");
+
+            // 1. Pick new folder
+            const selectedDir = await open({
+                directory: true,
+                multiple: false,
+                title: "اختر مجلد قاعدة البيانات الجديد"
+            });
+
+            if (!selectedDir) return;
+
+            // 2. Determine current location
+            const currentDbString = await getDatabasePath();
+            const current = await getFsPathOptions(currentDbString);
+
+            // 3. Close DB Connection
+            try {
+                const db = await getDb();
+                await db.execute("PRAGMA journal_mode=DELETE;"); // try to clean up WAL
+                if (typeof db.close === 'function') {
+                    await db.close();
+                }
+            } catch (e) {
+                console.warn("Failed to close DB:", e);
+            }
+
+            // 4. Move files
+            // Target file name in new dir
+            // We'll keep the name 'publishing.db' in the new directory.
+            // Note: 'join' from tauri-fs might be path join. Or we use string concatenation if we assume Windows/Unix separator.
+            // Tauri v2 `path` API is safer.
+            const { join: pathJoin } = await import("@tauri-apps/api/path");
+            const targetDbPath = await pathJoin(selectedDir, "publishing.db");
+
+            // Check if target already exists?
+            // "If the user changed the place while they already have a database in the previous position..."
+            // We move current DB to new place.
+
+            // Copy all existing files first
+            const filesToMove = [
+                { src: current.path, dest: targetDbPath },
+                { src: current.path + "-wal", dest: targetDbPath + "-wal" },
+                { src: current.path + "-shm", dest: targetDbPath + "-shm" }
+            ];
+
+            for (const file of filesToMove) {
+                if (await exists(file.src, current.options)) {
+                    await copyFile(file.src, file.dest, {
+                        fromPathBaseDir: current.options.baseDir
+                    });
+                }
+            }
+
+            // 5. Update Config
+            // Store as absolute path with sqlite: prefix
+            await setDatabasePath(`sqlite:${targetDbPath}`);
+
+            // 6. Delete old files (Move semantics)
+            try {
+                for (const file of filesToMove) {
+                    if (await exists(file.src, current.options)) {
+                        await remove(file.src, current.options);
+                    }
+                }
+            } catch (cleanupErr) {
+                console.warn("Could not delete old database files:", cleanupErr);
+            }
+
+            // 7. Reload to use new path
+            window.location.href = "/";
+
+        } catch (error) {
+            console.error(error);
+            alert("حدث خطأ أثناء تغيير المسار: " + error.message);
+        }
+    };
+
     const exportDatabase = async () => {
         try {
             const { save } = await import("@tauri-apps/plugin-dialog");
-            const { BaseDirectory, copyFile } = await import("@tauri-apps/plugin-fs");
+            const { copyFile } = await import("@tauri-apps/plugin-fs");
+            const { getDatabasePath } = await import("../../lib/appConfig");
 
             const destinationPath = await save({
                 defaultPath: `قاعدة بيانات الجرد ${new Date().toISOString().split('T')[0]}.db`,
@@ -65,8 +164,11 @@ export default function SettingsPage() {
 
             if (!destinationPath) return;
 
-            await copyFile("publishing.db", destinationPath, {
-                fromPathBaseDir: BaseDirectory.AppData,
+            const dbPathStr = await getDatabasePath();
+            const current = await getFsPathOptions(dbPathStr);
+
+            await copyFile(current.path, destinationPath, {
+                fromPathBaseDir: current.options.baseDir,
             });
 
             alert("تم حفظ نسخة احتياطية بنجاح");
@@ -79,7 +181,8 @@ export default function SettingsPage() {
     const importDatabase = async () => {
         try {
             const { open, confirm } = await import("@tauri-apps/plugin-dialog");
-            const { BaseDirectory, copyFile, remove, exists } = await import("@tauri-apps/plugin-fs");
+            const { copyFile, remove, exists } = await import("@tauri-apps/plugin-fs");
+            const { getDatabasePath } = await import("../../lib/appConfig");
 
             const selectedFile = await open({
                 filters: [{ name: "SQLite Database", extensions: ["db"] }],
@@ -93,40 +196,43 @@ export default function SettingsPage() {
             );
 
             if (confirmed) {
+                // Determine where the current DB is
+                const dbPathStr = await getDatabasePath();
+                const current = await getFsPathOptions(dbPathStr);
+
                 try {
-                    // 1. Attempt to switch journal mode to DELETE to clean up WAL/SHM files cleanly via SQLite
+                    // 1. Clean up connection
                     const db = await getDb();
                     await db.execute("PRAGMA journal_mode=DELETE;");
-
-                    // 2. Attempt to close the connection if the plugin supports it
                     if (typeof db.close === 'function') {
                         await db.close();
                     }
                 } catch (e) {
-                    console.warn("Failed to close DB or switch journal mode:", e);
+                    console.warn("Failed to close DB:", e);
                 }
 
-                // 3. Just in case, try to remove WAL/SHM if they still exist (and aren't locked)
+                // 2. Remove WAL/SHM if they stick around
                 try {
-                    const walExists = await exists("publishing.db-wal", { baseDir: BaseDirectory.AppData });
-                    if (walExists) {
-                        await remove("publishing.db-wal", { baseDir: BaseDirectory.AppData });
+                    // Construct WAL path based on current path
+                    const walPath = current.path + "-wal";
+                    const shmPath = current.path + "-shm";
+
+                    if (await exists(walPath, current.options)) {
+                        await remove(walPath, current.options);
                     }
-                    const shmExists = await exists("publishing.db-shm", { baseDir: BaseDirectory.AppData });
-                    if (shmExists) {
-                        await remove("publishing.db-shm", { baseDir: BaseDirectory.AppData });
+                    if (await exists(shmPath, current.options)) {
+                        await remove(shmPath, current.options);
                     }
                 } catch (e) {
-                    // Ignore errors here (file might be locked), rely on the PRAGMA having done the job
-                    console.warn("Cleanup WAL/SHM filesystem error:", e);
+                    console.warn("Cleanup WAL/SHM error:", e);
                 }
 
-                // 4. Overwrite the database file
-                await copyFile(selectedFile, "publishing.db", {
-                    toPathBaseDir: BaseDirectory.AppData
+                // 3. Overwrite
+                await copyFile(selectedFile, current.path, {
+                    toPathBaseDir: current.options.baseDir
                 });
 
-                // 5. Reload the app
+                // 4. Reload
                 window.location.href = "/";
             }
         } catch (error) {
@@ -162,24 +268,35 @@ export default function SettingsPage() {
                     <h2 className="text-xl font-bold text-primary">إدارة قاعدة البيانات</h2>
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex flex-col items-center gap-4">
                     <Button
-                        onClick={exportDatabase}
+                        onClick={changeDatabaseLocation}
                         variant="outline"
-                        className="flex-1 gap-2 h-14 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border-emerald-200"
+                        className="w-fit h-14 gap-2 text-blue-700 bg-blue-50 hover:bg-blue-100 border-blue-200"
                     >
-                        <Download size={20} />
-                        تصدير قاعدة البيانات
+                        <Database size={20} />
+                        تغيير مكان قاعدة البيانات
                     </Button>
 
-                    <Button
-                        onClick={importDatabase}
-                        variant="outline"
-                        className="flex-1 gap-2 h-14 text-amber-700 bg-amber-50 hover:bg-amber-100 border-amber-200"
-                    >
-                        <Upload size={20} />
-                        استيراد قاعدة بيانات
-                    </Button>
+                    <div className="flex flex-col sm:flex-row gap-4">
+                        <Button
+                            onClick={exportDatabase}
+                            variant="outline"
+                            className="flex-1 gap-2 h-14 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border-emerald-200"
+                        >
+                            <Download size={20} />
+                            تصدير قاعدة البيانات
+                        </Button>
+
+                        <Button
+                            onClick={importDatabase}
+                            variant="outline"
+                            className="flex-1 gap-2 h-14 text-amber-700 bg-amber-50 hover:bg-amber-100 border-amber-200"
+                        >
+                            <Upload size={20} />
+                            استيراد قاعدة بيانات
+                        </Button>
+                    </div>
                 </div>
                 <p className="text-sm text-muted-foreground text-center bg-gray-50 p-3 rounded-lg border border-dashed">
                     ملاحظة: عند استيراد قاعدة بيانات، سيتم استبدال جميع البيانات الحالية بالبيانات الموجودة في الملف المستورد.

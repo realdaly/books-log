@@ -13,9 +13,11 @@ export async function getDb() {
         try {
             const { default: Database } = await import("@tauri-apps/plugin-sql");
             const { default: initDatabase } = await import("../../db/initDatabase");
+            const { getDatabasePath } = await import("./appConfig");
 
             if (!dbInstance) {
-                dbInstance = await Database.load("sqlite:publishing.db");
+                const dbPath = await getDatabasePath();
+                dbInstance = await Database.load(dbPath);
             }
 
             if (!isSchemaInitialized) {
