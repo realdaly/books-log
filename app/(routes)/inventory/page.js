@@ -20,6 +20,92 @@ export default function InventoryPage() {
     const [remainingFilter, setRemainingFilter] = useState("all"); // all, low, high
     const [isFilterOpen, setIsFilterOpen] = useState(false);
 
+    const filteredData = data;
+
+    // Column Selection
+    // Column Selection
+    const [selectedCols, setSelectedCols] = useState(new Set());
+
+    const COLUMNS = [
+        { id: 'handle', label: '' },
+        { id: 'title', label: 'عنوان الكتاب', accessor: r => r.book_title },
+        { id: 'total_printed', label: 'المطبوع', accessor: r => r.total_printed || 0 },
+        { id: 'sent_to_institution', label: 'الواصل', accessor: r => r.sent_to_institution || 0 },
+        { id: 'remaining_institution', label: 'المتبقي', accessor: r => r.remaining_institution },
+        { id: 'pending_institution', label: 'طور البيع', accessor: r => r.pending_institution || '-' },
+        { id: 'sold_institution', label: 'المباع', accessor: r => r.sold_institution },
+        { id: 'gifted_institution', label: 'المهداة', accessor: r => r.gifted_institution },
+        { id: 'loaned_institution', label: 'المستعار', accessor: r => r.loaned_institution },
+        { id: 'loss_manual', label: 'المفقود', accessor: r => (r.loss_manual || 0) + (r.loss_institution || 0) },
+        { id: 'store_institution', label: 'مخازن أخرى', accessor: r => r.store_institution || 0 },
+        {
+            id: 'branch_diff', label: 'متبقي الفروع', accessor: r => {
+                const printed = r.total_printed || 0;
+                const received = r.sent_to_institution || 0;
+                const expected = Math.max(0, printed - received);
+                const logged = r.other_stores_total || 0;
+                return Math.max(0, expected - logged);
+            }
+        },
+        { id: 'remaining_total', label: 'المتبقي الكلي', accessor: r => r.remaining_total }
+    ];
+
+    const handleColumnClick = (colIndex, e) => {
+        e.stopPropagation();
+        if (colIndex === 0) return; // Skip handle column
+
+        const newSelected = new Set(e.ctrlKey || e.metaKey ? selectedCols : []);
+
+        if (e.shiftKey && selectedCols.size > 0) {
+            const lastSelected = Array.from(selectedCols).pop();
+            const start = Math.min(lastSelected, colIndex);
+            const end = Math.max(lastSelected, colIndex);
+            for (let i = start; i <= end; i++) {
+                if (i !== 0) newSelected.add(i);
+            }
+        } else {
+            if (newSelected.has(colIndex)) {
+                newSelected.delete(colIndex);
+            } else {
+                newSelected.add(colIndex);
+            }
+        }
+        setSelectedCols(newSelected);
+    };
+
+    useEffect(() => {
+        const handleCopy = (e) => {
+            if (selectedCols.size === 0) return;
+
+            // Allow default copy behavior if user has selected text explicitly
+            const selection = window.getSelection();
+            if (selection.toString().length > 0) return;
+
+            e.preventDefault();
+
+            const sortedCols = Array.from(selectedCols).sort((a, b) => a - b);
+
+            // Build header row
+            /* const headerText = sortedCols.map(idx => COLUMNS[idx].label).join('\t'); */
+
+            // Build data rows
+            const rowsText = filteredData.map(row => {
+                return sortedCols.map(idx => {
+                    const val = COLUMNS[idx].accessor(row);
+                    return val === null || val === undefined ? '' : val;
+                }).join('\t');
+            }).join('\n');
+
+            /* const finalText = `${headerText}\n${rowsText}`; */
+            const finalText = rowsText; // Usually copying raw data is preferred for Excel pasting without headers unless requested
+
+            e.clipboardData.setData('text/plain', finalText);
+        };
+
+        document.addEventListener('copy', handleCopy);
+        return () => document.removeEventListener('copy', handleCopy);
+    }, [selectedCols, filteredData]);
+
     // DnD Sensors
     const sensors = useSensors(
         useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -214,10 +300,13 @@ export default function InventoryPage() {
         }
     };
 
-    const filteredData = data;
+
 
     return (
-        <div className="space-y-6 h-full flex flex-col">
+        <div
+            className="space-y-6 h-full flex flex-col"
+            onClick={() => setSelectedCols(new Set())}
+        >
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
                     <h1 className="text-xl md:text-3xl font-black text-primary mb-1">
@@ -258,15 +347,15 @@ export default function InventoryPage() {
                         <table className="w-full text-right text-sm border-collapse border-b border-border">
                             <thead className="bg-primary text-primary-foreground sticky top-0 z-10 shadow-md">
                                 <tr>
-                                    <th className="p-4 w-[40px] rounded-tr-lg"></th>
-                                    <th className="p-4 min-w-[150px]">عنوان الكتاب</th>
-                                    <th className="p-4 text-center w-[75px] border-r border-primary-foreground/10">المطبوع</th>
-                                    <th className="p-4 text-center w-[75px] border-r border-primary-foreground/10">الواصل</th>
-                                    <th className="p-4 text-center w-[75px] border-r border-primary-foreground/10 font-bold relative group/header">
+                                    <th className={`p-4 w-[40px] rounded-tr-lg cursor-default ${selectedCols.has(0) ? 'bg-blue-100' : ''}`}></th>
+                                    <th onClick={(e) => handleColumnClick(1, e)} className={`p-4 min-w-[150px] cursor-pointer hover:bg-black/5 transition-colors ${selectedCols.has(1) ? 'bg-blue-100 text-blue-900' : ''}`}>عنوان الكتاب</th>
+                                    <th onClick={(e) => handleColumnClick(2, e)} className={`p-4 text-center w-[75px] border-r border-primary-foreground/10 cursor-pointer hover:bg-black/5 transition-colors ${selectedCols.has(2) ? 'bg-blue-100 text-blue-900' : ''}`}>المطبوع</th>
+                                    <th onClick={(e) => handleColumnClick(3, e)} className={`p-4 text-center w-[75px] border-r border-primary-foreground/10 cursor-pointer hover:bg-black/5 transition-colors ${selectedCols.has(3) ? 'bg-blue-100 text-blue-900' : ''}`}>الواصل</th>
+                                    <th onClick={(e) => handleColumnClick(4, e)} className={`p-4 text-center w-[75px] border-r border-primary-foreground/10 font-bold relative group/header cursor-pointer hover:bg-black/5 transition-colors ${selectedCols.has(4) ? 'bg-blue-100 text-blue-900' : ''}`}>
                                         <div className="flex items-center justify-center gap-1">
                                             المتبقي
                                             <button
-                                                onClick={() => setIsFilterOpen(!isFilterOpen)}
+                                                onClick={(e) => { e.stopPropagation(); setIsFilterOpen(!isFilterOpen); }}
                                                 className={`p-0.5 rounded hover:bg-white/20 transition-colors ${remainingFilter !== 'all' ? 'text-blue-200' : 'text-primary-foreground/50 hover:text-white'}`}
                                             >
                                                 <Filter size={14} fill={remainingFilter !== 'all' ? "currentColor" : "none"} />
@@ -274,22 +363,22 @@ export default function InventoryPage() {
                                         </div>
                                         {isFilterOpen && (
                                             <>
-                                                <div className="fixed inset-0 z-20" onClick={() => setIsFilterOpen(false)} />
+                                                <div className="fixed inset-0 z-20 cursor-default" onClick={(e) => { e.stopPropagation(); setIsFilterOpen(false); }} />
                                                 <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-32 bg-white rounded-md shadow-xl border z-30 overflow-hidden text-right">
                                                     <button
-                                                        onClick={() => { setRemainingFilter('all'); setIsFilterOpen(false); }}
+                                                        onClick={(e) => { e.stopPropagation(); setRemainingFilter('all'); setIsFilterOpen(false); }}
                                                         className={`w-full px-4 py-2 text-sm hover:bg-gray-100 transition-colors ${remainingFilter === 'all' ? 'font-bold text-primary bg-primary/5' : 'text-gray-700'}`}
                                                     >
                                                         الكل
                                                     </button>
                                                     <button
-                                                        onClick={() => { setRemainingFilter('low'); setIsFilterOpen(false); }}
+                                                        onClick={(e) => { e.stopPropagation(); setRemainingFilter('low'); setIsFilterOpen(false); }}
                                                         className={`w-full px-4 py-2 text-sm hover:bg-gray-100 transition-colors ${remainingFilter === 'low' ? 'font-bold text-primary bg-primary/5' : 'text-gray-700'}`}
                                                     >
                                                         نافد
                                                     </button>
                                                     <button
-                                                        onClick={() => { setRemainingFilter('high'); setIsFilterOpen(false); }}
+                                                        onClick={(e) => { e.stopPropagation(); setRemainingFilter('high'); setIsFilterOpen(false); }}
                                                         className={`w-full px-4 py-2 text-sm hover:bg-gray-100 transition-colors ${remainingFilter === 'high' ? 'font-bold text-primary bg-primary/5' : 'text-gray-700'}`}
                                                     >
                                                         متوفر
@@ -298,14 +387,14 @@ export default function InventoryPage() {
                                             </>
                                         )}
                                     </th>
-                                    <th className="p-4 text-center w-[75px] border-r border-primary-foreground/10 text-orange-300">طور البيع</th>
-                                    <th className="p-4 text-center w-[75px] border-r border-primary-foreground/10">المباع</th>
-                                    <th className="p-4 text-center w-[75px] border-r border-primary-foreground/10">المهداة</th>
-                                    <th className="p-4 text-center w-[75px] border-r border-primary-foreground/10">المستعار</th>
-                                    <th className="p-4 text-center w-[75px] border-r border-primary-foreground/10 text-red-200">المفقود</th>
-                                    <th className="p-4 text-center w-[75px] border-r border-primary-foreground/10 text-amber-200">مخازن أخرى</th>
-                                    <th className="p-4 text-center w-[75px] border-r border-primary-foreground/10 text-orange-200">متبقي الفروع</th>
-                                    <th className="p-4 text-center w-[75px] font-black text-white rounded-tl-lg bg-black/40 border-r border-primary-foreground/10">المتبقي الكلي</th>
+                                    <th onClick={(e) => handleColumnClick(5, e)} className={`p-4 text-center w-[75px] border-r border-primary-foreground/10 text-orange-300 cursor-pointer hover:bg-black/5 transition-colors ${selectedCols.has(5) ? '!bg-blue-100 !text-blue-900' : ''}`}>طور البيع</th>
+                                    <th onClick={(e) => handleColumnClick(6, e)} className={`p-4 text-center w-[75px] border-r border-primary-foreground/10 cursor-pointer hover:bg-black/5 transition-colors ${selectedCols.has(6) ? 'bg-blue-100 text-blue-900' : ''}`}>المباع</th>
+                                    <th onClick={(e) => handleColumnClick(7, e)} className={`p-4 text-center w-[75px] border-r border-primary-foreground/10 cursor-pointer hover:bg-black/5 transition-colors ${selectedCols.has(7) ? 'bg-blue-100 text-blue-900' : ''}`}>المهداة</th>
+                                    <th onClick={(e) => handleColumnClick(8, e)} className={`p-4 text-center w-[75px] border-r border-primary-foreground/10 cursor-pointer hover:bg-black/5 transition-colors ${selectedCols.has(8) ? 'bg-blue-100 text-blue-900' : ''}`}>المستعار</th>
+                                    <th onClick={(e) => handleColumnClick(9, e)} className={`p-4 text-center w-[75px] border-r border-primary-foreground/10 text-red-200 cursor-pointer hover:bg-black/5 transition-colors ${selectedCols.has(9) ? '!bg-blue-100 !text-blue-900' : ''}`}>المفقود</th>
+                                    <th onClick={(e) => handleColumnClick(10, e)} className={`p-4 text-center w-[75px] border-r border-primary-foreground/10 text-amber-200 cursor-pointer hover:bg-black/5 transition-colors ${selectedCols.has(10) ? '!bg-blue-100 !text-blue-900' : ''}`}>مخازن أخرى</th>
+                                    <th onClick={(e) => handleColumnClick(11, e)} className={`p-4 text-center w-[75px] border-r border-primary-foreground/10 text-orange-200 cursor-pointer hover:bg-black/5 transition-colors ${selectedCols.has(11) ? '!bg-blue-100 !text-blue-900' : ''}`}>متبقي الفروع</th>
+                                    <th onClick={(e) => handleColumnClick(12, e)} className={`p-4 text-center w-[75px] font-black text-white rounded-tl-lg bg-black/40 border-r border-primary-foreground/10 cursor-pointer hover:bg-black/5 transition-colors ${selectedCols.has(12) ? '!bg-blue-100 !text-blue-900' : ''}`}>المتبقي الكلي</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border">
@@ -330,6 +419,7 @@ export default function InventoryPage() {
                                                 row={row}
                                                 updateField={updateField}
                                                 successMap={successMap}
+                                                selectedCols={selectedCols}
                                             />
                                         ))}
                                     </SortableContext>
