@@ -5,7 +5,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Check, GripVertical } from "lucide-react";
 
-export function SortableInventoryRow({ row, updateField, successMap, selectedCols }) {
+export function SortableInventoryRow({ row, updateField, successMap, selectedCols, threshold }) {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: row.book_id });
 
     const style = {
@@ -77,7 +77,7 @@ export function SortableInventoryRow({ row, updateField, successMap, selectedCol
             </td>
 
             {/* Computed: Remaining Inst */}
-            <td className={`p-3 text-center font-bold border-l border-border/50 ${(row.remaining_institution || 0) <= 11
+            <td className={`p-3 text-center font-bold border-l border-border/50 ${(row.remaining_institution || 0) <= (threshold ?? 11)
                 ? "bg-red-500/20 text-red-700 font-black"
                 : "text-primary"
                 } ${selectedCols.has(4) ? 'bg-blue-100' : ''}`}>

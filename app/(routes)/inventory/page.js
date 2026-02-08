@@ -18,6 +18,7 @@ export default function InventoryPage() {
     const [publisherName, setPublisherName] = useState(null);
     const [successMap, setSuccessMap] = useState({});
     const [remainingFilter, setRemainingFilter] = useState("all"); // all, low, high
+    const [threshold, setThreshold] = useState("");
     const [isFilterOpen, setIsFilterOpen] = useState(false);
 
     const filteredData = data;
@@ -167,9 +168,11 @@ export default function InventoryPage() {
             }
 
             if (remainingFilter === 'low') {
-                whereClauses.push("(v.remaining_institution IS NOT NULL AND v.remaining_institution <= 11)");
+                const limit = threshold !== "" ? parseInt(threshold) : 11;
+                whereClauses.push(`(v.remaining_institution IS NOT NULL AND v.remaining_institution <= ${limit})`);
             } else if (remainingFilter === 'high') {
-                whereClauses.push("(v.remaining_institution IS NULL OR v.remaining_institution > 11)");
+                const limit = threshold !== "" ? parseInt(threshold) : 11;
+                whereClauses.push(`(v.remaining_institution IS NULL OR v.remaining_institution > ${limit})`);
             }
 
             const whereSQL = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : "";
@@ -216,7 +219,7 @@ export default function InventoryPage() {
             setLoading(false);
             setIsFetching(false);
         }
-    }, [page, searchTerm, remainingFilter]);
+    }, [page, searchTerm, remainingFilter, threshold]);
 
 
     useEffect(() => {
@@ -248,7 +251,7 @@ export default function InventoryPage() {
     // Reset page when filters change
     useEffect(() => {
         setPage(1);
-    }, [searchTerm, remainingFilter]);
+    }, [searchTerm, remainingFilter, threshold]);
 
     const updateField = async (id, field, value) => {
         const numVal = Math.max(0, parseInt(value) || 0);
@@ -364,22 +367,41 @@ export default function InventoryPage() {
                                         {isFilterOpen && (
                                             <>
                                                 <div className="fixed inset-0 z-20 cursor-default" onClick={(e) => { e.stopPropagation(); setIsFilterOpen(false); }} />
-                                                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-32 bg-white rounded-md shadow-xl border z-30 overflow-hidden text-right">
+                                                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-40 bg-white rounded-md shadow-xl border z-30 overflow-hidden text-right p-1 space-y-1">
+                                                    <div className="px-2 py-1">
+                                                        <label className="text-[10px] text-muted-foreground block mb-1 font-bold">الحد الأدنى</label>
+                                                        <input
+                                                            type="number"
+                                                            className="w-full h-7 px-2 text-xs border rounded focus:border-primary focus:ring-1 focus:ring-primary outline-none text-left font-bold text-gray-700"
+                                                            placeholder="11"
+                                                            value={threshold}
+                                                            onChange={(e) => {
+                                                                setThreshold(e.target.value);
+                                                                if (e.target.value === "" && remainingFilter !== 'all') {
+                                                                    setRemainingFilter("all");
+                                                                }
+                                                            }}
+                                                            onClick={(e) => e.stopPropagation()}
+                                                        />
+                                                    </div>
+                                                    <div className="h-px bg-gray-100 my-1 confirm-separator"></div>
                                                     <button
                                                         onClick={(e) => { e.stopPropagation(); setRemainingFilter('all'); setIsFilterOpen(false); }}
-                                                        className={`w-full px-4 py-2 text-sm hover:bg-gray-100 transition-colors ${remainingFilter === 'all' ? 'font-bold text-primary bg-primary/5' : 'text-gray-700'}`}
+                                                        className={`w-full px-4 py-1.5 text-xs rounded transition-colors ${remainingFilter === 'all' ? 'font-bold text-primary bg-primary/5' : 'text-gray-700 hover:bg-gray-100'}`}
                                                     >
                                                         الكل
                                                     </button>
                                                     <button
+                                                        disabled={!threshold}
                                                         onClick={(e) => { e.stopPropagation(); setRemainingFilter('low'); setIsFilterOpen(false); }}
-                                                        className={`w-full px-4 py-2 text-sm hover:bg-gray-100 transition-colors ${remainingFilter === 'low' ? 'font-bold text-primary bg-primary/5' : 'text-gray-700'}`}
+                                                        className={`w-full px-4 py-1.5 text-xs rounded transition-colors ${remainingFilter === 'low' ? 'font-bold text-primary bg-primary/5' : 'text-gray-700 hover:bg-gray-100'} disabled:opacity-50 disabled:cursor-not-allowed`}
                                                     >
                                                         نافد
                                                     </button>
                                                     <button
+                                                        disabled={!threshold}
                                                         onClick={(e) => { e.stopPropagation(); setRemainingFilter('high'); setIsFilterOpen(false); }}
-                                                        className={`w-full px-4 py-2 text-sm hover:bg-gray-100 transition-colors ${remainingFilter === 'high' ? 'font-bold text-primary bg-primary/5' : 'text-gray-700'}`}
+                                                        className={`w-full px-4 py-1.5 text-xs rounded transition-colors ${remainingFilter === 'high' ? 'font-bold text-primary bg-primary/5' : 'text-gray-700 hover:bg-gray-100'} disabled:opacity-50 disabled:cursor-not-allowed`}
                                                     >
                                                         متوفر
                                                     </button>
@@ -420,6 +442,7 @@ export default function InventoryPage() {
                                                 updateField={updateField}
                                                 successMap={successMap}
                                                 selectedCols={selectedCols}
+                                                threshold={threshold !== "" ? parseInt(threshold) : undefined}
                                             />
                                         ))}
                                     </SortableContext>
