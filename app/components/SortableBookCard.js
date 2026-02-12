@@ -16,10 +16,10 @@ export function SortableBookCard({ book, onClick, selectedIds = [], toggleSelect
             <div className="group relative perspective-1000 h-full">
                 <div
                     onClick={onClick}
-                    className="relative w-full aspect-[2/3] transition-all duration-300 group-hover:shadow-2xl rounded-lg overflow-hidden bg-white shadow-md border border-gray-200 h-full cursor-grab"
+                    className="relative w-full aspect-[2/3] transition-all duration-300 group-hover:shadow-2xl rounded-lg overflow-hidden bg-card shadow-md border border-border h-full cursor-grab"
                 >
                     {/* Book Cover */}
-                    <div className="absolute inset-0 bg-gray-100 flex items-center justify-center overflow-hidden">
+                    <div className="absolute inset-0 bg-muted/50 flex items-center justify-center overflow-hidden">
 
                         {/* Selection Checkbox */}
                         {!readOnly && toggleSelect && (
@@ -41,7 +41,7 @@ export function SortableBookCard({ book, onClick, selectedIds = [], toggleSelect
                                 className="w-full h-full object-cover"
                             />
                         ) : (
-                            <div className="flex flex-col items-center justify-center text-gray-400 p-4 text-center">
+                            <div className="flex flex-col items-center justify-center text-muted-foreground p-4 text-center">
                                 <BookOpenText size={48} className="mb-2" />
                                 <span className="text-xs font-medium line-clamp-2">{book.title}</span>
                             </div>
@@ -55,7 +55,7 @@ export function SortableBookCard({ book, onClick, selectedIds = [], toggleSelect
 
                                 <div className="flex gap-2 justify-between items-center">
                                     {openDetails && (
-                                        <Button size="sm" variant="secondary" className="h-8 text-xs flex-1 bg-white/90 hover:bg-white text-black border-0" onClick={(e) => { e.stopPropagation(); openDetails(book); }}>
+                                        <Button size="sm" variant="secondary" className="h-8 text-xs flex-1 bg-background/90 hover:bg-background text-foreground border-0" onClick={(e) => { e.stopPropagation(); openDetails(book); }}>
                                             <BarChart3 size={14} className="ml-1" /> التفاصيل
                                         </Button>
                                     )}

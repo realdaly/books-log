@@ -4,10 +4,10 @@
 
 @layer base {
   :root {
+    color-scheme: light;
     /* Teal / Cream Theme Mapped to HSL */
     /* Primary (Teal): #02343F -> HSL(191, 94%, 13%) */
     /* Background (Cream): #F0EDCC -> HSL(55, 55%, 87%) - Adjusted slightly for better contrast as background */
-    /* But stick close to original request */
 
     --background: 55 55% 94%;
     /* Very light cream for main bg */
@@ -44,6 +44,44 @@
     --ring: 191 94% 13%;
 
     --radius: 0.75rem;
+  }
+
+  .dark {
+    /* Complementary Dark Palette: Deep Slate/Teal */
+    --background: 220 25% 10%;
+    /* Dark slate/navy */
+    --foreground: 55 20% 90%;
+    /* Soft cream text */
+    color-scheme: dark;
+
+    --card: 220 25% 13%;
+    /* Slightly lighter slate for cards */
+    --card-foreground: 55 20% 90%;
+
+    --popover: 220 25% 13%;
+    --popover-foreground: 55 20% 90%;
+
+    --primary: 191 70% 40%;
+    /* Brighter, more vibrant teal for dark mode visibility */
+    --primary-foreground: 220 25% 10%;
+    /* Dark text on bright primary */
+
+    --secondary: 220 20% 20%;
+    /* Dark slate accent */
+    --secondary-foreground: 55 20% 95%;
+
+    --muted: 220 20% 20%;
+    --muted-foreground: 220 10% 65%;
+
+    --accent: 220 20% 20%;
+    --accent-foreground: 55 20% 95%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 220 20% 20%;
+    --input: 220 20% 20%;
+    --ring: 191 70% 40%;
   }
 }
 

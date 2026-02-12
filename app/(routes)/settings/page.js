@@ -1,13 +1,15 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useTheme } from "../../components/ThemeProvider";
 import { getDb } from "../../lib/db";
 import { Card, Button, Input } from "../../components/ui/Base";
-import { Loader2, Save, Download, Upload, Database } from "lucide-react";
+import { Loader2, Save, Download, Upload, Database, Moon, Sun, Palette } from "lucide-react";
 // import { save, open, ask } from "@tauri-apps/plugin-dialog";
 // import { copyFile, BaseDirectory } from "@tauri-apps/plugin-fs";
 
 export default function SettingsPage() {
     const [config, setConfig] = useState({ publisher_name: "شركة نشر" });
+    const { theme, toggleTheme } = useTheme();
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -246,7 +248,7 @@ export default function SettingsPage() {
     return (
         <div className="space-y-6 max-w-xl mx-auto">
             <h1 className="text-3xl font-bold text-primary text-center">الإعدادات</h1>
-            <Card className="p-8 space-y-6 shadow-xl border-0">
+            <Card className="p-8 space-y-6 shadow-xl border-0 dark:border dark:border-white/10 dark:bg-card/50">
                 <div className="space-y-2">
                     <label className="block text-sm font-black text-primary/60 uppercase tracking-wider">اسم المؤسسة</label>
                     <Input
@@ -262,7 +264,25 @@ export default function SettingsPage() {
                 </Button>
             </Card>
 
-            <Card className="p-8 space-y-6 shadow-xl border-0">
+            <Card className="p-8 space-y-6 shadow-xl border-0 dark:border dark:border-white/10 dark:bg-card/50">
+                <div className="flex items-center gap-2 border-b pb-4">
+                    <Palette className="text-primary" />
+                    <h2 className="text-xl font-bold text-primary">المظهر</h2>
+                </div>
+                <div className="flex items-center justify-between">
+                    <span className="text-lg font-medium">الوضع الليلي</span>
+                    <Button
+                        onClick={toggleTheme}
+                        variant="outline"
+                        size="icon"
+                        className="rounded-full w-12 h-12 transition-all hover:bg-secondary"
+                    >
+                        {theme === "dark" ? <Moon className="h-6 w-6" /> : <Sun className="h-6 w-6" />}
+                    </Button>
+                </div>
+            </Card>
+
+            <Card className="p-8 space-y-6 shadow-xl border-0 dark:border dark:border-white/10 dark:bg-card/50">
                 <div className="flex items-center gap-2 border-b pb-4">
                     <Database className="text-primary" />
                     <h2 className="text-xl font-bold text-primary">إدارة قاعدة البيانات</h2>
@@ -272,7 +292,7 @@ export default function SettingsPage() {
                     <Button
                         onClick={changeDatabaseLocation}
                         variant="outline"
-                        className="w-fit h-14 gap-2 text-blue-700 bg-blue-50 hover:bg-blue-100 border-blue-200"
+                        className="w-fit h-14 gap-2 text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 border-blue-200 dark:border-blue-800"
                     >
                         <Database size={20} />
                         تغيير مكان قاعدة البيانات
@@ -282,7 +302,7 @@ export default function SettingsPage() {
                         <Button
                             onClick={exportDatabase}
                             variant="outline"
-                            className="flex-1 gap-2 h-14 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border-emerald-200"
+                            className="flex-1 gap-2 h-14 text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 border-emerald-200 dark:border-emerald-800"
                         >
                             <Download size={20} />
                             تصدير قاعدة البيانات
@@ -291,14 +311,14 @@ export default function SettingsPage() {
                         <Button
                             onClick={importDatabase}
                             variant="outline"
-                            className="flex-1 gap-2 h-14 text-amber-700 bg-amber-50 hover:bg-amber-100 border-amber-200"
+                            className="flex-1 gap-2 h-14 text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/30 border-amber-200 dark:border-amber-800"
                         >
                             <Upload size={20} />
                             استيراد قاعدة بيانات
                         </Button>
                     </div>
                 </div>
-                <p className="text-sm text-muted-foreground text-center bg-gray-50 p-3 rounded-lg border border-dashed">
+                <p className="text-sm text-muted-foreground text-center bg-muted/30 p-3 rounded-lg border border-dashed border-border/50">
                     ملاحظة: عند استيراد قاعدة بيانات، سيتم استبدال جميع البيانات الحالية بالبيانات الموجودة في الملف المستورد.
                 </p>
             </Card>

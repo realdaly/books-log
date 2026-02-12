@@ -68,7 +68,7 @@ export default function Sidebar() {
     return (
         <aside
             className={cn(
-                "bg-white border-l border-border flex flex-col h-full shadow-xl relative z-40 transition-all duration-300 ease-in-out shrink-0",
+                "bg-card border-l border-border flex flex-col h-full shadow-xl relative z-40 transition-all duration-300 ease-in-out shrink-0",
                 isOpen ? "w-[280px]" : "w-[80px]"
             )}
         >

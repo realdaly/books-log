@@ -374,7 +374,7 @@ VALUES('loan', 'final', $1, $2, $3, $4, $5)
                 </div>
             </div>
 
-            <Card className="flex-1 p-0 overflow-hidden border-0 shadow-lg bg-white/40">
+            <Card className="flex-1 p-0 overflow-hidden border-0 shadow-lg bg-card/40">
                 <div className="h-full overflow-auto">
                     <table className="w-full text-right text-sm border-collapse border-b border-border">
                         <thead className="bg-primary text-primary-foreground font-bold sticky top-0 z-10 shadow-md">
@@ -408,7 +408,7 @@ VALUES('loan', 'final', $1, $2, $3, $4, $5)
                                 </tr>
                             )}
                             {!loading && transactions.map((t, idx) => (
-                                <tr key={t.id} className={`odd: bg - muted / 30 even: bg - white hover: bg - primary / 5 transition - colors ${selectedIds.includes(t.id) ? 'bg-primary/10' : ''} `}>
+                                <tr key={t.id} className={`odd:bg-muted/30 even:bg-card hover:bg-primary/5 transition-colors ${selectedIds.includes(t.id) ? 'bg-primary/10' : ''}`}>
                                     <td className="p-4 text-center border-l border-border/50 w-10 cursor-pointer" onClick={() => toggleSelect(t.id)}>
                                         <input
                                             type="checkbox"
@@ -428,8 +428,8 @@ VALUES('loan', 'final', $1, $2, $3, $4, $5)
                                         <NotesCell text={t.notes} />
                                     </td>
                                     <td className="p-4 flex justify-center gap-2">
-                                        <button onClick={() => openEdit(t)} className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"><Edit2 size={18} /></button>
-                                        <button onClick={() => handleDelete(t.id)} className="p-1.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors"><Trash2 size={18} /></button>
+                                        <button onClick={() => openEdit(t)} className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"><Edit2 size={18} /></button>
+                                        <button onClick={() => handleDelete(t.id)} className="p-1.5 rounded-lg text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"><Trash2 size={18} /></button>
                                     </td>
                                 </tr>
                             ))}
@@ -467,7 +467,7 @@ VALUES('loan', 'final', $1, $2, $3, $4, $5)
                             <button
                                 type="button"
                                 onClick={() => setIsMultiMode(!isMultiMode)}
-                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ring-2 ring-primary ring-offset-2 ${isMultiMode ? 'bg-primary' : 'bg-gray-300'}`}
+                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ring-2 ring-primary ring-offset-2 ${isMultiMode ? 'bg-primary' : 'bg-muted'}`}
                             >
                                 <span className={`${isMultiMode ? '-translate-x-6' : '-translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
                             </button>
@@ -481,9 +481,9 @@ VALUES('loan', 'final', $1, $2, $3, $4, $5)
                                 <Combobox value={formData.book_id} onChange={(val) => setFormData({ ...formData, book_id: val })} onClose={() => setBookQuery('')}>
                                     {({ open }) => (
                                         <div className="relative mt-1">
-                                            <div className="relative w-full cursor-default overflow-hidden rounded-lg bg-white text-right shadow-md border focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm py-1">
+                                            <div className="relative w-full cursor-default overflow-hidden rounded-lg bg-popover text-right shadow-md border focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm py-1">
                                                 <ComboboxInput
-                                                    className="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-gray-900 focus:ring-0 text-right"
+                                                    className="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-foreground bg-popover focus:ring-0 text-right"
                                                     displayValue={(book) => book?.title || ''}
                                                     onFocus={(e) => e.target.select()}
                                                     onClick={() => !open && bookComboRef.current?.click()}
@@ -497,9 +497,9 @@ VALUES('loan', 'final', $1, $2, $3, $4, $5)
                                                     />
                                                 </ComboboxButton>
                                             </div>
-                                            <ComboboxOptions className="absolute mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-50">
+                                            <ComboboxOptions className="absolute mt-1 max-h-60 w-full overflow-auto rounded-md bg-popover py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-50">
                                                 {filteredBooks.length === 0 && bookQuery !== '' ? (
-                                                    <div className="relative cursor-default select-none px-4 py-2 text-gray-700 font-bold">
+                                                    <div className="relative cursor-default select-none px-4 py-2 text-muted-foreground font-bold">
                                                         لا توجد بيانات.
                                                     </div>
                                                 ) : (
@@ -507,7 +507,7 @@ VALUES('loan', 'final', $1, $2, $3, $4, $5)
                                                         <ComboboxOption
                                                             key={book.id}
                                                             className={({ active }) =>
-                                                                `relative cursor-default select-none py-2 pl-10 pr-4 ${active ? 'bg-primary text-primary-foreground' : 'text-gray-900'
+                                                                `relative cursor-default select-none py-2 pl-10 pr-4 ${active ? 'bg-primary text-primary-foreground' : 'text-foreground'
                                                                 }`
                                                             }
                                                             value={book}
@@ -541,7 +541,7 @@ VALUES('loan', 'final', $1, $2, $3, $4, $5)
                         </div>
                     ) : (
                         <div className="space-y-4">
-                            <div className="flex justify-between items-center bg-gray-50 p-3 rounded-lg border border-dashed border-gray-300">
+                            <div className="flex justify-between items-center bg-muted/30 p-3 rounded-lg border border-dashed border-border">
                                 <span className="text-sm font-bold text-primary">اختر الكتب المراد استعارتها ({selectedMultiBooks.length}):</span>
                                 <Button type="button" variant="outline" size="sm" onClick={selectAllBooks}>
                                     {selectedMultiBooks.length === books.length ? "إلغاء تحديد الكل" : "تحديد الكل"}
@@ -568,9 +568,9 @@ VALUES('loan', 'final', $1, $2, $3, $4, $5)
                                 )}
                             </div>
 
-                            <div className="max-h-[150px] overflow-y-auto border rounded-xl divide-y bg-white custom-scrollbar">
+                            <div className="max-h-[150px] overflow-y-auto border rounded-xl divide-y bg-popover custom-scrollbar">
                                 {filteredMultiBooks.map(book => (
-                                    <div key={book.id} className="p-3 flex items-center justify-between hover:bg-gray-50 cursor-pointer" onClick={() => toggleMultiBook(book)}>
+                                    <div key={book.id} className="p-3 flex items-center justify-between hover:bg-muted cursor-pointer" onClick={() => toggleMultiBook(book)}>
                                         <div className="flex items-center gap-3">
                                             <input
                                                 type="checkbox"
@@ -593,9 +593,9 @@ VALUES('loan', 'final', $1, $2, $3, $4, $5)
                                 <Combobox value={formData.party_id} onChange={(val) => setFormData({ ...formData, party_id: val })} onClose={() => setQuery('')}>
                                     {({ open }) => (
                                         <div className="relative mt-1">
-                                            <div className="relative w-full cursor-default overflow-hidden rounded-lg bg-white text-right shadow-md border focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm py-1">
+                                            <div className="relative w-full cursor-default overflow-hidden rounded-lg bg-popover text-right shadow-md border focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm py-1">
                                                 <ComboboxInput
-                                                    className="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-gray-900 focus:ring-0 text-right"
+                                                    className="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-foreground bg-popover focus:ring-0 text-right"
                                                     displayValue={(party) => party?.name || ''}
                                                     onFocus={(e) => e.target.select()}
                                                     onClick={() => !open && partyComboRef.current?.click()}
@@ -609,9 +609,9 @@ VALUES('loan', 'final', $1, $2, $3, $4, $5)
                                                     />
                                                 </ComboboxButton>
                                             </div>
-                                            <ComboboxOptions className="absolute mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-50">
+                                            <ComboboxOptions className="absolute mt-1 max-h-60 w-full overflow-auto rounded-md bg-popover py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-50">
                                                 {filteredParties.length === 0 && query !== '' ? (
-                                                    <div className="relative cursor-default select-none px-4 py-2 text-gray-700">
+                                                    <div className="relative cursor-default select-none px-4 py-2 text-muted-foreground">
                                                         لا توجد نتائج.
                                                     </div>
                                                 ) : (
@@ -621,7 +621,7 @@ VALUES('loan', 'final', $1, $2, $3, $4, $5)
                                                             <ComboboxOption
                                                                 key={party.id}
                                                                 className={({ active }) =>
-                                                                    `relative cursor-default select-none py-2 pl-10 pr-4 ${active ? 'bg-primary text-primary-foreground' : 'text-gray-900'
+                                                                    `relative cursor-default select-none py-2 pl-10 pr-4 ${active ? 'bg-primary text-primary-foreground' : 'text-foreground'
                                                                     }`
                                                                 }
                                                                 value={party}

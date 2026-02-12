@@ -416,9 +416,9 @@ export default function StoresPage() {
 
             {/* Categories Filter Bar */}
             <div className="flex items-center gap-2 pb-2 w-full">
-                <div className="flex items-center gap-2 py-1.5 px-3 bg-gray-50 rounded-full border">
-                    <Filter size={16} className="text-gray-400" />
-                    <span className="text-xs font-bold text-gray-500 whitespace-nowrap">تصفية:</span>
+                <div className="flex items-center gap-2 py-1.5 px-3 bg-muted/20 rounded-full border">
+                    <Filter size={16} className="text-muted-foreground" />
+                    <span className="text-xs font-bold text-muted-foreground whitespace-nowrap">تصفية:</span>
                 </div>
                 <div className="flex-1 flex gap-0.5 overflow-x-auto scrollbar-hide">
                     {categories.map(cat => (
@@ -426,8 +426,8 @@ export default function StoresPage() {
                             key={cat.id}
                             onClick={() => toggleFilterCategory(cat.id)}
                             className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border whitespace-nowrap shrink-0 ${filterCategoryIds.includes(cat.id)
-                                ? "bg-primary text-white border-primary shadow-sm"
-                                : "bg-white text-gray-600 border-gray-200 hover:border-primary/50"
+                                ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                                : "bg-card text-muted-foreground border-border hover:border-primary/50"
                                 }`}
                         >
                             {cat.name}
@@ -437,10 +437,10 @@ export default function StoresPage() {
                         <button onClick={() => setFilterCategoryIds([])} className="px-2 py-1 text-xs text-red-500 hover:text-red-700 font-bold">مسح</button>
                     )}
                 </div>
-                <button onClick={() => setManageCategoriesOpen(true)} className="mr-auto p-1.5 text-gray-400 hover:text-primary hover:bg-gray-100 rounded-full transition-colors"><Settings size={16} /></button>
+                <button onClick={() => setManageCategoriesOpen(true)} className="mr-auto p-1.5 text-muted-foreground hover:text-primary hover:bg-muted rounded-full transition-colors"><Settings size={16} /></button>
             </div>
 
-            <Card className="flex-1 p-0 overflow-hidden border-0 shadow-lg bg-white/40">
+            <Card className="flex-1 p-0 overflow-hidden border-0 shadow-lg bg-card/40">
                 <div className="h-full overflow-auto">
                     <table className="w-full text-right text-sm border-collapse border-b border-border">
                         <thead className="bg-primary text-primary-foreground font-bold sticky top-0 z-10 shadow-md">
@@ -460,7 +460,7 @@ export default function StoresPage() {
                         <tbody className="divide-y divide-border">
                             {loading && <tr><td colSpan="8" className="p-12 text-center text-muted-foreground"><Loader2 className="animate-spin text-primary mx-auto" size={32} /></td></tr>}
                             {!loading && transactions.map((t, idx) => (
-                                <tr key={t.id} className={`odd:bg-muted/30 even:bg-white hover:bg-primary/5 transition-colors ${selectedIds.includes(t.id) ? 'bg-primary/10' : ''}`}>
+                                <tr key={t.id} className={`odd:bg-muted/30 even:bg-card hover:bg-primary/5 transition-colors ${selectedIds.includes(t.id) ? 'bg-primary/10' : ''}`}>
                                     <td className="p-4 text-center border-l border-border/50 cursor-pointer" onClick={() => toggleSelect(t.id)}>
                                         <input
                                             type="checkbox"
@@ -476,15 +476,15 @@ export default function StoresPage() {
                                     <td className="p-4 w-[200px] border-l border-border/50">
                                         <div className="flex flex-wrap gap-1 overflow-hidden h-6">
                                             {t.category_names.map((name, idx) => (
-                                                <span key={idx} className="px-1.5 py-0.5 bg-gray-100 text-gray-600 text-[10px] rounded border border-gray-200 whitespace-nowrap">{name}</span>
+                                                <span key={idx} className="px-1.5 py-0.5 bg-muted/50 text-muted-foreground text-[10px] rounded border border-border whitespace-nowrap">{name}</span>
                                             ))}
                                             {t.category_names.length === 0 && <span className="text-gray-400 text-xs">-</span>}
                                         </div>
                                     </td>
                                     <td className="p-4 text-muted-foreground border-l border-border/50 w-[210px] whitespace-nowrap overflow-hidden text-ellipsis"><NotesCell text={t.notes} /></td>
                                     <td className="p-4 flex justify-center gap-2">
-                                        <button onClick={() => openEdit(t)} className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50"><Edit2 size={18} /></button>
-                                        <button onClick={() => handleDelete(t.id)} className="p-1.5 rounded-lg text-red-600 hover:bg-red-50"><Trash2 size={18} /></button>
+                                        <button onClick={() => openEdit(t)} className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20"><Edit2 size={18} /></button>
+                                        <button onClick={() => handleDelete(t.id)} className="p-1.5 rounded-lg text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"><Trash2 size={18} /></button>
                                     </td>
                                 </tr>
                             ))}
@@ -501,7 +501,7 @@ export default function StoresPage() {
                     {!editId && (
                         <div className="flex items-center justify-between bg-secondary/20 p-2 rounded-lg mb-4">
                             <span className="text-sm font-bold text-primary">إضافة عدة كتب؟</span>
-                            <button type="button" onClick={() => setIsMultiMode(!isMultiMode)} className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ring-2 ring-primary ring-offset-2 ${isMultiMode ? 'bg-primary' : 'bg-gray-300'}`}>
+                            <button type="button" onClick={() => setIsMultiMode(!isMultiMode)} className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ring-2 ring-primary ring-offset-2 ${isMultiMode ? 'bg-primary' : 'bg-muted'}`}>
                                 <span className={`${isMultiMode ? '-translate-x-6' : '-translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
                             </button>
                         </div>
@@ -513,9 +513,9 @@ export default function StoresPage() {
                             <Combobox value={formData.book_id} onChange={(val) => setFormData({ ...formData, book_id: val })} onClose={() => setBookQuery('')}>
                                 {({ open }) => (
                                     <div className="relative mt-1">
-                                        <div className="relative w-full cursor-default overflow-hidden rounded-lg bg-white text-right shadow-md border focus:outline-none sm:text-sm py-1">
+                                        <div className="relative w-full cursor-default overflow-hidden rounded-lg bg-popover text-right shadow-md border focus:outline-none sm:text-sm py-1">
                                             <ComboboxInput
-                                                className="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-gray-900 focus:ring-0 text-right"
+                                                className="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-foreground bg-popover focus:ring-0 text-right"
                                                 displayValue={(book) => book?.title || ''}
                                                 onChange={(event) => setBookQuery(event.target.value)}
                                                 onFocus={(e) => e.target.select()}
@@ -524,9 +524,9 @@ export default function StoresPage() {
                                             />
                                             <ComboboxButton ref={bookComboRef} className="absolute inset-y-0 right-0 flex items-center pr-2"><ChevronsUpDown className="h-5 w-5 text-gray-400" aria-hidden="true" /></ComboboxButton>
                                         </div>
-                                        <ComboboxOptions className="absolute mt-1 max-h-28 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-50">
+                                        <ComboboxOptions className="absolute mt-1 max-h-28 w-full overflow-auto rounded-md bg-popover py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-50">
                                             {filteredBooks.map((book) => (
-                                                <ComboboxOption key={book.id} className={({ active }) => `relative cursor-default select-none py-2 pl-10 pr-4 ${active ? 'bg-primary text-primary-foreground' : 'text-gray-900'}`} value={book}>
+                                                <ComboboxOption key={book.id} className={({ active }) => `relative cursor-default select-none py-2 pl-10 pr-4 ${active ? 'bg-primary text-primary-foreground' : 'text-foreground'}`} value={book}>
                                                     {({ selected, active }) => (
                                                         <>
                                                             <span className={`block truncate ${selected ? 'font-medium' : 'font-normal'}`}>{book.title}</span>
@@ -542,7 +542,7 @@ export default function StoresPage() {
                         </div>
                     ) : (
                         <div className="space-y-4">
-                            <div className="flex justify-between items-center bg-gray-50 p-3 rounded-lg border border-dashed border-gray-300">
+                            <div className="flex justify-between items-center bg-muted/30 p-3 rounded-lg border border-dashed border-border">
                                 <span className="text-sm font-bold text-primary">اختر الكتب ({selectedMultiBooks.length}):</span>
                                 <Button type="button" variant="outline" size="sm" onClick={selectAllBooks}>{selectedMultiBooks.length === books.length ? "إلغاء تحديد الكل" : "تحديد الكل"}</Button>
                             </div>
@@ -564,9 +564,9 @@ export default function StoresPage() {
                                     </button>
                                 )}
                             </div>
-                            <div className="max-h-[120px] overflow-y-auto border rounded-xl divide-y bg-white custom-scrollbar">
+                            <div className="max-h-[120px] overflow-y-auto border rounded-xl divide-y bg-popover custom-scrollbar">
                                 {filteredMultiBooks.map(book => (
-                                    <div key={book.id} className="p-3 flex items-center justify-between hover:bg-gray-50 cursor-pointer" onClick={() => toggleMultiBook(book)}>
+                                    <div key={book.id} className="p-3 flex items-center justify-between hover:bg-muted cursor-pointer" onClick={() => toggleMultiBook(book)}>
                                         <div className="flex items-center gap-3">
                                             <input type="checkbox" className="w-5 h-5 rounded border-gray-300 text-primary pointer-events-none" checked={selectedMultiBooks.some(b => b.id === book.id)} readOnly />
                                             <span className="font-bold text-sm">{book.title}</span>
@@ -597,9 +597,9 @@ export default function StoresPage() {
                                 >
                                     {({ open }) => (
                                         <div className="relative mt-1">
-                                            <div className="py-1 relative w-full cursor-default overflow-hidden rounded-lg bg-white text-left shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm border">
+                                            <div className="py-1 relative w-full cursor-default overflow-hidden rounded-lg bg-popover text-left shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm border">
                                                 <ComboboxInput
-                                                    className="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-gray-900 focus:ring-0 text-right font-bold"
+                                                    className="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-foreground bg-popover focus:ring-0 text-right font-bold"
                                                     displayValue={() => ""}
                                                     onFocus={(e) => e.target.select()}
                                                     onClick={() => !open && categoryComboRef.current?.click()}
@@ -613,9 +613,9 @@ export default function StoresPage() {
                                                     />
                                                 </ComboboxButton>
                                             </div>
-                                            <ComboboxOptions className="absolute mt-1 max-h-32 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-50 custom-scrollbar">
+                                            <ComboboxOptions className="absolute mt-1 max-h-32 w-full overflow-auto rounded-md bg-popover py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-50 custom-scrollbar">
                                                 {filteredComboboxCategories.length === 0 && categoryQuery !== '' ? (
-                                                    <div className="relative cursor-default select-none py-2 px-4 text-gray-700">
+                                                    <div className="relative cursor-default select-none py-2 px-4 text-muted-foreground">
                                                         لا توجد نتائج.
                                                     </div>
                                                 ) : (
@@ -623,7 +623,7 @@ export default function StoresPage() {
                                                         <ComboboxOption
                                                             key={cat.id}
                                                             className={({ active }) =>
-                                                                `relative cursor-default select-none py-2 pl-4 pr-10 ${active ? 'bg-primary text-white' : 'text-gray-900'
+                                                                `relative cursor-default select-none py-2 pl-4 pr-10 ${active ? 'bg-primary text-white' : 'text-foreground'
                                                                 }`
                                                             }
                                                             value={cat.id}
@@ -670,7 +670,7 @@ export default function StoresPage() {
                                 categories
                                     .filter(cat => formData.categoryIds.includes(cat.id))
                                     .map(cat => (
-                                        <span key={cat.id} className="bg-emerald-50 text-emerald-700 text-xs px-2 py-1 rounded-md border border-emerald-100 font-bold flex items-center gap-1">
+                                        <span key={cat.id} className="bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-xs px-2 py-1 rounded-md border border-emerald-100 dark:border-emerald-800 font-bold flex items-center gap-1">
                                             {cat.name}
                                             <button
                                                 type="button"
@@ -706,9 +706,9 @@ export default function StoresPage() {
                             إضافة
                         </Button>
                     </form>
-                    <div className="space-y-2 max-h-60 overflow-y-auto border rounded-xl p-2 bg-gray-50 custom-scrollbar">
+                    <div className="space-y-2 max-h-60 overflow-y-auto border rounded-xl p-2 bg-muted/20 custom-scrollbar">
                         {categories.map(cat => (
-                            <div key={cat.id} className="flex items-center gap-2 bg-white p-2 rounded-lg border shadow-sm group">
+                            <div key={cat.id} className="flex items-center gap-2 bg-card p-2 rounded-lg border shadow-sm group">
                                 {editingCategory?.id === cat.id ? (
                                     <form onSubmit={handleUpdateCategory} className="flex-1 flex gap-2">
                                         <Input autoFocus value={editingCategory.name} onChange={e => setEditingCategory({ ...editingCategory, name: e.target.value })} className="h-8" />
@@ -717,15 +717,15 @@ export default function StoresPage() {
                                     </form>
                                 ) : (
                                     <>
-                                        <span className="flex-1 text-sm font-bold text-gray-700">{cat.name}</span>
-                                        <button onClick={() => setEditingCategory(cat)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors" title="تعديل"><Edit2 size={16} /></button>
-                                        <button onClick={() => handleDeleteCategory(cat.id)} className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors" title="حذف"><Trash2 size={16} /></button>
+                                        <span className="flex-1 text-sm font-bold text-foreground">{cat.name}</span>
+                                        <button onClick={() => setEditingCategory(cat)} className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors" title="تعديل"><Edit2 size={16} /></button>
+                                        <button onClick={() => handleDeleteCategory(cat.id)} className="p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors" title="حذف"><Trash2 size={16} /></button>
                                     </>
                                 )}
                             </div>
                         ))}
                         {categories.length === 0 && (
-                            <p className="text-gray-400 text-center text-sm py-4">لا توجد تصنيفات</p>
+                            <p className="text-muted-foreground text-center text-sm py-4">لا توجد تصنيفات</p>
                         )}
                     </div>
                 </div>

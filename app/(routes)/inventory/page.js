@@ -340,7 +340,7 @@ export default function InventoryPage() {
                 </div>
             </div>
 
-            <Card className="flex-1 overflow-hidden p-0 border-0 shadow-2xl bg-white/40">
+            <Card className="flex-1 overflow-hidden p-0 border-0 shadow-2xl bg-card/40">
                 <div className="h-full overflow-auto">
                     <DndContext
                         sensors={sensors}
@@ -350,11 +350,11 @@ export default function InventoryPage() {
                         <table className="w-full text-right text-sm border-collapse border-b border-border">
                             <thead className="bg-primary text-primary-foreground sticky top-0 z-10 shadow-md">
                                 <tr>
-                                    <th className={`p-4 w-[40px] rounded-tr-lg cursor-default ${selectedCols.has(0) ? 'bg-blue-100' : ''}`}></th>
-                                    <th onClick={(e) => handleColumnClick(1, e)} className={`p-4 min-w-[150px] cursor-pointer hover:bg-black/5 transition-colors ${selectedCols.has(1) ? 'bg-blue-100 text-blue-900' : ''}`}>عنوان الكتاب</th>
-                                    <th onClick={(e) => handleColumnClick(2, e)} className={`p-4 text-center w-[75px] border-r border-primary-foreground/10 cursor-pointer hover:bg-black/5 transition-colors ${selectedCols.has(2) ? 'bg-blue-100 text-blue-900' : ''}`}>المطبوع</th>
-                                    <th onClick={(e) => handleColumnClick(3, e)} className={`p-4 text-center w-[75px] border-r border-primary-foreground/10 cursor-pointer hover:bg-black/5 transition-colors ${selectedCols.has(3) ? 'bg-blue-100 text-blue-900' : ''}`}>الواصل</th>
-                                    <th onClick={(e) => handleColumnClick(4, e)} className={`p-4 text-center w-[75px] border-r border-primary-foreground/10 font-bold relative group/header cursor-pointer hover:bg-black/5 transition-colors ${selectedCols.has(4) ? 'bg-blue-100 text-blue-900' : ''}`}>
+                                    <th className={`p-4 w-[40px] rounded-tr-lg cursor-default ${selectedCols.has(0) ? 'bg-blue-100 dark:bg-blue-900/30' : ''}`}></th>
+                                    <th onClick={(e) => handleColumnClick(1, e)} className={`p-4 min-w-[150px] cursor-pointer transition-colors ${selectedCols.has(1) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100' : ''}`}>عنوان الكتاب</th>
+                                    <th onClick={(e) => handleColumnClick(2, e)} className={`p-4 text-center w-[75px] border-r border-primary-foreground/10 cursor-pointer transition-colors ${selectedCols.has(2) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100' : ''}`}>المطبوع</th>
+                                    <th onClick={(e) => handleColumnClick(3, e)} className={`p-4 text-center w-[75px] border-r border-primary-foreground/10 cursor-pointer transition-colors ${selectedCols.has(3) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100' : ''}`}>الواصل</th>
+                                    <th onClick={(e) => handleColumnClick(4, e)} className={`p-4 text-center w-[75px] border-r border-primary-foreground/10 font-bold relative group/header cursor-pointer transition-colors ${selectedCols.has(4) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100' : ''}`}>
                                         <div className="flex items-center justify-center gap-1">
                                             المتبقي
                                             <button
@@ -367,12 +367,12 @@ export default function InventoryPage() {
                                         {isFilterOpen && (
                                             <>
                                                 <div className="fixed inset-0 z-20 cursor-default" onClick={(e) => { e.stopPropagation(); setIsFilterOpen(false); }} />
-                                                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-40 bg-white rounded-md shadow-xl border z-30 overflow-hidden text-right p-1 space-y-1">
+                                                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-40 bg-popover rounded-md shadow-xl border z-30 overflow-hidden text-right p-1 space-y-1">
                                                     <div className="px-2 py-1">
                                                         <label className="text-[10px] text-muted-foreground block mb-1 font-bold">الحد الأدنى</label>
                                                         <input
                                                             type="number"
-                                                            className="w-full h-7 px-2 text-xs border rounded focus:border-primary focus:ring-1 focus:ring-primary outline-none text-left font-bold text-gray-700"
+                                                            className="w-full h-7 px-2 text-xs border rounded focus:border-primary focus:ring-1 focus:ring-primary outline-none text-left font-bold text-foreground bg-background"
                                                             placeholder="11"
                                                             value={threshold}
                                                             onChange={(e) => {
@@ -384,24 +384,24 @@ export default function InventoryPage() {
                                                             onClick={(e) => e.stopPropagation()}
                                                         />
                                                     </div>
-                                                    <div className="h-px bg-gray-100 my-1 confirm-separator"></div>
+                                                    <div className="h-px bg-muted my-1 confirm-separator"></div>
                                                     <button
                                                         onClick={(e) => { e.stopPropagation(); setRemainingFilter('all'); setIsFilterOpen(false); }}
-                                                        className={`w-full px-4 py-1.5 text-xs rounded transition-colors ${remainingFilter === 'all' ? 'font-bold text-primary bg-primary/5' : 'text-gray-700 hover:bg-gray-100'}`}
+                                                        className={`w-full px-4 py-1.5 text-xs rounded transition-colors ${remainingFilter === 'all' ? 'font-bold text-primary bg-primary/5' : 'text-foreground hover:bg-muted'}`}
                                                     >
                                                         الكل
                                                     </button>
                                                     <button
                                                         disabled={!threshold}
                                                         onClick={(e) => { e.stopPropagation(); setRemainingFilter('low'); setIsFilterOpen(false); }}
-                                                        className={`w-full px-4 py-1.5 text-xs rounded transition-colors ${remainingFilter === 'low' ? 'font-bold text-primary bg-primary/5' : 'text-gray-700 hover:bg-gray-100'} disabled:opacity-50 disabled:cursor-not-allowed`}
+                                                        className={`w-full px-4 py-1.5 text-xs rounded transition-colors ${remainingFilter === 'low' ? 'font-bold text-primary bg-primary/5' : 'text-foreground hover:bg-muted'} disabled:opacity-50 disabled:cursor-not-allowed`}
                                                     >
                                                         نافد
                                                     </button>
                                                     <button
                                                         disabled={!threshold}
                                                         onClick={(e) => { e.stopPropagation(); setRemainingFilter('high'); setIsFilterOpen(false); }}
-                                                        className={`w-full px-4 py-1.5 text-xs rounded transition-colors ${remainingFilter === 'high' ? 'font-bold text-primary bg-primary/5' : 'text-gray-700 hover:bg-gray-100'} disabled:opacity-50 disabled:cursor-not-allowed`}
+                                                        className={`w-full px-4 py-1.5 text-xs rounded transition-colors ${remainingFilter === 'high' ? 'font-bold text-primary bg-primary/5' : 'text-foreground hover:bg-muted'} disabled:opacity-50 disabled:cursor-not-allowed`}
                                                     >
                                                         متوفر
                                                     </button>
@@ -409,14 +409,14 @@ export default function InventoryPage() {
                                             </>
                                         )}
                                     </th>
-                                    <th onClick={(e) => handleColumnClick(5, e)} className={`p-4 text-center w-[75px] border-r border-primary-foreground/10 text-orange-300 cursor-pointer hover:bg-black/5 transition-colors ${selectedCols.has(5) ? '!bg-blue-100 !text-blue-900' : ''}`}>طور البيع</th>
-                                    <th onClick={(e) => handleColumnClick(6, e)} className={`p-4 text-center w-[75px] border-r border-primary-foreground/10 cursor-pointer hover:bg-black/5 transition-colors ${selectedCols.has(6) ? 'bg-blue-100 text-blue-900' : ''}`}>المباع</th>
-                                    <th onClick={(e) => handleColumnClick(7, e)} className={`p-4 text-center w-[75px] border-r border-primary-foreground/10 cursor-pointer hover:bg-black/5 transition-colors ${selectedCols.has(7) ? 'bg-blue-100 text-blue-900' : ''}`}>المهداة</th>
-                                    <th onClick={(e) => handleColumnClick(8, e)} className={`p-4 text-center w-[75px] border-r border-primary-foreground/10 cursor-pointer hover:bg-black/5 transition-colors ${selectedCols.has(8) ? 'bg-blue-100 text-blue-900' : ''}`}>المستعار</th>
-                                    <th onClick={(e) => handleColumnClick(9, e)} className={`p-4 text-center w-[75px] border-r border-primary-foreground/10 text-red-200 cursor-pointer hover:bg-black/5 transition-colors ${selectedCols.has(9) ? '!bg-blue-100 !text-blue-900' : ''}`}>المفقود</th>
-                                    <th onClick={(e) => handleColumnClick(10, e)} className={`p-4 text-center w-[75px] border-r border-primary-foreground/10 text-amber-200 cursor-pointer hover:bg-black/5 transition-colors ${selectedCols.has(10) ? '!bg-blue-100 !text-blue-900' : ''}`}>مخازن أخرى</th>
-                                    <th onClick={(e) => handleColumnClick(11, e)} className={`p-4 text-center w-[75px] border-r border-primary-foreground/10 text-orange-200 cursor-pointer hover:bg-black/5 transition-colors ${selectedCols.has(11) ? '!bg-blue-100 !text-blue-900' : ''}`}>متبقي الفروع</th>
-                                    <th onClick={(e) => handleColumnClick(12, e)} className={`p-4 text-center w-[75px] font-black text-white rounded-tl-lg bg-black/40 border-r border-primary-foreground/10 cursor-pointer hover:bg-black/5 transition-colors ${selectedCols.has(12) ? '!bg-blue-100 !text-blue-900' : ''}`}>المتبقي الكلي</th>
+                                    <th onClick={(e) => handleColumnClick(5, e)} className={`p-4 text-center w-[75px] border-r border-primary-foreground/10 text-orange-300 dark:text-primary-foreground cursor-pointer transition-colors ${selectedCols.has(5) ? '!bg-blue-100 dark:!bg-blue-900/30 !text-blue-900 dark:!text-blue-100' : ''}`}>طور البيع</th>
+                                    <th onClick={(e) => handleColumnClick(6, e)} className={`p-4 text-center w-[75px] border-r border-primary-foreground/10 cursor-pointer transition-colors ${selectedCols.has(6) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100' : ''}`}>المباع</th>
+                                    <th onClick={(e) => handleColumnClick(7, e)} className={`p-4 text-center w-[75px] border-r border-primary-foreground/10 cursor-pointer transition-colors ${selectedCols.has(7) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100' : ''}`}>المهداة</th>
+                                    <th onClick={(e) => handleColumnClick(8, e)} className={`p-4 text-center w-[75px] border-r border-primary-foreground/10 cursor-pointer transition-colors ${selectedCols.has(8) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100' : ''}`}>المستعار</th>
+                                    <th onClick={(e) => handleColumnClick(9, e)} className={`p-4 text-center w-[75px] border-r border-primary-foreground/10 text-red-200 dark:text-primary-foreground cursor-pointer transition-colors ${selectedCols.has(9) ? '!bg-blue-100 dark:!bg-blue-900/30 !text-blue-900 dark:!text-blue-100' : ''}`}>المفقود</th>
+                                    <th onClick={(e) => handleColumnClick(10, e)} className={`p-4 text-center w-[75px] border-r border-primary-foreground/10 text-amber-200 dark:text-primary-foreground cursor-pointer transition-colors ${selectedCols.has(10) ? '!bg-blue-100 dark:!bg-blue-900/30 !text-blue-900 dark:!text-blue-100' : ''}`}>مخازن أخرى</th>
+                                    <th onClick={(e) => handleColumnClick(11, e)} className={`p-4 text-center w-[75px] border-r border-primary-foreground/10 text-orange-200 dark:text-primary-foreground cursor-pointer transition-colors ${selectedCols.has(11) ? '!bg-blue-100 dark:!bg-blue-900/30 !text-blue-900 dark:!text-blue-100' : ''}`}>متبقي الفروع</th>
+                                    <th onClick={(e) => handleColumnClick(12, e)} className={`p-4 text-center w-[75px] font-black text-white dark:text-primary-foreground rounded-tl-lg bg-black/40 dark:bg-black/20 border-r border-primary-foreground/10 cursor-pointer transition-colors ${selectedCols.has(12) ? '!bg-blue-100 dark:!bg-blue-900/30 !text-blue-900 dark:!text-blue-100' : ''}`}>المتبقي الكلي</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border">

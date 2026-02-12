@@ -501,9 +501,9 @@ export default function PartiesPage() {
 
                 {/* Categories Filter Bar */}
                 <div className="flex items-center gap-2 pb-2 w-full">
-                    <div className="flex items-center gap-2 py-1.5 px-3 bg-gray-50 rounded-full border">
-                        <Filter size={16} className="text-gray-400" />
-                        <span className="text-xs font-bold text-gray-500 whitespace-nowrap">تصفية:</span>
+                    <div className="flex items-center gap-2 py-1.5 px-3 bg-muted/30 rounded-full border">
+                        <Filter size={16} className="text-muted-foreground" />
+                        <span className="text-xs font-bold text-muted-foreground whitespace-nowrap">تصفية:</span>
                     </div>
                     <div className="flex-1 flex gap-0.5 overflow-x-auto scrollbar-hide">
                         {categories.map(cat => (
@@ -512,7 +512,7 @@ export default function PartiesPage() {
                                 onClick={() => toggleFilterCategory(cat.id)}
                                 className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border whitespace-nowrap shrink-0 ${filterCategoryIds.includes(cat.id)
                                     ? "bg-primary text-white border-primary shadow-sm"
-                                    : "bg-white text-gray-600 border-gray-200 hover:border-primary/50"
+                                    : "bg-card text-muted-foreground border-border hover:border-primary/50"
                                     }`}
                             >
                                 {cat.name}
@@ -522,11 +522,11 @@ export default function PartiesPage() {
                             <button onClick={() => setFilterCategoryIds([])} className="px-2 py-1 text-xs text-red-500 hover:text-red-700 font-bold">مسح</button>
                         )}
                     </div>
-                    <button onClick={() => setManageCategoriesOpen(true)} className="mr-auto p-1.5 text-gray-400 hover:text-primary hover:bg-gray-100 rounded-full transition-colors"><Settings size={16} /></button>
+                    <button onClick={() => setManageCategoriesOpen(true)} className="mr-auto p-1.5 text-muted-foreground hover:text-primary hover:bg-muted rounded-full transition-colors"><Settings size={16} /></button>
                 </div>
             </div>
 
-            <Card className="flex-1 p-0 overflow-hidden border-0 shadow-lg bg-white/40">
+            <Card className="flex-1 p-0 overflow-hidden border-0 shadow-lg bg-card/40">
                 <div className="h-full overflow-auto">
                     <table className="w-full text-right text-sm border-collapse border-b border-border">
                         <thead className="bg-primary text-primary-foreground font-bold sticky top-0 z-10 shadow-md">
@@ -559,7 +559,7 @@ export default function PartiesPage() {
                                 </tr>
                             )}
                             {!loading && parties.map(p => (
-                                <tr key={p.id} className={`odd:bg-muted/30 even:bg-white hover:bg-primary/5 transition-colors ${selectedIds.includes(p.id) ? 'bg-primary/10' : ''}`}>
+                                <tr key={p.id} className={`odd:bg-muted/30 even:bg-card hover:bg-primary/5 transition-colors ${selectedIds.includes(p.id) ? 'bg-primary/10' : ''}`}>
                                     <td className="p-4 text-center border-l border-border/50 w-10 cursor-pointer" onClick={() => toggleSelect(p.id)}>
                                         <input
                                             type="checkbox"
@@ -585,9 +585,9 @@ export default function PartiesPage() {
                                         <NotesCell text={p.notes} />
                                     </td>
                                     <td className="p-4 flex justify-center gap-2">
-                                        <button onClick={() => viewDetails(p)} className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors" title="تفاصيل"><Eye size={18} /></button>
-                                        <button onClick={() => openEdit(p)} className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"><Edit2 size={18} /></button>
-                                        <button onClick={() => handleDelete(p.id)} className="p-1.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors"><Trash2 size={18} /></button>
+                                        <button onClick={() => viewDetails(p)} className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors" title="تفاصيل"><Eye size={18} /></button>
+                                        <button onClick={() => openEdit(p)} className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"><Edit2 size={18} /></button>
+                                        <button onClick={() => handleDelete(p.id)} className="p-1.5 rounded-lg text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"><Trash2 size={18} /></button>
                                     </td>
                                 </tr>
                             ))}
@@ -657,9 +657,9 @@ export default function PartiesPage() {
                                 >
                                     {({ open }) => (
                                         <div className="relative mt-1">
-                                            <div className="py-1 relative w-full cursor-default overflow-hidden rounded-lg bg-white text-left shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm border">
+                                            <div className="py-1 relative w-full cursor-default overflow-hidden rounded-lg bg-popover text-left shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm border">
                                                 <ComboboxInput
-                                                    className="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-gray-900 focus:ring-0 text-right font-bold"
+                                                    className="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-foreground bg-popover focus:ring-0 text-right font-bold"
                                                     displayValue={() => ""}
                                                     onChange={(event) => setCategoryQuery(event.target.value)}
                                                     onClick={() => !open && comboBtnRef.current?.click()}
@@ -679,9 +679,9 @@ export default function PartiesPage() {
                                                 leaveTo="opacity-0"
                                                 afterLeave={() => setCategoryQuery('')}
                                             >
-                                                <ComboboxOptions className="absolute mt-1 max-h-24 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-50 custom-scrollbar">
+                                                <ComboboxOptions className="absolute mt-1 max-h-24 w-full overflow-auto rounded-md bg-popover py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-50 custom-scrollbar">
                                                     {filteredComboboxCategories.length === 0 && categoryQuery !== '' ? (
-                                                        <div className="relative cursor-default select-none py-2 px-4 text-gray-700">
+                                                        <div className="relative cursor-default select-none py-2 px-4 text-muted-foreground">
                                                             لا توجد نتائج.
                                                         </div>
                                                     ) : (
@@ -689,7 +689,7 @@ export default function PartiesPage() {
                                                             <ComboboxOption
                                                                 key={cat.id}
                                                                 className={({ active }) =>
-                                                                    `relative cursor-default select-none py-2 pl-4 pr-10 ${active ? 'bg-primary text-white' : 'text-gray-900'
+                                                                    `relative cursor-default select-none py-2 pl-4 pr-10 ${active ? 'bg-primary text-white' : 'text-foreground'
                                                                     }`
                                                                 }
                                                                 value={cat.id}
@@ -768,17 +768,17 @@ export default function PartiesPage() {
                 maxWidth="max-w-3xl"
             >
                 <div className="space-y-4">
-                    <div className="flex justify-between items-center bg-gray-50 p-2 rounded-xl border">
+                    <div className="flex justify-between items-center bg-gray-50 dark:bg-muted/10 p-2 rounded-xl border">
                         <div className="flex gap-2">
-                            <button onClick={() => setFilterType("all")} className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${filterType === 'all' ? 'bg-primary text-primary-foreground shadow-md' : 'bg-white text-muted-foreground hover:bg-gray-100 border'}`}>الكل</button>
-                            <button onClick={() => setFilterType("sale")} className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${filterType === 'sale' ? 'bg-primary text-primary-foreground shadow-md' : 'bg-white text-muted-foreground hover:bg-gray-100 border'}`}>بيع</button>
-                            <button onClick={() => setFilterType("gift")} className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${filterType === 'gift' ? 'bg-primary text-primary-foreground shadow-md' : 'bg-white text-muted-foreground hover:bg-gray-100 border'}`}>إهداء</button>
-                            <button onClick={() => setFilterType("loan")} className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${filterType === 'loan' ? 'bg-primary text-primary-foreground shadow-md' : 'bg-white text-muted-foreground hover:bg-gray-100 border'}`}>استعارة</button>
+                            <button onClick={() => setFilterType("all")} className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${filterType === 'all' ? 'bg-primary text-white shadow-md' : 'bg-card text-muted-foreground hover:bg-muted border'}`}>الكل</button>
+                            <button onClick={() => setFilterType("sale")} className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${filterType === 'sale' ? 'bg-primary text-white shadow-md' : 'bg-card text-muted-foreground hover:bg-muted border'}`}>بيع</button>
+                            <button onClick={() => setFilterType("gift")} className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${filterType === 'gift' ? 'bg-primary text-white shadow-md' : 'bg-card text-muted-foreground hover:bg-muted border'}`}>إهداء</button>
+                            <button onClick={() => setFilterType("loan")} className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${filterType === 'loan' ? 'bg-primary text-white shadow-md' : 'bg-card text-muted-foreground hover:bg-muted border'}`}>استعارة</button>
                         </div>
                         <Button
                             onClick={exportAsImage}
                             disabled={filteredTxs.length === 0}
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2 shadow-sm transition-all"
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white dark:bg-emerald-900/20 dark:text-emerald-400 dark:hover:bg-emerald-900/40 dark:border-emerald-800/50 dark:border gap-2 shadow-sm transition-all"
                         >
                             <ImageIcon size={18} />
                             حفظ كصورة
@@ -788,13 +788,13 @@ export default function PartiesPage() {
                     {/* Sales Status Filter - Only Visible when Sale is Selected */}
                     {filterType === 'sale' && (
                         <div className="flex items-center gap-2 pb-2">
-                            <span className="text-xs font-bold text-gray-500">حالة البيع:</span>
+                            <span className="text-xs font-bold text-muted-foreground">حالة البيع:</span>
                             <div className="flex gap-2">
                                 <button
                                     onClick={() => setSaleStatusFilter(prev => prev.includes('final') ? [] : ['final'])}
                                     className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${saleStatusFilter.includes('final')
                                         ? "bg-primary text-white border-primary shadow-sm"
-                                        : "bg-white text-gray-600 border-gray-200 hover:border-primary/50"
+                                        : "bg-card text-muted-foreground border-border hover:border-primary/50"
                                         }`}
                                 >
                                     مكتمل
@@ -803,7 +803,7 @@ export default function PartiesPage() {
                                     onClick={() => setSaleStatusFilter(prev => prev.includes('pending') ? [] : ['pending'])}
                                     className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${saleStatusFilter.includes('pending')
                                         ? "bg-primary text-white border-primary shadow-sm"
-                                        : "bg-white text-gray-600 border-gray-200 hover:border-primary/50"
+                                        : "bg-card text-muted-foreground border-border hover:border-primary/50"
                                         }`}
                                 >
                                     طور البيع
@@ -821,7 +821,7 @@ export default function PartiesPage() {
                             </div>
                         </div>
 
-                        <div className="max-h-[60vh] overflow-y-auto border rounded-2xl shadow-lg bg-white custom-scrollbar transition-all duration-300">
+                        <div className="max-h-[60vh] overflow-y-auto border rounded-2xl shadow-lg bg-card custom-scrollbar transition-all duration-300">
                             <table className="w-full text-right text-sm border-collapse">
                                 <thead className="bg-primary text-primary-foreground sticky top-0 z-10">
                                     <tr>
@@ -837,11 +837,11 @@ export default function PartiesPage() {
                                             <td className="p-4 border-l border-border/50 text-center">
                                                 {t.type === 'sale' && (
                                                     t.state === 'pending'
-                                                        ? <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-black">طور البيع</span>
-                                                        : <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-black">مكتمل</span>
+                                                        ? <span className="px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-900/20 text-amber-800 dark:text-amber-400 text-xs font-black">طور البيع</span>
+                                                        : <span className="px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-400 text-xs font-black">مكتمل</span>
                                                 )}
-                                                {t.type === 'gift' && <span className="px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-black">إهداء</span>}
-                                                {t.type === 'loan' && <span className="px-3 py-1 rounded-full bg-indigo-100 text-indigo-800 text-xs font-black">استعارة</span>}
+                                                {t.type === 'gift' && <span className="px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-400 text-xs font-black">إهداء</span>}
+                                                {t.type === 'loan' && <span className="px-3 py-1 rounded-full bg-indigo-100 dark:bg-indigo-900/20 text-indigo-800 dark:text-indigo-400 text-xs font-black">استعارة</span>}
                                             </td>
                                             <td className="p-4 font-bold text-foreground border-l border-border/50 group-hover:text-primary transition-colors">{t.book_title}</td>
                                             <td className="p-4 font-black text-center border-l border-border/50 text-primary text-base">{t.qty}</td>
@@ -883,10 +883,10 @@ export default function PartiesPage() {
                         </Button>
                     </form>
 
-                    <div className="bg-gray-50 p-4 rounded-xl border">
-                        <div className="space-y-2 max-h-[60vh] overflow-y-auto">
+                    <div className="bg-muted/20 p-4 rounded-xl border">
+                        <div className="space-y-2 max-h-[60vh] overflow-y-auto custom-scrollbar">
                             {categories.map(cat => (
-                                <div key={cat.id} className="flex items-center gap-2 bg-white p-2 rounded-lg border shadow-sm">
+                                <div key={cat.id} className="flex items-center gap-2 bg-card p-2 rounded-lg border shadow-sm">
                                     {editingCategory?.id === cat.id ? (
                                         <form onSubmit={handleUpdateCategory} className="flex-1 flex gap-2">
                                             <Input
@@ -900,9 +900,9 @@ export default function PartiesPage() {
                                         </form>
                                     ) : (
                                         <>
-                                            <span className="flex-1 text-sm font-bold text-gray-700">{cat.name}</span>
-                                            <button onClick={() => setEditingCategory(cat)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded"><Edit2 size={16} /></button>
-                                            <button onClick={() => handleDeleteCategory(cat.id)} className="p-1.5 text-red-600 hover:bg-red-50 rounded"><Trash2 size={16} /></button>
+                                            <span className="flex-1 text-sm font-bold text-foreground">{cat.name}</span>
+                                            <button onClick={() => setEditingCategory(cat)} className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded"><Edit2 size={16} /></button>
+                                            <button onClick={() => handleDeleteCategory(cat.id)} className="p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"><Trash2 size={16} /></button>
                                         </>
                                     )}
                                 </div>

@@ -445,16 +445,16 @@ export default function SalesPage() {
 
                 {/* Status Filter Bar */}
                 <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                    <div className="flex items-center gap-2 py-1.5 px-3 bg-gray-50 rounded-lg border">
-                        <Filter size={16} className="text-gray-400" />
-                        <span className="text-xs font-bold text-gray-500 whitespace-nowrap">تصفية:</span>
+                    <div className="flex items-center gap-2 py-1.5 px-3 bg-muted/30 rounded-lg border">
+                        <Filter size={16} className="text-muted-foreground" />
+                        <span className="text-xs font-bold text-muted-foreground whitespace-nowrap">تصفية:</span>
                     </div>
                     <div className="flex gap-2">
                         <button
                             onClick={() => setFilterStatus(prev => prev.includes('final') ? [] : ['final'])}
                             className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${filterStatus.includes('final')
                                 ? "bg-primary text-white border-primary shadow-sm"
-                                : "bg-white text-gray-600 border-gray-200 hover:border-primary/50"
+                                : "bg-card text-muted-foreground border-border hover:border-primary/50"
                                 }`}
                         >
                             مكتمل
@@ -463,7 +463,7 @@ export default function SalesPage() {
                             onClick={() => setFilterStatus(prev => prev.includes('pending') ? [] : ['pending'])}
                             className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${filterStatus.includes('pending')
                                 ? "bg-primary text-white border-primary shadow-sm"
-                                : "bg-white text-gray-600 border-gray-200 hover:border-primary/50"
+                                : "bg-card text-muted-foreground border-border hover:border-primary/50"
                                 }`}
                         >
                             طور البيع
@@ -475,7 +475,7 @@ export default function SalesPage() {
                 </div>
             </div>
 
-            <Card className="flex-1 p-0 overflow-hidden border-0 shadow-lg bg-white/40">
+            <Card className="flex-1 p-0 overflow-hidden border-0 shadow-lg bg-card/40">
                 <div className="h-full overflow-auto">
                     <table className="w-full text-right text-sm border-collapse border-b border-border">
                         <thead className="bg-primary text-primary-foreground font-bold sticky top-0 z-10 shadow-md">
@@ -512,7 +512,7 @@ export default function SalesPage() {
                                 </tr>
                             )}
                             {!loading && transactions.map((t, idx) => (
-                                <tr key={t.id} className={`odd:bg-muted/30 even:bg-white hover:bg-primary/5 transition-colors ${selectedIds.includes(t.id) ? 'bg-primary/10' : ''}`}>
+                                <tr key={t.id} className={`odd:bg-muted/30 even:bg-card hover:bg-primary/5 transition-colors ${selectedIds.includes(t.id) ? 'bg-primary/10' : ''}`}>
                                     <td className="p-4 text-center border-l border-border/50 w-10 cursor-pointer" onClick={() => toggleSelect(t.id)}>
                                         <input
                                             type="checkbox"
@@ -523,8 +523,8 @@ export default function SalesPage() {
                                     </td>
                                     <td className="p-4 border-l border-border/50 text-center whitespace-nowrap">
                                         {t.state === 'pending'
-                                            ? <span className="px-2 py-1 rounded bg-amber-100 text-amber-800 text-xs font-bold whitespace-nowrap">طور البيع</span>
-                                            : <span className="px-2 py-1 rounded bg-emerald-100 text-emerald-800 text-xs font-bold whitespace-nowrap">مكتمل</span>
+                                            ? <span className="px-2 py-1 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-400 text-xs font-bold whitespace-nowrap border border-amber-200 dark:border-amber-800/50">طور البيع</span>
+                                            : <span className="px-2 py-1 rounded bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-400 text-xs font-bold whitespace-nowrap border border-emerald-200 dark:border-emerald-800/50">مكتمل</span>
                                         }
                                     </td>
                                     <td className="p-4 font-bold text-primary border-l border-border/50 text-center">{t.qty}</td>
@@ -540,8 +540,8 @@ export default function SalesPage() {
                                         <NotesCell text={t.notes} iconOnly={true} />
                                     </td>
                                     <td className="p-4 flex justify-center gap-2">
-                                        <button onClick={() => openEdit(t)} className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"><Edit2 size={18} /></button>
-                                        <button onClick={() => handleDelete(t.id)} className="p-1.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors"><Trash2 size={18} /></button>
+                                        <button onClick={() => openEdit(t)} className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"><Edit2 size={18} /></button>
+                                        <button onClick={() => handleDelete(t.id)} className="p-1.5 rounded-lg text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"><Trash2 size={18} /></button>
                                     </td>
                                 </tr>
                             ))}
@@ -578,7 +578,7 @@ export default function SalesPage() {
                             <button
                                 type="button"
                                 onClick={() => setIsMultiMode(!isMultiMode)}
-                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ring-2 ring-primary ring-offset-2 ${isMultiMode ? 'bg-primary' : 'bg-gray-300'}`}
+                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ring-2 ring-primary ring-offset-2 ${isMultiMode ? 'bg-primary' : 'bg-muted'}`}
                             >
                                 <span className={`${isMultiMode ? '-translate-x-6' : '-translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
                             </button>
@@ -592,9 +592,9 @@ export default function SalesPage() {
                                 <Combobox value={formData.book_id} onChange={handleBookChange} onClose={() => setBookQuery('')}>
                                     {({ open }) => (
                                         <div className="relative mt-1">
-                                            <div className="relative w-full cursor-default overflow-hidden rounded-lg bg-white text-right shadow-md border focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm py-1">
+                                            <div className="relative w-full cursor-default overflow-hidden rounded-lg bg-popover text-right shadow-md border focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm py-1">
                                                 <ComboboxInput
-                                                    className="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-gray-900 focus:ring-0 text-right"
+                                                    className="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-foreground bg-popover focus:ring-0 text-right"
                                                     displayValue={(book) => book?.title || ''}
                                                     onFocus={(e) => e.target.select()}
                                                     onClick={() => !open && bookComboRef.current?.click()}
@@ -608,9 +608,9 @@ export default function SalesPage() {
                                                     />
                                                 </ComboboxButton>
                                             </div>
-                                            <ComboboxOptions className="absolute mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-50">
+                                            <ComboboxOptions className="absolute mt-1 max-h-60 w-full overflow-auto rounded-md bg-popover py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-50">
                                                 {filteredBooks.length === 0 && bookQuery !== '' ? (
-                                                    <div className="relative cursor-default select-none px-4 py-2 text-gray-700 font-bold">
+                                                    <div className="relative cursor-default select-none px-4 py-2 text-muted-foreground font-bold">
                                                         لا توجد بيانات.
                                                     </div>
                                                 ) : (
@@ -618,7 +618,7 @@ export default function SalesPage() {
                                                         <ComboboxOption
                                                             key={book.id}
                                                             className={({ active }) =>
-                                                                `relative cursor-default select-none py-2 pl-10 pr-4 ${active ? 'bg-primary text-primary-foreground' : 'text-gray-900'
+                                                                `relative cursor-default select-none py-2 pl-10 pr-4 ${active ? 'bg-primary text-primary-foreground' : 'text-foreground'
                                                                 }`
                                                             }
                                                             value={book}
@@ -652,7 +652,7 @@ export default function SalesPage() {
                         </div>
                     ) : (
                         <div className="space-y-3">
-                            <div className="flex justify-between items-center bg-gray-50 p-1 px-3 rounded-lg">
+                            <div className="flex justify-between items-center bg-muted/30 p-1 px-3 rounded-lg border border-dashed border-border/50">
                                 <span className="text-sm font-bold">اختر الكتب المراد بيعها ({selectedMultiBooks.length}):</span>
                                 <Button className="h-5 px-1 md:h-7 md:px-2" type="button" variant="outline" size="sm" onClick={selectAllBooks}>
                                     {selectedMultiBooks.length === books.length ? "إلغاء تحديد الكل" : "تحديد الكل"}
@@ -679,11 +679,11 @@ export default function SalesPage() {
                                 )}
                             </div>
 
-                            <div className="max-h-[110px] overflow-y-auto border rounded-xl divide-y bg-white">
+                            <div className="max-h-[110px] overflow-y-auto border rounded-xl divide-y bg-popover">
                                 {filteredMultiBooks.map(book => (
                                     <div
                                         key={book.id}
-                                        onClick={() => toggleMultiBook(book)} className="p-3 flex items-center justify-between hover:bg-gray-50 cursor-pointer">
+                                        onClick={() => toggleMultiBook(book)} className="p-3 flex items-center justify-between hover:bg-muted cursor-pointer">
                                         <div className="flex items-center gap-3">
                                             <input
                                                 type="checkbox"
@@ -721,15 +721,15 @@ export default function SalesPage() {
                         </div>
                     )}
 
-                    <div className="flex items-center gap-2 bg-amber-50 p-3 rounded-lg border border-amber-100">
+                    <div className="flex items-center gap-2 bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg border border-amber-100 dark:border-amber-800/50">
                         <input
                             id="is_pending"
                             type="checkbox"
-                            className="h-5 w-5 rounded border-amber-300 text-amber-600 focus:ring-amber-500"
+                            className="h-5 w-5 rounded border-amber-300 dark:border-amber-700 text-amber-600 focus:ring-amber-500 cursor-pointer"
                             checked={formData.is_pending}
                             onChange={e => setFormData({ ...formData, is_pending: e.target.checked })}
                         />
-                        <label htmlFor="is_pending" className="text-sm font-bold text-amber-900 cursor-pointer">
+                        <label htmlFor="is_pending" className="text-sm font-bold text-amber-900 dark:text-amber-400 cursor-pointer">
                             في طور البيع (لم يتم استلام المبلغ بعد)
                         </label>
                     </div>
@@ -790,9 +790,9 @@ export default function SalesPage() {
                                 <Combobox value={formData.party_id} onChange={(val) => setFormData({ ...formData, party_id: val })} onClose={() => setQuery('')}>
                                     {({ open }) => (
                                         <div className="relative">
-                                            <div className="relative w-full cursor-default overflow-hidden rounded-lg bg-white text-right shadow-md border focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm">
+                                            <div className="relative w-full cursor-default overflow-hidden rounded-lg bg-popover text-right shadow-md border focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm">
                                                 <ComboboxInput
-                                                    className="w-full border-none py-3 pl-3 pr-10 text-sm leading-5 text-gray-900 focus:ring-0 text-right"
+                                                    className="w-full border-none py-3 pl-3 pr-10 text-sm leading-5 text-foreground bg-popover focus:ring-0 text-right"
                                                     displayValue={(party) => party?.name || ''}
                                                     onFocus={(e) => e.target.select()}
                                                     onClick={() => !open && partyComboRef.current?.click()}
@@ -806,9 +806,9 @@ export default function SalesPage() {
                                                     />
                                                 </ComboboxButton>
                                             </div>
-                                            <ComboboxOptions className="absolute mt-1 max-h-44 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-50">
+                                            <ComboboxOptions className="absolute mt-1 max-h-44 w-full overflow-auto rounded-md bg-popover py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-50">
                                                 {filteredParties.length === 0 && query !== '' ? (
-                                                    <div className="relative cursor-default select-none px-4 py-2 text-gray-700 font-bold">
+                                                    <div className="relative cursor-default select-none px-4 py-2 text-muted-foreground font-bold">
                                                         لا توجد بيانات.
                                                     </div>
                                                 ) : (
@@ -817,7 +817,7 @@ export default function SalesPage() {
                                                             <ComboboxOption
                                                                 key={party.id}
                                                                 className={({ active }) =>
-                                                                    `relative cursor-default select-none py-2 pl-10 pr-4 ${active ? 'bg-primary text-primary-foreground' : 'text-gray-900'
+                                                                    `relative cursor-default select-none py-2 pl-10 pr-4 ${active ? 'bg-primary text-primary-foreground' : 'text-foreground'
                                                                     }`
                                                                 }
                                                                 value={party}

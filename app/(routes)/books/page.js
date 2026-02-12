@@ -572,7 +572,7 @@ export default function BooksPage() {
                         <Input
                             ref={searchInputRef}
                             placeholder="بحث عن كتاب..."
-                            className="pr-10 pl-10 bg-white shadow-sm border-gray-200 w-full"
+                            className="pr-10 pl-10 bg-card shadow-sm border-border w-full text-foreground"
                             value={query}
                             onChange={e => setQuery(e.target.value)}
                         />
@@ -605,7 +605,7 @@ export default function BooksPage() {
                 </div>
 
                 {/* Filter Label */}
-                <div className="flex items-center gap-2 py-1.5 px-3 bg-gray-50 rounded-full border">
+                <div className="flex items-center gap-2 py-1.5 px-3 bg-muted/30 rounded-full border">
                     <Filter size={16} className="text-gray-400" />
                     <span className="text-xs font-bold text-gray-500 whitespace-nowrap">تصفية:</span>
                 </div>
@@ -618,7 +618,7 @@ export default function BooksPage() {
                             onClick={() => setFilterCategoryIds(prev => prev.includes(cat.id) ? prev.filter(id => id !== cat.id) : [...prev, cat.id])}
                             className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border whitespace-nowrap shrink-0 ${filterCategoryIds.includes(cat.id)
                                 ? "bg-primary text-white border-primary shadow-sm"
-                                : "bg-white text-gray-600 border-gray-200 hover:border-primary/50"
+                                : "bg-card text-muted-foreground border-border hover:border-primary/50"
                                 }`}
                         >
                             {cat.name}
@@ -630,7 +630,7 @@ export default function BooksPage() {
                 </div>
 
                 {/* Settings Button */}
-                <button onClick={() => setManageCategoriesOpen(true)} className="mr-auto p-1.5 text-gray-400 hover:text-primary hover:bg-gray-100 rounded-full transition-colors">
+                <button onClick={() => setManageCategoriesOpen(true)} className="mr-auto p-1.5 text-muted-foreground hover:text-primary hover:bg-muted rounded-full transition-colors">
                     <Settings size={16} />
                 </button>
             </div>
@@ -669,9 +669,9 @@ export default function BooksPage() {
                         {/* Add New Book Card */}
                         {!loading && <button
                             onClick={() => { setEditId(null); resetForm(); setIsModalOpen(true); }}
-                            className="group relative w-full aspect-[2/3] rounded-xl border-2 border-dashed border-gray-300 hover:border-primary hover:bg-primary/5 flex flex-col items-center justify-center gap-3 transition-all duration-300"
+                            className="group relative w-full aspect-[2/3] rounded-xl border-2 border-dashed border-border hover:border-primary hover:bg-primary/5 flex flex-col items-center justify-center gap-3 transition-all duration-300"
                         >
-                            <div className="w-16 h-16 rounded-full bg-gray-100 group-hover:bg-white flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform text-gray-400 group-hover:text-primary">
+                            <div className="w-16 h-16 rounded-full bg-muted/50 group-hover:bg-card flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform text-muted-foreground group-hover:text-primary">
                                 <Plus size={32} />
                             </div>
                             <span className="font-bold text-gray-400 group-hover:text-primary text-sm">إضافة كتاب جديد</span>
@@ -681,7 +681,6 @@ export default function BooksPage() {
             </DndContext>
 
 
-            {/* Pagination Controls */}
             {/* Pagination Controls */}
             <PaginationControls
                 page={page}
@@ -694,31 +693,31 @@ export default function BooksPage() {
             {
                 detailsBook && (
                     <div onClick={() => setDetailsBook(null)} className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200 cursor-pointer !m-0">
-                        <div onClick={(e) => e.stopPropagation()} className="cursor-default bg-white rounded-[2rem] shadow-2xl w-full max-w-7xl max-h-[90vh] overflow-hidden flex flex-col md:flex-row animate-in zoom-in-95 duration-200 relative">
-                            <button onClick={() => setDetailsBook(null)} className="absolute top-4 left-4 z-10 bg-white/80 p-2 rounded-full hover:bg-white shadow-sm transition-all md:text-gray-500 hover:text-black">
+                        <div onClick={(e) => e.stopPropagation()} className="cursor-default bg-background rounded-[2rem] shadow-2xl w-full max-w-7xl max-h-[90vh] overflow-hidden flex flex-col md:flex-row animate-in zoom-in-95 duration-200 relative">
+                            <button onClick={() => setDetailsBook(null)} className="absolute top-4 left-4 z-10 bg-card/80 p-2 rounded-full hover:bg-card shadow-sm transition-all md:text-muted-foreground hover:text-foreground">
                                 ✕
                             </button>
 
                             {/* Left Side: Image & Key Info */}
-                            <div className="w-full md:w-1/3 bg-gray-50 p-6 flex flex-col items-center justify-center text-center border-l border-gray-100 overflow-y-auto">
-                                <div className="w-56 min-h-80 rounded-xl shadow-lg run-in mb-6 bg-white relative group overflow-hidden">
+                            <div className="w-full md:w-1/3 bg-muted/10 p-6 flex flex-col items-center justify-center text-center border-l border-border overflow-y-auto">
+                                <div className="w-56 min-h-80 rounded-xl shadow-lg run-in mb-6 bg-card relative group overflow-hidden">
                                     {detailsBook.cover_image ? (
                                         <img src={detailsBook.cover_image} alt="Cover" className="w-full h-full object-cover" />
                                     ) : (
-                                        <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-400">
+                                        <div className="w-full h-full flex items-center justify-center bg-gray-200 dark:bg-gray-600 text-gray-400">
                                             <BookOpenText size={48} />
                                         </div>
                                     )}
                                 </div>
-                                <h2 className="text-xl font-black text-gray-800 mb-2 leading-tight">{detailsBook.title}</h2>
+                                <h2 className="text-xl font-black text-foreground mb-2 leading-tight">{detailsBook.title}</h2>
                                 <p className="text-gray-500 text-sm mb-6 max-w-xs mx-auto">{detailsBook.notes || "لا توجد ملاحظات إضافية"}</p>
 
                                 <div className="grid grid-cols-2 gap-4 w-full">
-                                    <div className="bg-white p-3 rounded-xl shadow-sm border border-gray-100">
-                                        <div className="text-xs text-gray-400 font-bold mb-1">العدد المطبوع</div>
+                                    <div className="bg-card p-3 rounded-xl shadow-sm border border-border">
+                                        <div className="text-xs text-muted-foreground font-bold mb-1">العدد المطبوع</div>
                                         <div className="text-xl font-black text-primary">{detailsBook.total_printed}</div>
                                     </div>
-                                    <div className="bg-white p-3 rounded-xl shadow-sm border border-gray-100">
+                                    <div className="bg-card p-3 rounded-xl shadow-sm border border-border">
                                         <div className="text-xs text-gray-400 font-bold mb-1">سعر النسخة</div>
                                         <div className="text-xl font-black text-emerald-600">{Number(detailsBook.unit_price).toLocaleString()}</div>
                                     </div>
@@ -727,7 +726,7 @@ export default function BooksPage() {
                                 <div className="flex flex-wrap gap-2 mt-4 justify-center">
                                     {detailsBook.category_names && detailsBook.category_names.length > 0 ? (
                                         detailsBook.category_names.map((cat, idx) => (
-                                            <span key={idx} className="bg-emerald-50 text-emerald-700 text-xs px-2 py-1 rounded-md border border-emerald-100 font-bold">
+                                            <span key={idx} className="bg-emerald-100 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 text-xs px-2 py-1 rounded-md border border-emerald-200 dark:border-emerald-800 font-bold">
                                                 {cat}
                                             </span>
                                         ))
@@ -739,7 +738,7 @@ export default function BooksPage() {
 
                             {/* Right Side: Charts & Stats */}
                             <div className="w-full md:w-4/6 p-8 overflow-y-auto">
-                                <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                                <h3 className="text-2xl font-bold text-foreground mb-6 flex items-center gap-2">
                                     <BarChart3 className="text-primary" />
                                     إحصائيات الكتاب
                                 </h3>
@@ -752,42 +751,42 @@ export default function BooksPage() {
                                         <div className="flex flex-col gap-6">
                                             {/* Top Row: 6 Stats */}
                                             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-                                                <div className="text-center p-3 rounded-2xl bg-emerald-50 text-emerald-900 shadow-sm border border-emerald-100/50">
+                                                <div className="text-center p-3 rounded-2xl bg-emerald-100 dark:bg-emerald-900/20 text-emerald-900 dark:text-emerald-400 shadow-sm border border-emerald-300/50 dark:border-emerald-800/30">
                                                     <div className="text-xs font-bold opacity-70 whitespace-nowrap">المتبقي الفعلي</div>
                                                     <div className="text-2xl font-black mt-1">{bookStats.remainingInstitution}</div>
                                                 </div>
-                                                <div className="text-center p-3 rounded-2xl bg-blue-50 text-blue-900 shadow-sm border border-blue-100/50">
+                                                <div className="text-center p-3 rounded-2xl bg-blue-100 dark:bg-blue-900/20 text-blue-900 dark:text-blue-400 shadow-sm border border-blue-300/50 dark:border-blue-800/30">
                                                     <div className="text-xs font-bold opacity-70 whitespace-nowrap">إجمالي المباع</div>
                                                     <div className="text-2xl font-black mt-1">{bookStats.totalSold}</div>
                                                 </div>
-                                                <div className="text-center p-3 rounded-2xl bg-amber-50 text-amber-900 shadow-sm border border-amber-100/50">
+                                                <div className="text-center p-3 rounded-2xl bg-amber-100 dark:bg-amber-900/20 text-amber-900 dark:text-amber-400 shadow-sm border border-amber-300/50 dark:border-amber-800/30">
                                                     <div className="text-xs font-bold opacity-70 whitespace-nowrap">إجمالي المهداة</div>
                                                     <div className="text-2xl font-black mt-1">{bookStats.totalGifted}</div>
                                                 </div>
-                                                <div className="text-center p-3 rounded-2xl bg-gray-50 text-gray-900 shadow-sm border border-gray-100/50">
+                                                <div className="text-center p-3 rounded-2xl bg-gray-200 dark:bg-gray-800/20 text-gray-900 dark:text-gray-300 shadow-sm border border-gray-300/50 dark:border-gray-700/30">
                                                     <div className="text-xs font-bold opacity-70 whitespace-nowrap">إجمالي المستعار</div>
                                                     <div className="text-2xl font-black mt-1">{bookStats.realLoaned}</div>
                                                 </div>
-                                                <div className="text-center p-3 rounded-2xl bg-indigo-50 text-indigo-900 shadow-sm border border-indigo-100/50">
+                                                <div className="text-center p-3 rounded-2xl bg-indigo-100 dark:bg-indigo-900/20 text-indigo-900 dark:text-indigo-400 shadow-sm border border-indigo-300/50 dark:border-indigo-800/30">
                                                     <div className="text-xs font-bold opacity-70 whitespace-nowrap">مخازن أخرى</div>
                                                     <div className="text-2xl font-black mt-1">{bookStats.storeInstitution}</div>
                                                 </div>
-                                                <div className="text-center p-3 rounded-2xl bg-orange-50 text-orange-900 shadow-sm border border-orange-100/50">
+                                                <div className="text-center p-3 rounded-2xl bg-orange-100 dark:bg-orange-900/20 text-orange-900 dark:text-orange-400 shadow-sm border border-orange-300/50 dark:border-orange-800/30">
                                                     <div className="text-xs font-bold opacity-70 whitespace-nowrap">فروع أخرى</div>
                                                     <div className="text-2xl font-black mt-1">{bookStats.otherTotal}</div>
                                                 </div>
                                             </div>
 
                                             {/* Revenue Card (Full Width) */}
-                                            <div className="p-4 rounded-2xl bg-teal-50 text-teal-900 flex justify-between items-center shadow-sm border border-teal-100/50">
+                                            <div className="p-4 rounded-2xl bg-teal-100 dark:bg-teal-900/20 text-teal-900 dark:text-teal-400 flex justify-between items-center shadow-sm border border-teal-300/50 dark:border-teal-800">
                                                 <div className="text-sm font-bold opacity-70">إجمالي الأرباح (المبيعات)</div>
                                                 <div className="text-2xl font-black">{Number(bookStats.totalRevenue).toLocaleString()} دينار عراقي</div>
                                             </div>
                                         </div>
 
                                         {/* Chart Area */}
-                                        <div className="bg-white rounded-2xl border p-6 shadow-sm">
-                                            <h4 className="font-bold text-gray-600 mb-4 text-sm">توزيع نسخ الكتاب</h4>
+                                        <div className="bg-card rounded-2xl border border-border p-6 shadow-sm">
+                                            <h4 className="font-bold text-muted-foreground mb-4 text-sm">توزيع نسخ الكتاب</h4>
                                             <div className="h-64 w-full">
                                                 <ResponsiveContainer width="100%" height="100%">
                                                     <PieChart>
@@ -811,7 +810,7 @@ export default function BooksPage() {
                                             {/* Custom Legend to ensure correct order */}
                                             <div className="flex flex-wrap justify-center gap-4 mt-4 px-4">
                                                 {chartData.map((entry, index) => (
-                                                    <div key={index} className="flex items-center gap-2 text-xs font-bold text-gray-600">
+                                                    <div key={index} className="flex items-center gap-2 text-xs font-bold text-gray-600 dark:text-gray-400">
                                                         <span className="w-3 h-3 rounded-full" style={{ backgroundColor: entry.color }}></span>
                                                         <span>{entry.name}</span>
                                                     </div>
@@ -823,19 +822,19 @@ export default function BooksPage() {
                                         <div className="grid grid-cols-2 gap-4 text-sm text-gray-500">
                                             <div className="flex justify-between border-b py-2">
                                                 <span>نسخ واصلة للمؤسسة</span>
-                                                <span className="font-bold text-gray-800">{bookStats.sentInst}</span>
+                                                <span className="font-bold text-gray-600 dark:text-gray-400">{bookStats.sentInst}</span>
                                             </div>
                                             <div className="flex justify-between border-b py-2">
                                                 <span>متبقي الفروع</span>
-                                                <span className="font-bold text-gray-800">{bookStats.remainingBranches}</span>
+                                                <span className="font-bold text-gray-600 dark:text-gray-400">{bookStats.remainingBranches}</span>
                                             </div>
                                             <div className="flex justify-between border-b py-2">
                                                 <span>قيد البيع (لم يكتمل)</span>
-                                                <span className="font-bold text-gray-800">{bookStats.realPending}</span>
+                                                <span className="font-bold text-gray-600 dark:text-gray-400">{bookStats.realPending}</span>
                                             </div>
                                             <div className="flex justify-between border-b py-2">
                                                 <span>مفقود / تالف</span>
-                                                <span className="font-bold text-gray-800">{bookStats.manualLoss}</span>
+                                                <span className="font-bold text-gray-600 dark:text-gray-400">{bookStats.manualLoss}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -855,7 +854,7 @@ export default function BooksPage() {
                             <label className="text-sm font-bold text-gray-700">صورة الغلاف</label>
                             <div
                                 onClick={handleImageUpload}
-                                className="flex-1 border-2 border-dashed border-gray-300 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 hover:border-primary transition-colors relative overflow-hidden group"
+                                className="flex-1 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-primary transition-colors relative overflow-hidden group"
                             >
                                 {formData.cover_image ? (
                                     <>
@@ -922,9 +921,9 @@ export default function BooksPage() {
                                         >
                                             {({ open }) => (
                                                 <div className="relative mt-1">
-                                                    <div className="py-1 relative w-full cursor-default overflow-hidden rounded-lg bg-white text-left shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm border">
+                                                    <div className="py-1 relative w-full cursor-default overflow-hidden rounded-lg bg-popover text-left shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm border">
                                                         <ComboboxInput
-                                                            className="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-gray-900 focus:ring-0 text-right font-bold"
+                                                            className="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-foreground bg-popover focus:ring-0 text-right font-bold"
                                                             displayValue={() => ""}
                                                             onChange={(event) => setCategoryQuery(event.target.value)}
                                                             onClick={() => !open && comboBtnRef.current?.click()}
@@ -944,9 +943,9 @@ export default function BooksPage() {
                                                         leaveTo="opacity-0"
                                                         afterLeave={() => setCategoryQuery('')}
                                                     >
-                                                        <ComboboxOptions className="absolute mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-50 custom-scrollbar">
+                                                        <ComboboxOptions className="absolute mt-1 max-h-60 w-full overflow-auto rounded-md bg-popover py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-50 custom-scrollbar">
                                                             {filteredComboboxCategories.length === 0 && categoryQuery !== '' ? (
-                                                                <div className="relative cursor-default select-none py-2 px-4 text-gray-700">
+                                                                <div className="relative cursor-default select-none py-2 px-4 text-muted-foreground">
                                                                     لا توجد نتائج.
                                                                 </div>
                                                             ) : (
@@ -954,7 +953,7 @@ export default function BooksPage() {
                                                                     <ComboboxOption
                                                                         key={cat.id}
                                                                         className={({ active }) =>
-                                                                            `relative cursor-default select-none py-2 pl-4 pr-10 ${active ? 'bg-primary text-white' : 'text-gray-900'
+                                                                            `relative cursor-default select-none py-2 pl-4 pr-10 ${active ? 'bg-primary text-primary-foreground' : 'text-foreground'
                                                                             }`
                                                                         }
                                                                         value={cat.id}
@@ -1042,9 +1041,9 @@ export default function BooksPage() {
                             إضافة
                         </Button>
                     </form>
-                    <div className="space-y-2 max-h-60 overflow-y-auto border rounded-xl p-2 bg-gray-50 custom-scrollbar">
+                    <div className="space-y-2 max-h-60 overflow-y-auto border rounded-xl p-2 bg-muted/20 custom-scrollbar">
                         {categories.map(cat => (
-                            <div key={cat.id} className="flex items-center gap-2 bg-white p-2 rounded-lg border shadow-sm group">
+                            <div key={cat.id} className="flex items-center gap-2 bg-card p-2 rounded-lg border shadow-sm group">
                                 {editingCategory?.id === cat.id ? (
                                     <form onSubmit={handleUpdateCategory} className="flex-1 flex gap-2">
                                         <Input autoFocus value={editingCategory.name} onChange={e => setEditingCategory({ ...editingCategory, name: e.target.value })} className="h-8" />
@@ -1053,14 +1052,14 @@ export default function BooksPage() {
                                     </form>
                                 ) : (
                                     <>
-                                        <span className="flex-1 text-sm font-bold text-gray-700">{cat.name}</span>
-                                        <button onClick={() => setEditingCategory(cat)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors" title="تعديل"><Edit2 size={16} /></button>
-                                        <button onClick={() => handleDeleteCategory(cat.id)} className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors" title="حذف"><Trash2 size={16} /></button>
+                                        <span className="flex-1 text-sm font-bold text-foreground">{cat.name}</span>
+                                        <button onClick={() => setEditingCategory(cat)} className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors" title="تعديل"><Edit2 size={16} /></button>
+                                        <button onClick={() => handleDeleteCategory(cat.id)} className="p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors" title="حذف"><Trash2 size={16} /></button>
                                     </>
                                 )}
                             </div>
                         ))}
-                        {categories.length === 0 && <p className="text-center text-gray-400 py-4 text-sm">لا توجد تصنيفات بعد.</p>}
+                        {categories.length === 0 && <p className="text-center text-muted-foreground py-4 text-sm">لا توجد تصنيفات بعد.</p>}
                     </div>
                 </div>
             </Modal>
