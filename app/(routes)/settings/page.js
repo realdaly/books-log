@@ -270,7 +270,7 @@ export default function SettingsPage() {
                     <h2 className="text-xl font-bold text-primary">المظهر</h2>
                 </div>
                 <div className="flex items-center justify-between">
-                    <span className="text-lg font-medium">الوضع الليلي</span>
+                    <span className="text-lg font-medium">الوضع المظلم</span>
                     <Button
                         onClick={toggleTheme}
                         variant="outline"

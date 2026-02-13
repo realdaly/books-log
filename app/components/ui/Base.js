@@ -6,7 +6,7 @@ export function Button({ className, variant = "default", size = "default", ...pr
     return (
         <button
             className={cn(
-                "inline-flex items-center justify-center gap-x-1 whitespace-nowrap rounded-lg text-sm font-bold ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+                "inline-flex items-center justify-center gap-x-1 whitespace-nowrap rounded-lg text-sm font-bold ring-offset-background transition-colors outline-none disabled:pointer-events-none disabled:opacity-50",
                 // Variants
                 variant === "default" && "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm",
                 variant === "destructive" && "bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-sm",

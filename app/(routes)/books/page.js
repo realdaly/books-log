@@ -25,7 +25,7 @@ export default function BooksPage() {
     const searchInputRef = useRef(null);
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
-    const ITEMS_PER_PAGE = 50;
+    const ITEMS_PER_PAGE = 25;
 
     const [loading, setLoading] = useState(true);
     const [isFetching, setIsFetching] = useState(false);
@@ -551,7 +551,7 @@ export default function BooksPage() {
     /* if (loading) return <div className="flex justify-center items-center h-full"><Loader2 className="animate-spin text-primary" size={64} /></div>; */
 
     return (
-        <div className="space-y-8 h-full flex flex-col pb-8">
+        <div className="space-y-8 h-full flex flex-col">
             <div className="flex justify-between items-center px-2 flex-wrap gap-4">
                 <div className="flex items-center gap-4">
                     <h1 className="text-2xl md:text-3xl font-bold text-primary drop-shadow-sm">مكتبة الكتب</h1>

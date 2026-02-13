@@ -53,16 +53,36 @@ export function SortableBookCard({ book, onClick, selectedIds = [], toggleSelect
                                 <h3 className="text-white font-bold text-lg leading-tight mb-1 line-clamp-2 drop-shadow-md">{book.title}</h3>
                                 <p className="text-gray-300 text-xs mb-3">مطبوع: {book.total_printed}</p>
 
-                                <div className="flex gap-2 justify-between items-center">
+                                <div className="flex items-center">
                                     {openDetails && (
-                                        <Button size="sm" variant="secondary" className="h-8 text-xs flex-1 bg-background/90 hover:bg-background text-foreground border-0" onClick={(e) => { e.stopPropagation(); openDetails(book); }}>
-                                            <BarChart3 size={14} className="ml-1" /> التفاصيل
-                                        </Button>
+                                        <div className="pl-3 flex-1 cursor-pointer">
+                                            <Button size="sm" variant="secondary" className="h-5 w-full text-xs bg-background/20 hover:bg-background hover:text-foreground text-background dark:text-foreground border-0" onClick={(e) => { e.stopPropagation(); openDetails(book); }}>
+                                                <BarChart3 size={14} /> التفاصيل
+                                            </Button>
+                                        </div>
                                     )}
                                     {!readOnly && (
-                                        <div className="flex gap-2">
-                                            {openEdit && <button onClick={(e) => { e.stopPropagation(); openEdit(book); }} className="bg-white/20 hover:bg-white p-1.5 rounded-full text-white hover:text-blue-600 transition-colors backdrop-blur-sm"><Edit2 size={16} /></button>}
-                                            {handleDelete && <button onClick={(e) => { e.stopPropagation(); handleDelete(book.id); }} className="bg-white/20 hover:bg-white p-1.5 rounded-full text-white hover:text-red-600 transition-colors backdrop-blur-sm"><Trash2 size={16} /></button>}
+                                        <div className="flex items-center">
+                                            {openEdit &&
+                                                <div className="pl-1 cursor-pointer">
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); openEdit(book); }}
+                                                        className="outline-none bg-background/20 hover:bg-background p-1.5 rounded-full text-white hover:text-blue-600 transition-colors"
+                                                    >
+                                                        <Edit2 size={16} />
+                                                    </button>
+                                                </div>
+                                            }
+                                            {handleDelete &&
+                                                <div className="pr-1 cursor-pointer">
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); handleDelete(book.id); }}
+                                                        className="outline-none bg-background/20 hover:bg-background p-1.5 rounded-full text-white hover:text-red-600 transition-colors"
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                </div>
+                                            }
                                         </div>
                                     )}
                                 </div>
