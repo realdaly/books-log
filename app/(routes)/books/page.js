@@ -41,7 +41,7 @@ export default function BooksPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [formData, setFormData] = useState({
         title: "", notes: "", total_printed: "0", sent_to_institution: "0",
-        loss_manual: "0", unit_price: "0",
+        loss_manual: "0", retail_price: "0", wholesale_price: "0",
         cover_image: null,
         categoryIds: []
     });
@@ -193,7 +193,7 @@ export default function BooksPage() {
             // Fetch books
             const rows = await db.select(`
                 SELECT 
-                    b.id, b.title, b.cover_image, b.notes, b.total_printed, b.sent_to_institution, b.loss_manual, b.unit_price, b.created_at, b.updated_at, b.display_order,
+                    b.id, b.title, b.cover_image, b.notes, b.total_printed, b.sent_to_institution, b.loss_manual, b.unit_price, b.retail_price, b.wholesale_price, b.created_at, b.updated_at, b.display_order,
                     COALESCE(ot.other_qty, 0) as other_stores_total,
                     
                     COALESCE(sales.sold_qty, 0) as sold_inst,
@@ -398,19 +398,20 @@ export default function BooksPage() {
         e.preventDefault();
         try {
             const db = await getDb();
-            const { title, notes, total_printed, sent_to_institution, loss_manual, unit_price, cover_image } = formData;
+            const { title, notes, total_printed, sent_to_institution, loss_manual, retail_price, wholesale_price, cover_image } = formData;
 
             const nTotal = Number(total_printed) || 0;
             const nSent = Number(sent_to_institution) || 0;
             const nLoss = Number(loss_manual) || 0;
-            const nPrice = Number(unit_price) || 0;
+            const nRetail = Number(retail_price) || 0;
+            const nWholesale = Number(wholesale_price) || 0;
 
             if (editId) {
                 // Update Single
                 await db.execute(`
                     UPDATE book SET title = $1, notes = $2, total_printed = $3, sent_to_institution = $4,
-                    loss_manual = $5, unit_price = $6, cover_image = $7 WHERE id = $8
-                        `, [title, notes, nTotal, nSent, nLoss, nPrice, cover_image, editId]);
+                    loss_manual = $5, retail_price = $6, wholesale_price = $7, unit_price = $6, cover_image = $8 WHERE id = $9
+                        `, [title, notes, nTotal, nSent, nLoss, nRetail, nWholesale, cover_image, editId]);
 
                 // Update Categories
                 await db.execute("DELETE FROM book_category_link WHERE book_id=$1", [editId]);
@@ -434,8 +435,8 @@ export default function BooksPage() {
 
                     await db.execute(`
                         INSERT INTO book(title, notes, total_printed, sent_to_institution,
-                            loss_manual, unit_price, cover_image) VALUES($1, $2, $3, $4, $5, $6, $7)
-                    `, [t, notes, nTotal, nSent, nLoss, nPrice, cover_image]);
+                            loss_manual, retail_price, wholesale_price, unit_price, cover_image) VALUES($1, $2, $3, $4, $5, $6, $7, $6, $8)
+                    `, [t, notes, nTotal, nSent, nLoss, nRetail, nWholesale, cover_image]);
 
                     const idRes = await db.select("SELECT last_insert_rowid() as id");
                     const newId = idRes[0]?.id;
@@ -519,7 +520,8 @@ export default function BooksPage() {
                 total_printed: String(fullBook.total_printed || 0),
                 sent_to_institution: String(fullBook.sent_to_institution || 0),
                 loss_manual: String(fullBook.loss_manual || 0),
-                unit_price: String(fullBook.unit_price || 0),
+                retail_price: String(fullBook.retail_price || fullBook.unit_price || 0),
+                wholesale_price: String(fullBook.wholesale_price || 0),
                 cover_image: fullBook.cover_image,
                 categoryIds: b.category_ids || []
             });
@@ -533,7 +535,7 @@ export default function BooksPage() {
     const resetForm = () => {
         setFormData({
             title: "", notes: "", total_printed: "0", sent_to_institution: "0",
-            loss_manual: "0", unit_price: "0", cover_image: null, categoryIds: []
+            loss_manual: "0", retail_price: "0", wholesale_price: "0", cover_image: null, categoryIds: []
         });
     };
 
@@ -713,13 +715,19 @@ export default function BooksPage() {
                                 <p className="text-gray-500 text-sm mb-6 max-w-xs mx-auto">{detailsBook.notes || "لا توجد ملاحظات إضافية"}</p>
 
                                 <div className="grid grid-cols-2 gap-4 w-full">
-                                    <div className="bg-card p-3 rounded-xl shadow-sm border border-border">
-                                        <div className="text-xs text-muted-foreground font-bold mb-1">العدد المطبوع</div>
+                                    <div className="flex flex-col justify-center gap-2 bg-card p-3 rounded-xl shadow-sm border border-border">
+                                        <div className="my-auto text-xs text-muted-foreground font-bold mb-1">العدد المطبوع</div>
                                         <div className="text-xl font-black text-primary">{detailsBook.total_printed}</div>
                                     </div>
-                                    <div className="bg-card p-3 rounded-xl shadow-sm border border-border">
-                                        <div className="text-xs text-gray-400 font-bold mb-1">سعر النسخة</div>
-                                        <div className="text-xl font-black text-emerald-600">{Number(detailsBook.unit_price).toLocaleString()}</div>
+                                    <div className="bg-card p-3 rounded-xl shadow-sm border border-border flex flex-col justify-between">
+                                        <div className="flex justify-between items-center border-b border-border/50 pb-1 mb-1">
+                                            <div className="text-xs text-gray-400 font-bold">سعر المفرد</div>
+                                            <div className="text-lg font-black text-emerald-600">{Number(detailsBook.retail_price || detailsBook.unit_price || 0).toLocaleString()}</div>
+                                        </div>
+                                        <div className="flex justify-between items-center pt-1">
+                                            <div className="text-xs text-gray-400 font-bold">سعر الجملة</div>
+                                            <div className="text-lg font-black text-blue-600">{Number(detailsBook.wholesale_price || 0).toLocaleString()}</div>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -894,11 +902,17 @@ export default function BooksPage() {
                                     <label className="block text-sm font-bold mb-1 border-primary pr-2">الواصل للمؤسسة</label>
                                     <Input type="number" min={0} value={formData.sent_to_institution} onChange={e => setFormData({ ...formData, sent_to_institution: e.target.value })} />
                                 </div>
-                                <div className="col-span-2 md:col-span-1">
-                                    <label className="block text-sm font-bold mb-1 border-primary pr-2">سعر النسخة</label>
-                                    <Input type="number" min={0} className="h-11" step="0.01" required value={formData.unit_price} onChange={e => setFormData({ ...formData, unit_price: e.target.value })} />
+                                <div className="col-span-2 md:col-span-1 flex gap-2">
+                                    <div className="flex-1">
+                                        <label className="block text-sm font-bold mb-1 border-primary pr-2">سعر المفرد</label>
+                                        <Input type="number" min={0} className="h-11" step="0.01" required value={formData.retail_price} onChange={e => setFormData({ ...formData, retail_price: e.target.value })} />
+                                    </div>
+                                    <div className="flex-1">
+                                        <label className="block text-sm font-bold mb-1 border-primary pr-2">سعر الجملة</label>
+                                        <Input type="number" min={0} className="h-11" step="0.01" required value={formData.wholesale_price} onChange={e => setFormData({ ...formData, wholesale_price: e.target.value })} />
+                                    </div>
                                 </div>
-                                <div>
+                                <div className="col-span-2 md:col-span-1">
                                     <label className="block text-sm font-bold mb-1 border-primary pr-2">مفقود (يدوي)</label>
                                     <Input type="number" min={0} className="h-11" value={formData.loss_manual} onChange={e => setFormData({ ...formData, loss_manual: e.target.value })} />
                                 </div>

@@ -48,6 +48,17 @@ async function ensureSchema(db) {
         if (!columnNames.includes("unit_price")) {
             await db.execute("ALTER TABLE book ADD COLUMN unit_price REAL DEFAULT 0");
         }
+        // New dual pricing
+        if (!columnNames.includes("wholesale_price")) {
+            await db.execute("ALTER TABLE book ADD COLUMN wholesale_price REAL DEFAULT 0");
+            // Optional: migrate existing unit_price to wholesale_price if meaningful? 
+            // Usually unit_price was 'selling price', so maybe retail_price.
+        }
+        if (!columnNames.includes("retail_price")) {
+            await db.execute("ALTER TABLE book ADD COLUMN retail_price REAL DEFAULT 0");
+            // Migrate old unit_price to retail_price
+            await db.execute("UPDATE book SET retail_price = unit_price WHERE retail_price = 0");
+        }
         if (!columnNames.includes("loss_manual")) {
             await db.execute("ALTER TABLE book ADD COLUMN loss_manual INTEGER DEFAULT 0");
         }

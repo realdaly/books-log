@@ -15,6 +15,15 @@ export function SortableInventoryRow({ row, updateField, successMap, selectedCol
         position: isDragging ? 'relative' : 'static',
     };
 
+    const handleKeyDown = (e, originalValue) => {
+        if (e.key === 'Enter') {
+            e.target.blur();
+        } else if (e.key === 'Escape') {
+            e.target.value = originalValue ?? "";
+            e.target.blur();
+        }
+    };
+
     const printed = row.total_printed || 0;
     const received = row.sent_to_institution || 0;
     const expected = Math.max(0, printed - received);
@@ -38,13 +47,15 @@ export function SortableInventoryRow({ row, updateField, successMap, selectedCol
             <td className={`p-2 text-center border-l border-border/50 ${selectedCols.has(2) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
                 <div className="relative flex justify-center">
                     <input
-                        type="number"
-                        min="0"
-                        className="w-14 p-1 text-center bg-transparent border border-transparent hover:border-input rounded-lg focus:bg-background focus:border-primary focus:ring-1 focus:ring-primary transition-all font-medium text-foreground"
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        onChange={(e) => (e.target.value = e.target.value.replace(/[^0-9]/g, ""))}
+                        className="cursor-pointer w-14 p-1 text-center bg-transparent border border-transparent hover:border-input rounded-lg focus:bg-background focus:border-primary focus:ring-1 focus:ring-primary transition-all font-medium text-foreground"
                         defaultValue={row.total_printed}
                         onBlur={e => updateField(row.book_id, 'total_printed', e.target.value)}
                         onFocus={e => e.target.select()}
-                        onKeyDown={(e) => e.key === 'Enter' && e.target.blur()}
+                        onKeyDown={(e) => handleKeyDown(e, row.total_printed)}
                     />
                     {successMap && successMap[`${row.book_id}_total_printed`] && (
                         <div className="absolute -top-4 bg-popover/90 backdrop-blur border border-emerald-200 shadow-sm rounded-full px-1.5 py-0.5 flex items-center gap-0.5 animate-in fade-in zoom-in slide-in-from-bottom-2">
@@ -59,13 +70,15 @@ export function SortableInventoryRow({ row, updateField, successMap, selectedCol
             <td className={`p-2 text-center border-l border-border/50 ${selectedCols.has(3) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
                 <div className="relative flex justify-center">
                     <input
-                        type="number"
-                        min="0"
-                        className="w-14 p-1 text-center bg-transparent border border-transparent hover:border-input rounded-lg focus:bg-background focus:border-primary focus:ring-1 focus:ring-primary transition-all font-medium text-foreground"
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        onChange={(e) => (e.target.value = e.target.value.replace(/[^0-9]/g, ""))}
+                        className="cursor-pointer w-14 p-1 text-center bg-transparent border border-transparent hover:border-input rounded-lg focus:bg-background focus:border-primary focus:ring-1 focus:ring-primary transition-all font-medium text-foreground"
                         defaultValue={row.sent_to_institution}
                         onBlur={e => updateField(row.book_id, 'sent_to_institution', e.target.value)}
                         onFocus={e => e.target.select()}
-                        onKeyDown={(e) => e.key === 'Enter' && e.target.blur()}
+                        onKeyDown={(e) => handleKeyDown(e, row.sent_to_institution)}
                     />
                     {successMap && successMap[`${row.book_id}_sent_to_institution`] && (
                         <div className="absolute -top-4 bg-popover/90 backdrop-blur border border-emerald-200 shadow-sm rounded-full px-1.5 py-0.5 flex items-center gap-0.5 animate-in fade-in zoom-in slide-in-from-bottom-2">
@@ -96,13 +109,15 @@ export function SortableInventoryRow({ row, updateField, successMap, selectedCol
             <td className={`p-2 text-center border-l border-border/50 ${selectedCols.has(9) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
                 <div className="relative flex justify-center">
                     <input
-                        type="number"
-                        min="0"
-                        className="w-14 p-1 text-center bg-transparent border border-transparent hover:border-input rounded-lg focus:bg-background focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all font-medium text-foreground"
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        onChange={(e) => (e.target.value = e.target.value.replace(/[^0-9]/g, ""))}
+                        className="cursor-pointer w-14 p-1 text-center bg-transparent border border-transparent hover:border-input rounded-lg focus:bg-background focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all font-medium text-foreground"
                         defaultValue={row.loss_manual}
                         onBlur={e => updateField(row.book_id, 'loss_manual', e.target.value)}
                         onFocus={e => e.target.select()}
-                        onKeyDown={(e) => e.key === 'Enter' && e.target.blur()}
+                        onKeyDown={(e) => handleKeyDown(e, row.loss_manual)}
                     />
                     {successMap && successMap[`${row.book_id}_loss_manual`] && (
                         <div className="absolute -top-4 bg-popover/90 backdrop-blur border border-emerald-200 shadow-sm rounded-full px-1.5 py-0.5 flex items-center gap-0.5 animate-in fade-in zoom-in slide-in-from-bottom-2">

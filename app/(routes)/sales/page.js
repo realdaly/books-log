@@ -43,6 +43,7 @@ export default function SalesPage() {
     const [isMultiMode, setIsMultiMode] = useState(false);
     const [selectedMultiBooks, setSelectedMultiBooks] = useState([]); // Array of { book, qty, unit_price }
     const [selectedIds, setSelectedIds] = useState([]);
+    const [priceType, setPriceType] = useState('retail'); // 'retail' | 'wholesale'
 
     // Combobox State
     const [query, setQuery] = useState('');
@@ -146,7 +147,7 @@ export default function SalesPage() {
 
             setTransactions(rows);
 
-            const booksData = await db.select("SELECT id, title, unit_price FROM book ORDER BY display_order ASC, title ASC");
+            const booksData = await db.select("SELECT id, title, unit_price, retail_price, wholesale_price FROM book ORDER BY display_order ASC, title ASC");
             setBooks(booksData);
 
             const partiesData = await db.select("SELECT id, name FROM party ORDER BY id DESC");
@@ -208,12 +209,25 @@ export default function SalesPage() {
         const newForm = { ...formData, book_id: book };
 
         if (book && !editId) {
-            // Only auto-populate price for NEW sales, not when editing
-            newForm.unit_price = book.unit_price || 0;
-            newForm.total_price = (parseFloat(newForm.qty) || 0) * (book.unit_price || 0);
+            // Default to Retail Price
+            setPriceType('retail');
+            const price = book.retail_price || book.unit_price || 0;
+            newForm.unit_price = price;
+            newForm.total_price = (parseFloat(newForm.qty) || 0) * price;
         }
 
         setFormData(newForm);
+    };
+
+    const handlePriceTypeChange = (type) => {
+        setPriceType(type);
+        if (formData.book_id) {
+            const price = type === 'wholesale'
+                ? (formData.book_id.wholesale_price || 0)
+                : (formData.book_id.retail_price || formData.book_id.unit_price || 0);
+
+            handleQtyPriceChange('unit_price', price);
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -349,6 +363,14 @@ export default function SalesPage() {
             notes: row.notes || "",
             is_pending: row.state === 'pending'
         });
+        // Detect Price Type
+        if (b) {
+            if (row.unit_price === b.wholesale_price) {
+                setPriceType('wholesale');
+            } else {
+                setPriceType('retail');
+            }
+        }
         setEditId(row.id);
         setIsMultiMode(false);
         setIsModalOpen(true);
@@ -358,14 +380,16 @@ export default function SalesPage() {
         setFormData({
             book_id: books[0] || null,
             qty: 1,
-            unit_price: books[0]?.unit_price || 0,
-            total_price: books[0]?.unit_price || 0,
+            unit_price: books[0]?.retail_price || books[0]?.unit_price || 0,
+            total_price: books[0]?.retail_price || books[0]?.unit_price || 0,
             receipt_no: "",
             party_id: parties[0] || null,
             tx_date: new Date().toISOString().split('T')[0],
             notes: "",
             is_pending: false
         });
+
+        setPriceType('retail');
         setIsMultiMode(false);
         setSelectedMultiBooks([]);
         setMultiBookQuery('');
@@ -376,7 +400,7 @@ export default function SalesPage() {
         if (exists) {
             setSelectedMultiBooks(selectedMultiBooks.filter(b => b.book.id !== book.id));
         } else {
-            setSelectedMultiBooks([...selectedMultiBooks, { book, qty: 1, unit_price: book.unit_price || 0 }]);
+            setSelectedMultiBooks([...selectedMultiBooks, { book, qty: 1, unit_price: book.retail_price || book.unit_price || 0 }]);
         }
     };
 
@@ -390,7 +414,7 @@ export default function SalesPage() {
         if (selectedMultiBooks.length === books.length) {
             setSelectedMultiBooks([]);
         } else {
-            setSelectedMultiBooks(books.map(b => ({ book: b, qty: 1, unit_price: b.unit_price || 0 })));
+            setSelectedMultiBooks(books.map(b => ({ book: b, qty: 1, unit_price: b.retail_price || b.unit_price || 0 })));
         }
     };
 
@@ -746,11 +770,31 @@ export default function SalesPage() {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium mb-1">سعر النسخة</label>
+                                    <div className="flex justify-between items-center mb-1">
+                                        <label className="block text-sm font-medium">سعر النسخة</label>
+                                        <div className="flex gap-1 bg-muted/40 p-0.5 rounded-lg">
+                                            <button
+                                                type="button"
+                                                onClick={() => handlePriceTypeChange('retail')}
+                                                className={`px-2 py-0.5 text-[10px] font-bold rounded-md transition-all ${priceType === 'retail' ? 'bg-indigo-100 text-indigo-700 shadow-sm border border-indigo-200' : 'text-muted-foreground hover:text-foreground'}`}
+                                            >
+                                                مفرد
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => handlePriceTypeChange('wholesale')}
+                                                className={`px-2 py-0.5 text-[10px] font-bold rounded-md transition-all ${priceType === 'wholesale' ? 'bg-indigo-100 text-indigo-700 shadow-sm border border-indigo-200' : 'text-muted-foreground hover:text-foreground'}`}
+                                            >
+                                                جملة
+                                            </button>
+                                        </div>
+                                    </div>
+
                                     <Input
                                         type="number" min="0" step="0.01"
                                         value={formData.unit_price}
                                         onChange={e => handleQtyPriceChange('unit_price', e.target.value)}
+                                        className="h-10"
                                     />
                                 </div>
                             </div>
