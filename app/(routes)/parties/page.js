@@ -768,7 +768,7 @@ export default function PartiesPage() {
                 maxWidth="max-w-3xl"
             >
                 <div className="space-y-4">
-                    <div className="flex justify-between items-center bg-gray-50 dark:bg-muted/10 p-2 rounded-xl border">
+                    <div className="flex justify-between items-center bg-primary/5 dark:bg-muted/10 p-2 rounded-xl border">
                         <div className="flex gap-2">
                             <button onClick={() => setFilterType("all")} className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${filterType === 'all' ? 'bg-primary text-white shadow-md' : 'bg-card text-muted-foreground hover:bg-muted border'}`}>الكل</button>
                             <button onClick={() => setFilterType("sale")} className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${filterType === 'sale' ? 'bg-primary text-white shadow-md' : 'bg-card text-muted-foreground hover:bg-muted border'}`}>بيع</button>
