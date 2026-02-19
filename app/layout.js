@@ -46,7 +46,7 @@ export default function RootLayout({ children }) {
                         });
                     ` }} />
                     <Sidebar />
-                    <main className="flex-1 overflow-auto p-6 md:p-8 relative">
+                    <main className="flex-1 overflow-auto px-6 md:px-8 pt-6 md:pt-8 pb-3 relative">
                         {children}
                     </main>
                 </ThemeProvider>

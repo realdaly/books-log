@@ -129,7 +129,7 @@ export default function InventoryPage() {
     const updateDisplayOrder = async (items) => {
         try {
             const db = await getDb();
-            const startOrder = (page - 1) * ITEMS_PER_PAGE;
+            const startOrder = (page - 1) * itemsPerPage;
 
             for (let i = 0; i < items.length; i++) {
                 const row = items[i]; // row has book_id
@@ -144,7 +144,7 @@ export default function InventoryPage() {
     // Pagination
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
-    const ITEMS_PER_PAGE = 50;
+    const [itemsPerPage, setItemsPerPage] = useState(50);
 
 
     const fetchData = useCallback(async () => {
@@ -192,9 +192,8 @@ export default function InventoryPage() {
             `;
             const countResult = await db.select(countQuery, params);
             const totalItems = countResult[0]?.count || 0;
-            setTotalPages(Math.ceil(totalItems / ITEMS_PER_PAGE));
-
-            const offset = (page - 1) * ITEMS_PER_PAGE;
+            setTotalPages(Math.ceil(totalItems / itemsPerPage));
+            const offset = (page - 1) * itemsPerPage;
 
             // Fetch Data
             const dataQuery = `
@@ -208,7 +207,7 @@ export default function InventoryPage() {
                 JOIN book b ON b.id = v.book_id
                 ${whereSQL}
                 ORDER BY b.display_order ASC, v.book_title ASC
-                LIMIT ${ITEMS_PER_PAGE} OFFSET ${offset}
+                LIMIT ${itemsPerPage} OFFSET ${offset}
             `;
 
             const rows = await db.select(dataQuery, params);
@@ -219,7 +218,7 @@ export default function InventoryPage() {
             setLoading(false);
             setIsFetching(false);
         }
-    }, [page, searchTerm, remainingFilter, threshold]);
+    }, [page, searchTerm, remainingFilter, threshold, itemsPerPage]);
 
 
     useEffect(() => {
@@ -464,6 +463,8 @@ export default function InventoryPage() {
                 page={page}
                 totalPages={totalPages}
                 setPage={setPage}
+                itemsPerPage={itemsPerPage}
+                setItemsPerPage={setItemsPerPage}
                 isLoading={isFetching}
             />
         </div >

@@ -25,7 +25,7 @@ export default function BooksPage() {
     const searchInputRef = useRef(null);
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
-    const ITEMS_PER_PAGE = 25;
+    const [itemsPerPage, setItemsPerPage] = useState(25);
 
     const [loading, setLoading] = useState(true);
     const [isFetching, setIsFetching] = useState(false);
@@ -123,7 +123,7 @@ export default function BooksPage() {
             // Let's use a loop for now for simplicity.
 
             // To maintain global order across pages, we need to know the 'start' index of this page.
-            const startOrder = (page - 1) * ITEMS_PER_PAGE;
+            const startOrder = (page - 1) * itemsPerPage;
 
             // NOTE: If we want true reordering, we should probably update the DB integers.
             // Let's iterate and update. 
@@ -186,9 +186,9 @@ export default function BooksPage() {
 
             const countResult = await db.select(countQuery, params);
             const totalItems = countResult[0]?.count || 0;
-            setTotalPages(Math.ceil(totalItems / ITEMS_PER_PAGE));
+            setTotalPages(Math.ceil(totalItems / itemsPerPage));
 
-            const offset = (page - 1) * ITEMS_PER_PAGE;
+            const offset = (page - 1) * itemsPerPage;
 
             // Fetch books
             const rows = await db.select(`
@@ -217,7 +217,7 @@ export default function BooksPage() {
                 ${finalWhere}
                 GROUP BY b.id
                 ORDER BY b.display_order ASC, b.id DESC
-                LIMIT ${ITEMS_PER_PAGE} OFFSET ${offset}
+                LIMIT ${itemsPerPage} OFFSET ${offset}
             `, params);
 
             const normalizedRows = rows.map(r => ({
@@ -237,7 +237,7 @@ export default function BooksPage() {
             setLoading(false);
             setIsFetching(false);
         }
-    }, [page, debouncedQuery, filterCategoryIds]);
+    }, [page, debouncedQuery, filterCategoryIds, itemsPerPage]);
 
     useEffect(() => {
         fetchData();
@@ -688,6 +688,8 @@ export default function BooksPage() {
                 page={page}
                 totalPages={totalPages}
                 setPage={setPage}
+                itemsPerPage={itemsPerPage}
+                setItemsPerPage={setItemsPerPage}
                 isLoading={isFetching}
             />
 

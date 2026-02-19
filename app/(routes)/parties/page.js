@@ -576,7 +576,7 @@ export default function PartiesPage() {
                                     <td className="p-4 w-[200px] border-l border-border/50">
                                         <div className="flex flex-wrap gap-1 overflow-hidden h-6">
                                             {p.category_names && p.category_names.map((name, idx) => (
-                                                <span key={idx} className="px-1.5 py-0.5 bg-gray-100 text-gray-600 text-[10px] rounded border border-gray-200 whitespace-nowrap">{name}</span>
+                                                <span key={idx} className="px-1.5 py-0.5 bg-muted/50 text-muted-foreground text-[10px] rounded border border-border whitespace-nowrap">{name}</span>
                                             ))}
                                             {(!p.category_names || p.category_names.length === 0) && <span className="text-gray-400 text-xs">-</span>}
                                         </div>
