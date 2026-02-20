@@ -18,7 +18,7 @@ export default function PartiesPage() {
     const [debouncedQuery, setDebouncedQuery] = useState('');
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
-    const ITEMS_PER_PAGE = 50;
+    const [itemsPerPage, setItemsPerPage] = useState(50);
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isFetching, setIsFetching] = useState(false);
@@ -107,9 +107,9 @@ export default function PartiesPage() {
             const countQuery = `SELECT COUNT(*) as count FROM party p ${finalWhere}`;
             const countResult = await db.select(countQuery, params);
             const totalItems = countResult[0]?.count || 0;
-            setTotalPages(Math.ceil(totalItems / ITEMS_PER_PAGE));
+            setTotalPages(Math.ceil(totalItems / itemsPerPage));
 
-            const offset = (page - 1) * ITEMS_PER_PAGE;
+            const offset = (page - 1) * itemsPerPage;
 
             // Limit and Offset in Sql
             // Note: params used in WHERE clause for search.
@@ -124,7 +124,7 @@ export default function PartiesPage() {
                 ${finalWhere}
                 GROUP BY p.id
                 ORDER BY p.id DESC
-                LIMIT ${ITEMS_PER_PAGE} OFFSET ${offset}
+                LIMIT ${itemsPerPage} OFFSET ${offset}
             `, params);
 
             // Normalize to arrays
@@ -146,7 +146,7 @@ export default function PartiesPage() {
             setLoading(false);
             setIsFetching(false);
         }
-    }, [page, debouncedQuery, filterCategoryIds]);
+    }, [page, debouncedQuery, filterCategoryIds, itemsPerPage]);
 
     useEffect(() => {
         fetchData();
@@ -609,6 +609,8 @@ export default function PartiesPage() {
                 totalPages={totalPages}
                 setPage={setPage}
                 isLoading={isFetching}
+                itemsPerPage={itemsPerPage}
+                setItemsPerPage={setItemsPerPage}
             />
 
             {/* Add/Edit Modal */}

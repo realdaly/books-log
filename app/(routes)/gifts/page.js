@@ -14,7 +14,7 @@ import { ask } from '@tauri-apps/plugin-dialog';
 import { NotesCell } from "../../components/ui/NotesCell";
 
 export default function GiftsPage() {
-    const ITEMS_PER_PAGE = 50;
+    const [itemsPerPage, setItemsPerPage] = useState(50);
 
     const [transactions, setTransactions] = useState([]);
     const [bookComboRef, partyComboRef] = [useRef(null), useRef(null)];
@@ -110,9 +110,9 @@ export default function GiftsPage() {
 
             const countResult = await db.select(countQuery, params);
             const totalItems = countResult[0]?.count || 0;
-            setTotalPages(Math.ceil(totalItems / ITEMS_PER_PAGE));
+            setTotalPages(Math.ceil(totalItems / itemsPerPage));
 
-            const offset = (page - 1) * ITEMS_PER_PAGE;
+            const offset = (page - 1) * itemsPerPage;
 
             const rows = await db.select(`
                 SELECT 
@@ -124,7 +124,7 @@ export default function GiftsPage() {
                 LEFT JOIN party p ON t.party_id = p.id
                 ${whereClause}
                 ORDER BY t.tx_date DESC, t.id DESC
-                LIMIT ${ITEMS_PER_PAGE} OFFSET ${offset}
+                LIMIT ${itemsPerPage} OFFSET ${offset}
             `, params);
 
             setTransactions(rows);
@@ -141,7 +141,7 @@ export default function GiftsPage() {
             setLoading(false);
             setIsFetching(false);
         }
-    }, [page, debouncedSearchQuery]);
+    }, [page, debouncedSearchQuery, itemsPerPage]);
 
     useEffect(() => {
         fetchData();
@@ -451,6 +451,8 @@ export default function GiftsPage() {
                 totalPages={totalPages}
                 setPage={setPage}
                 isLoading={isFetching}
+                itemsPerPage={itemsPerPage}
+                setItemsPerPage={setItemsPerPage}
             />
 
             <Modal

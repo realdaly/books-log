@@ -10,7 +10,6 @@ import {
     Users,
     Library,
     Settings,
-    Book,
     Menu,
     Layers,
     Building2
@@ -137,16 +136,16 @@ export default function Sidebar() {
             )}>
                 <div className="flex items-center overflow-hidden">
                     <div className="w-20 flex justify-center shrink-0">
-                        <div className="bg-primary/10 p-2 rounded-lg shrink-0">
-                            <Book size={24} className="text-primary" />
+                        <div className="shrink-0">
+                            <img src="/app-icon.png" alt="App Icon" className="w-8 h-8 object-contain" />
                         </div>
                     </div>
                     <div className={cn(
                         "whitespace-nowrap transition-all duration-500 ease-in-out overflow-hidden",
                         isOpen ? "opacity-100 max-w-[200px]" : "opacity-0 max-w-0"
                     )}>
-                        <h1 className="text-lg font-extrabold tracking-tight text-foreground leading-tight">Books Log</h1>
-                        <p className="text-[10px] text-primary/60 font-black">نظام إدارة الكتب</p>
+                        <h1 className="text-lg font-extrabold tracking-tight text-foreground leading-tight">نظام إدارة الكتب</h1>
+                        <p className="text-[10px] text-primary/60 font-black">1.0.0</p>
                     </div>
                 </div>
             </div>

@@ -14,7 +14,7 @@ import { ask } from '@tauri-apps/plugin-dialog';
 import { NotesCell } from "../../components/ui/NotesCell";
 
 export default function StoresPage() {
-    const ITEMS_PER_PAGE = 50;
+    const [itemsPerPage, setItemsPerPage] = useState(50);
 
     const [transactions, setTransactions] = useState([]);
     const [bookComboRef, categoryComboRef] = [useRef(null), useRef(null)];
@@ -133,9 +133,9 @@ export default function StoresPage() {
 
             const countResult = await db.select(countQuery, params);
             const totalItems = countResult[0]?.count || 0;
-            setTotalPages(Math.ceil(totalItems / ITEMS_PER_PAGE));
+            setTotalPages(Math.ceil(totalItems / itemsPerPage));
 
-            const offset = (page - 1) * ITEMS_PER_PAGE;
+            const offset = (page - 1) * itemsPerPage;
 
             const rows = await db.select(`
                 SELECT 
@@ -150,7 +150,7 @@ export default function StoresPage() {
                 ${whereClause}
                 GROUP BY t.id
                 ORDER BY t.tx_date DESC, t.id DESC
-                LIMIT ${ITEMS_PER_PAGE} OFFSET ${offset}
+                LIMIT ${itemsPerPage} OFFSET ${offset}
             `, params);
 
             const normalizedRows = rows.map(r => ({
@@ -173,7 +173,7 @@ export default function StoresPage() {
             setLoading(false);
             setIsFetching(false);
         }
-    }, [page, debouncedSearchQuery, filterCategoryIds]);
+    }, [page, debouncedSearchQuery, filterCategoryIds, itemsPerPage]);
 
     useEffect(() => {
         fetchData();
@@ -494,7 +494,7 @@ export default function StoresPage() {
                 </div>
             </Card>
 
-            <PaginationControls page={page} totalPages={totalPages} setPage={setPage} isLoading={isFetching} />
+            <PaginationControls page={page} totalPages={totalPages} setPage={setPage} isLoading={isFetching} itemsPerPage={itemsPerPage} setItemsPerPage={setItemsPerPage} />
 
             <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editId ? "تعديل حركة مخزنية" : "إضافة حركة مخزنية"} maxWidth={isMultiMode ? "max-w-4xl" : "max-w-lg"}>
                 <form onSubmit={handleSubmit} className="space-y-3">

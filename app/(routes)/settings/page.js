@@ -322,6 +322,14 @@ export default function SettingsPage() {
                     ملاحظة: عند استيراد قاعدة بيانات، سيتم استبدال جميع البيانات الحالية بالبيانات الموجودة في الملف المستورد.
                 </p>
             </Card>
-        </div>
+            <p className="text-sm text-muted-foreground text-center bg-muted/30 p-3 rounded-lg border border-dashed border-border/50">
+                <span className="text-primary mb-1 block">تم التطوير بواسطة شركة سمارت كيوب للبرمجة والحلول التقنية</span>
+                <a href="https://smcube.dev" target="_blank" rel="noopener noreferrer" className="hover:underline">
+                    Smart Cube Co.
+                </a>
+                &copy;
+                2026
+            </p>
+        </div >
     );
 }

@@ -15,8 +15,8 @@ export function PaginationControls({ page, totalPages, setPage, isLoading, items
                             setItemsPerPage(Number(e.target.value));
                             setPage(1);
                         }}
-                        className="bg-background border border-border rounded px-2 py-1 text-xs font-bold ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                         disabled={isLoading}
+                        className="bg-background border border-border rounded px-2 py-1 text-xs font-bold ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                     >
                         <option value={10}>10</option>
                         <option value={25}>25</option>

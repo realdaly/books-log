@@ -19,7 +19,7 @@ export default function OtherStoresPage() {
     const [mainSearchRef, multiBookRef] = [useRef(null), useRef(null)];
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
-    const ITEMS_PER_PAGE = 50;
+    const [itemsPerPage, setItemsPerPage] = useState(50);
 
     const [books, setBooks] = useState([]);
     const [categories, setCategories] = useState([]);
@@ -122,9 +122,9 @@ export default function OtherStoresPage() {
 
             const countResult = await db.select(countQuery, params);
             const totalItems = countResult[0]?.count || 0;
-            setTotalPages(Math.ceil(totalItems / ITEMS_PER_PAGE));
+            setTotalPages(Math.ceil(totalItems / itemsPerPage));
 
-            const offset = (page - 1) * ITEMS_PER_PAGE;
+            const offset = (page - 1) * itemsPerPage;
 
             const rows = await db.select(`
                 SELECT 
@@ -139,7 +139,7 @@ export default function OtherStoresPage() {
                 ${finalWhere}
                 GROUP BY ot.id
                 ORDER BY ot.tx_date DESC, ot.id DESC
-                LIMIT ${ITEMS_PER_PAGE} OFFSET ${offset}
+                LIMIT ${itemsPerPage} OFFSET ${offset}
             `, params);
 
             const normalizedRows = rows.map(r => ({
@@ -161,7 +161,7 @@ export default function OtherStoresPage() {
             setLoading(false);
             setIsFetching(false);
         }
-    }, [page, debouncedQuery, filterCategoryIds]);
+    }, [page, debouncedQuery, filterCategoryIds, itemsPerPage]);
 
     useEffect(() => {
         fetchData();
@@ -526,6 +526,8 @@ export default function OtherStoresPage() {
                 totalPages={totalPages}
                 setPage={setPage}
                 isLoading={isFetching}
+                itemsPerPage={itemsPerPage}
+                setItemsPerPage={setItemsPerPage}
             />
 
             {/* Add/Edit Modal */}

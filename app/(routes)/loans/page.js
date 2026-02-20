@@ -19,7 +19,7 @@ export default function LoansPage() {
     const [mainSearchRef, multiBookRef] = [useRef(null), useRef(null)];
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
-    const ITEMS_PER_PAGE = 50;
+    const [itemsPerPage, setItemsPerPage] = useState(50);
 
     const [books, setBooks] = useState([]);
     const [parties, setParties] = useState([]);
@@ -109,9 +109,9 @@ export default function LoansPage() {
 `;
             const countResult = await db.select(countQuery, params);
             const totalItems = countResult[0]?.count || 0;
-            setTotalPages(Math.ceil(totalItems / ITEMS_PER_PAGE));
+            setTotalPages(Math.ceil(totalItems / itemsPerPage));
 
-            const offset = (page - 1) * ITEMS_PER_PAGE;
+            const offset = (page - 1) * itemsPerPage;
 
             const rows = await db.select(`
 SELECT
@@ -123,7 +123,7 @@ t.id, t.qty, t.notes, t.tx_date,
                 LEFT JOIN party p ON t.party_id = p.id
                 ${whereClause}
                 ORDER BY t.tx_date DESC, t.id DESC
-                LIMIT ${ITEMS_PER_PAGE} OFFSET ${offset}
+                LIMIT ${itemsPerPage} OFFSET ${offset}
 `, params);
 
             setTransactions(rows);
@@ -139,7 +139,7 @@ t.id, t.qty, t.notes, t.tx_date,
             setLoading(false);
             setIsFetching(false);
         }
-    }, [page, debouncedSearchQuery]);
+    }, [page, debouncedSearchQuery, itemsPerPage]);
 
     useEffect(() => {
         fetchData();
@@ -451,6 +451,8 @@ VALUES('loan', 'final', $1, $2, $3, $4, $5)
                 totalPages={totalPages}
                 setPage={setPage}
                 isLoading={isFetching}
+                itemsPerPage={itemsPerPage}
+                setItemsPerPage={setItemsPerPage}
             />
 
             {/* Modal */}
