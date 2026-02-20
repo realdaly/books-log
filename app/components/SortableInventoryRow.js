@@ -5,7 +5,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Check, GripVertical } from "lucide-react";
 
-export function SortableInventoryRow({ row, updateField, successMap, selectedCols, threshold }) {
+export function SortableInventoryRow({ row, index, updateField, successMap, selectedCols, threshold }) {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: row.book_id });
 
     const style = {
@@ -41,10 +41,13 @@ export function SortableInventoryRow({ row, updateField, successMap, selectedCol
                 <GripVertical size={16} />
             </td>
 
-            <td className={`p-3 font-bold text-foreground border-l border-border/50 ${selectedCols.has(1) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>{row.book_title}</td>
+            {/* Index */}
+            <td className={`p-3 text-center border-l border-border/50 text-muted-foreground font-bold ${selectedCols.has(1) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>{index}</td>
+
+            <td className={`p-3 font-bold text-foreground border-l border-border/50 ${selectedCols.has(2) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>{row.book_title}</td>
 
             {/* Editable: Total Printed */}
-            <td className={`p-2 text-center border-l border-border/50 ${selectedCols.has(2) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
+            <td className={`p-2 text-center border-l border-border/50 ${selectedCols.has(3) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
                 <div className="relative flex justify-center">
                     <input
                         type="text"
@@ -67,7 +70,7 @@ export function SortableInventoryRow({ row, updateField, successMap, selectedCol
             </td>
 
             {/* Editable: Sent to Inst */}
-            <td className={`p-2 text-center border-l border-border/50 ${selectedCols.has(3) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
+            <td className={`p-2 text-center border-l border-border/50 ${selectedCols.has(4) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
                 <div className="relative flex justify-center">
                     <input
                         type="text"
@@ -93,20 +96,20 @@ export function SortableInventoryRow({ row, updateField, successMap, selectedCol
             <td className={`p-3 text-center font-bold border-l border-border/50 ${(row.remaining_institution || 0) <= (threshold ?? 11)
                 ? "bg-red-500/20 text-red-700 font-black"
                 : "text-primary"
-                } ${selectedCols.has(4) ? 'bg-blue-100 dark:bg-blue-900/30' : ''}`}>
+                } ${selectedCols.has(5) ? 'bg-blue-100 dark:bg-blue-900/30' : ''}`}>
                 {row.remaining_institution}
             </td>
 
             {/* Pending Sale */}
-            <td className={`p-3 text-center text-foreground border-l border-border/50 ${selectedCols.has(5) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>{row.pending_institution || '-'}</td>
+            <td className={`p-3 text-center text-foreground border-l border-border/50 ${selectedCols.has(6) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>{row.pending_institution || '-'}</td>
 
             {/* Inst Stats */}
-            <td className={`p-3 text-center text-foreground border-l border-border/50 ${selectedCols.has(6) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>{row.sold_institution}</td>
-            <td className={`p-3 text-center text-foreground border-l border-border/50 ${selectedCols.has(7) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>{row.gifted_institution}</td>
-            <td className={`p-3 text-center text-foreground border-l border-border/50 ${selectedCols.has(8) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>{row.loaned_institution}</td>
+            <td className={`p-3 text-center text-foreground border-l border-border/50 ${selectedCols.has(7) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>{row.sold_institution}</td>
+            <td className={`p-3 text-center text-foreground border-l border-border/50 ${selectedCols.has(8) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>{row.gifted_institution}</td>
+            <td className={`p-3 text-center text-foreground border-l border-border/50 ${selectedCols.has(9) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>{row.loaned_institution}</td>
 
             {/* Editable: Manual Loss */}
-            <td className={`p-2 text-center border-l border-border/50 ${selectedCols.has(9) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
+            <td className={`p-2 text-center border-l border-border/50 ${selectedCols.has(10) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
                 <div className="relative flex justify-center">
                     <input
                         type="text"
@@ -130,19 +133,19 @@ export function SortableInventoryRow({ row, updateField, successMap, selectedCol
             </td>
 
             {/* New Stores (Makhazen) */}
-            <td className={`p-3 text-center text-foreground border-l border-l-border/50 border-r border-r-primary-foreground/10 ${selectedCols.has(10) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
+            <td className={`p-3 text-center text-foreground border-l border-l-border/50 border-r border-r-primary-foreground/10 ${selectedCols.has(11) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
                 <Link href={`/stores?book_id=${row.book_id}`} className="hover:underline">{row.store_institution || 0}</Link>
             </td>
 
             {/* Other Stores Total (Renamed to Branches) - Calculated Value */}
-            <td className={`p-3 text-center font-bold text-foreground border-l border-l-border/50 border-r border-r-primary-foreground/10 ${selectedCols.has(11) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
+            <td className={`p-3 text-center font-bold text-foreground border-l border-l-border/50 border-r border-r-primary-foreground/10 ${selectedCols.has(12) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
                 <Link href={`/branches?book_id=${row.book_id}`} className="hover:underline" title={`متبقي من المطبوع (${expected}) - حركات الفروع الأخرى (${logged}) = ${branchDiff}`}>
                     {branchDiff}
                 </Link>
             </td>
 
             {/* Total Remaining - DARKER CELL */}
-            <td className={`p-3 text-center font-black text-lg text-primary transition-colors border-l border-border/50 ${selectedCols.has(12) ? 'bg-blue-100 dark:bg-blue-900/30' : 'bg-primary/5 group-hover:bg-primary/20'}`}>
+            <td className={`p-3 text-center font-black text-lg text-primary transition-colors border-l border-border/50 ${selectedCols.has(13) ? 'bg-blue-100 dark:bg-blue-900/30' : 'bg-primary/5 group-hover:bg-primary/20'}`}>
                 {row.remaining_total}
             </td>
         </tr>

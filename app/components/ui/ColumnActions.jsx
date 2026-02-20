@@ -27,7 +27,7 @@ export function ColumnActions({ selectedCols, data, columns, title = "تصدير
         sortedCols.forEach(idx => {
             const col = columns[idx];
             if (!col) return;
-            html += `<th style="border: 1px solid #c5d6d9; padding: 12px 8px; background-color: #02343F; font-weight: bold; color: #F0EDCC; text-align: center; vertical-align: middle;"><div style="display: flex; align-items: center; justify-content: center; min-height: 24px;">${col.pdfLabel || col.label || col.id}</div></th>`;
+            html += `<th style="border: 1px solid #c5d6d9; background-color: #02343F; font-weight: bold; color: #F0EDCC; text-align: center; padding-bottom: 14px">${col.pdfLabel || col.label || col.id}</th>`;
         });
         html += `</tr></thead>`;
 
@@ -41,7 +41,7 @@ export function ColumnActions({ selectedCols, data, columns, title = "تصدير
                 if (!col) return;
                 const val = col.accessor ? col.accessor(row, rowIdx) : row[col.id];
                 const displayVal = val === null || val === undefined ? '-' : val;
-                html += `<td style="border: 1px solid #c5d6d9; padding: 10px 8px; color: #02343F; vertical-align: middle; text-align: center; font-weight: 600;"><div style="display: flex; align-items: center; justify-content: center; min-height: 24px;">${displayVal}</div></td>`;
+                html += `<td style="border: 1px solid #c5d6d9; color: #02343F; text-align: center; font-weight: 600; padding-bottom: 14px;">${displayVal}</td>`;
             });
             html += `</tr>`;
         });

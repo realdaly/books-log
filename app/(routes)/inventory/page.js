@@ -28,6 +28,7 @@ export default function InventoryPage() {
     // Column Selection
     const COLUMNS = [
         { id: 'handle', label: '', selectable: false },
+        { id: 'index', label: 'ت', accessor: (r, i) => i + 1 },
         { id: 'title', label: 'عنوان الكتاب', accessor: r => r.book_title },
         { id: 'total_printed', label: 'المطبوع', accessor: r => r.total_printed || 0 },
         { id: 'sent_to_institution', label: 'الواصل', accessor: r => r.sent_to_institution || 0 },
@@ -284,7 +285,7 @@ export default function InventoryPage() {
                 </div>
             </div>
 
-            <Card className="flex-1 overflow-hidden p-0 border-0 shadow-2xl bg-card/40">
+            <Card className="flex-1 overflow-hidden p-0 border-0 shadow-lg bg-card/40">
                 <div className="h-full overflow-auto">
                     <DndContext
                         sensors={sensors}
@@ -295,10 +296,11 @@ export default function InventoryPage() {
                             <thead className="bg-primary text-primary-foreground sticky top-0 z-10 shadow-md">
                                 <tr>
                                     <th className={`p-4 w-[40px] rounded-tr-lg cursor-default ${selectedCols.has(0) ? 'bg-blue-100 dark:bg-blue-900/30' : ''}`}></th>
-                                    <th onClick={(e) => handleColumnClick(1, e)} className={`p-4 min-w-[150px] cursor-pointer transition-colors ${selectedCols.has(1) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100' : ''}`}>عنوان الكتاب</th>
-                                    <th onClick={(e) => handleColumnClick(2, e)} className={`p-4 text-center w-[75px] border-r border-primary-foreground/10 cursor-pointer transition-colors ${selectedCols.has(2) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100' : ''}`}>المطبوع</th>
-                                    <th onClick={(e) => handleColumnClick(3, e)} className={`p-4 text-center w-[75px] border-r border-primary-foreground/10 cursor-pointer transition-colors ${selectedCols.has(3) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100' : ''}`}>الواصل</th>
-                                    <th onClick={(e) => handleColumnClick(4, e)} className={`p-4 text-center w-[75px] border-r border-primary-foreground/10 font-bold relative group/header cursor-pointer transition-colors ${selectedCols.has(4) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100' : ''}`}>
+                                    <th onClick={(e) => handleColumnClick(1, e)} className={`p-4 text-center w-[60px] border-r border-primary-foreground/10 cursor-pointer transition-colors ${selectedCols.has(1) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100' : ''}`}>ت</th>
+                                    <th onClick={(e) => handleColumnClick(2, e)} className={`p-4 min-w-[150px] cursor-pointer transition-colors border-r border-primary-foreground/10 ${selectedCols.has(2) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100' : ''}`}>عنوان الكتاب</th>
+                                    <th onClick={(e) => handleColumnClick(3, e)} className={`p-4 text-center w-[75px] border-r border-primary-foreground/10 cursor-pointer transition-colors ${selectedCols.has(3) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100' : ''}`}>المطبوع</th>
+                                    <th onClick={(e) => handleColumnClick(4, e)} className={`p-4 text-center w-[75px] border-r border-primary-foreground/10 cursor-pointer transition-colors ${selectedCols.has(4) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100' : ''}`}>الواصل</th>
+                                    <th onClick={(e) => handleColumnClick(5, e)} className={`p-4 text-center w-[75px] border-r border-primary-foreground/10 font-bold relative group/header cursor-pointer transition-colors ${selectedCols.has(5) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100' : ''}`}>
                                         <div className="flex items-center justify-center gap-1">
                                             المتبقي
                                             <button
@@ -353,14 +355,14 @@ export default function InventoryPage() {
                                             </>
                                         )}
                                     </th>
-                                    <th onClick={(e) => handleColumnClick(5, e)} className={`p-4 text-center w-[75px] border-r border-primary-foreground/10 text-orange-300 dark:text-primary-foreground cursor-pointer transition-colors ${selectedCols.has(5) ? '!bg-blue-100 dark:!bg-blue-900/30 !text-blue-900 dark:!text-blue-100' : ''}`}>طور البيع</th>
-                                    <th onClick={(e) => handleColumnClick(6, e)} className={`p-4 text-center w-[75px] border-r border-primary-foreground/10 cursor-pointer transition-colors ${selectedCols.has(6) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100' : ''}`}>المباع</th>
-                                    <th onClick={(e) => handleColumnClick(7, e)} className={`p-4 text-center w-[75px] border-r border-primary-foreground/10 cursor-pointer transition-colors ${selectedCols.has(7) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100' : ''}`}>المهداة</th>
-                                    <th onClick={(e) => handleColumnClick(8, e)} className={`p-4 text-center w-[75px] border-r border-primary-foreground/10 cursor-pointer transition-colors ${selectedCols.has(8) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100' : ''}`}>المستعار</th>
-                                    <th onClick={(e) => handleColumnClick(9, e)} className={`p-4 text-center w-[75px] border-r border-primary-foreground/10 text-red-200 dark:text-primary-foreground cursor-pointer transition-colors ${selectedCols.has(9) ? '!bg-blue-100 dark:!bg-blue-900/30 !text-blue-900 dark:!text-blue-100' : ''}`}>المفقود</th>
-                                    <th onClick={(e) => handleColumnClick(10, e)} className={`p-4 text-center w-[75px] border-r border-primary-foreground/10 text-amber-200 dark:text-primary-foreground cursor-pointer transition-colors ${selectedCols.has(10) ? '!bg-blue-100 dark:!bg-blue-900/30 !text-blue-900 dark:!text-blue-100' : ''}`}>مخازن أخرى</th>
-                                    <th onClick={(e) => handleColumnClick(11, e)} className={`p-4 text-center w-[75px] border-r border-primary-foreground/10 text-orange-200 dark:text-primary-foreground cursor-pointer transition-colors ${selectedCols.has(11) ? '!bg-blue-100 dark:!bg-blue-900/30 !text-blue-900 dark:!text-blue-100' : ''}`}>متبقي الفروع</th>
-                                    <th onClick={(e) => handleColumnClick(12, e)} className={`p-4 text-center w-[75px] font-black text-white dark:text-primary-foreground rounded-tl-lg bg-black/40 dark:bg-black/20 border-r border-primary-foreground/10 cursor-pointer transition-colors ${selectedCols.has(12) ? '!bg-blue-100 dark:!bg-blue-900/30 !text-blue-900 dark:!text-blue-100' : ''}`}>المتبقي الكلي</th>
+                                    <th onClick={(e) => handleColumnClick(6, e)} className={`p-4 text-center w-[75px] border-r border-primary-foreground/10 text-orange-300 dark:text-primary-foreground cursor-pointer transition-colors ${selectedCols.has(6) ? '!bg-blue-100 dark:!bg-blue-900/30 !text-blue-900 dark:!text-blue-100' : ''}`}>طور البيع</th>
+                                    <th onClick={(e) => handleColumnClick(7, e)} className={`p-4 text-center w-[75px] border-r border-primary-foreground/10 cursor-pointer transition-colors ${selectedCols.has(7) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100' : ''}`}>المباع</th>
+                                    <th onClick={(e) => handleColumnClick(8, e)} className={`p-4 text-center w-[75px] border-r border-primary-foreground/10 cursor-pointer transition-colors ${selectedCols.has(8) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100' : ''}`}>المهداة</th>
+                                    <th onClick={(e) => handleColumnClick(9, e)} className={`p-4 text-center w-[75px] border-r border-primary-foreground/10 cursor-pointer transition-colors ${selectedCols.has(9) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100' : ''}`}>المستعار</th>
+                                    <th onClick={(e) => handleColumnClick(10, e)} className={`p-4 text-center w-[75px] border-r border-primary-foreground/10 text-red-200 dark:text-primary-foreground cursor-pointer transition-colors ${selectedCols.has(10) ? '!bg-blue-100 dark:!bg-blue-900/30 !text-blue-900 dark:!text-blue-100' : ''}`}>المفقود</th>
+                                    <th onClick={(e) => handleColumnClick(11, e)} className={`p-4 text-center w-[75px] border-r border-primary-foreground/10 text-amber-200 dark:text-primary-foreground cursor-pointer transition-colors ${selectedCols.has(11) ? '!bg-blue-100 dark:!bg-blue-900/30 !text-blue-900 dark:!text-blue-100' : ''}`}>مخازن أخرى</th>
+                                    <th onClick={(e) => handleColumnClick(12, e)} className={`p-4 text-center w-[75px] border-r border-primary-foreground/10 text-orange-200 dark:text-primary-foreground cursor-pointer transition-colors ${selectedCols.has(12) ? '!bg-blue-100 dark:!bg-blue-900/30 !text-blue-900 dark:!text-blue-100' : ''}`}>متبقي الفروع</th>
+                                    <th onClick={(e) => handleColumnClick(13, e)} className={`p-4 text-center w-[75px] font-black text-white dark:text-primary-foreground rounded-tl-lg bg-black/40 dark:bg-black/20 border-r border-primary-foreground/10 cursor-pointer transition-colors ${selectedCols.has(13) ? '!bg-blue-100 dark:!bg-blue-900/30 !text-blue-900 dark:!text-blue-100' : ''}`}>المتبقي الكلي</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border">
@@ -379,10 +381,11 @@ export default function InventoryPage() {
                                         items={data.map(d => d.book_id)}
                                         strategy={verticalListSortingStrategy}
                                     >
-                                        {filteredData.map((row) => (
+                                        {filteredData.map((row, idx) => (
                                             <SortableInventoryRow
                                                 key={row.book_id}
                                                 row={row}
+                                                index={idx + 1}
                                                 updateField={updateField}
                                                 successMap={successMap}
                                                 selectedCols={selectedCols}

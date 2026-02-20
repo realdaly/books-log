@@ -606,24 +606,6 @@ export default function GiftsPage() {
                         </div>
                     )}
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium mb-1">العدد</label>
-                            <Input
-                                type="number" min="1" required
-                                value={formData.qty}
-                                onChange={e => setFormData({ ...formData, qty: e.target.value })}
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium mb-1">التاريخ</label>
-                            <DateInput
-                                value={formData.tx_date}
-                                onChange={val => setFormData({ ...formData, tx_date: val })}
-                            />
-                        </div>
-                    </div>
-
                     <div>
                         <label className="block text-sm font-medium mb-1">الجهة المستلمة</label>
                         <div className="flex gap-2 items-center">
@@ -647,7 +629,7 @@ export default function GiftsPage() {
                                                     />
                                                 </ComboboxButton>
                                             </div>
-                                            <ComboboxOptions className="absolute mt-1 max-h-44 w-full overflow-auto rounded-md bg-popover py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-50">
+                                            <ComboboxOptions className="absolute mt-1 max-h-56 w-full overflow-auto rounded-md bg-popover py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-50">
                                                 {filteredParties.length === 0 && query !== '' ? (
                                                     <div className="relative cursor-default select-none px-4 py-2 text-muted-foreground font-bold">
                                                         لا توجد بيانات.
@@ -709,6 +691,24 @@ export default function GiftsPage() {
                             <Button type="button" onClick={() => setIsAddPartyOpen(true)} className="px-3">
                                 <Plus size={18} />
                             </Button>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium mb-1">العدد</label>
+                            <Input
+                                type="number" min="1" required
+                                value={formData.qty}
+                                onChange={e => setFormData({ ...formData, qty: e.target.value })}
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium mb-1">التاريخ</label>
+                            <DateInput
+                                value={formData.tx_date}
+                                onChange={val => setFormData({ ...formData, tx_date: val })}
+                            />
                         </div>
                     </div>
 

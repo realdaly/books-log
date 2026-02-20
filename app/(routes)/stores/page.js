@@ -543,7 +543,7 @@ export default function StoresPage() {
                                             />
                                             <ComboboxButton ref={bookComboRef} className="absolute inset-y-0 right-0 flex items-center pr-2"><ChevronsUpDown className="h-5 w-5 text-gray-400" aria-hidden="true" /></ComboboxButton>
                                         </div>
-                                        <ComboboxOptions className="absolute mt-1 max-h-28 w-full overflow-auto rounded-md bg-popover py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-50">
+                                        <ComboboxOptions className="absolute mt-1 max-h-48 w-full overflow-auto rounded-md bg-popover py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-50">
                                             {filteredBooks.map((book) => (
                                                 <ComboboxOption key={book.id} className={({ active }) => `relative cursor-default select-none py-2 pl-10 pr-4 ${active ? 'bg-primary text-primary-foreground' : 'text-foreground'}`} value={book}>
                                                     {({ selected, active }) => (
@@ -632,7 +632,7 @@ export default function StoresPage() {
                                                     />
                                                 </ComboboxButton>
                                             </div>
-                                            <ComboboxOptions className="absolute mt-1 max-h-32 w-full overflow-auto rounded-md bg-popover py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-50 custom-scrollbar">
+                                            <ComboboxOptions className="absolute mt-1 max-h-48 w-full overflow-auto rounded-md bg-popover py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-50 custom-scrollbar">
                                                 {filteredComboboxCategories.length === 0 && categoryQuery !== '' ? (
                                                     <div className="relative cursor-default select-none py-2 px-4 text-muted-foreground">
                                                         لا توجد نتائج.

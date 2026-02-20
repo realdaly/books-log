@@ -782,6 +782,93 @@ export default function SalesPage() {
                         </label>
                     </div>
 
+                    <div>
+                        <label className="block text-sm font-medium mb-1 text-primary">الجهة (المشتري)</label>
+                        <div className="flex items-center gap-2">
+                            <div className="relative w-full">
+                                <Combobox value={formData.party_id} onChange={(val) => setFormData({ ...formData, party_id: val })} onClose={() => setQuery('')}>
+                                    {({ open }) => (
+                                        <div className="relative">
+                                            <div className="relative w-full cursor-default overflow-hidden rounded-lg bg-popover text-right shadow-md border focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm">
+                                                <ComboboxInput
+                                                    className="w-full border-none py-3 pl-3 pr-10 text-sm leading-5 text-foreground bg-popover focus:ring-0 text-right"
+                                                    displayValue={(party) => party?.name || ''}
+                                                    onFocus={(e) => e.target.select()}
+                                                    onClick={() => !open && partyComboRef.current?.click()}
+                                                    onChange={(event) => setQuery(event.target.value)}
+                                                    placeholder="ابحث عن جهة..."
+                                                />
+                                                <ComboboxButton ref={partyComboRef} className="absolute inset-y-0 right-0 flex items-center pr-2">
+                                                    <ChevronsUpDown
+                                                        className="h-5 w-5 text-gray-400"
+                                                        aria-hidden="true"
+                                                    />
+                                                </ComboboxButton>
+                                            </div>
+                                            <ComboboxOptions className="absolute mt-1 max-h-72 w-full overflow-auto rounded-md bg-popover py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-50">
+                                                {filteredParties.length === 0 && query !== '' ? (
+                                                    <div className="relative cursor-default select-none px-4 py-2 text-muted-foreground font-bold">
+                                                        لا توجد بيانات.
+                                                    </div>
+                                                ) : (
+                                                    <>
+                                                        {filteredParties.slice(0, partyLimit).map((party) => (
+                                                            <ComboboxOption
+                                                                key={party.id}
+                                                                className={({ active }) =>
+                                                                    `relative cursor-default select-none py-2 pl-10 pr-4 ${active ? 'bg-primary text-primary-foreground' : 'text-foreground'
+                                                                    }`
+                                                                }
+                                                                value={party}
+                                                            >
+                                                                {({ selected, active }) => (
+                                                                    <>
+                                                                        <span
+                                                                            className={`block truncate ${selected ? 'font-medium' : 'font-normal'
+                                                                                }`}
+                                                                        >
+                                                                            {party.name}
+                                                                        </span>
+                                                                        {selected ? (
+                                                                            <span
+                                                                                className={`absolute inset-y-0 left-0 flex items-center pl-3 ${active ? 'text-white' : 'text-primary'
+                                                                                    }`}
+                                                                            >
+                                                                                <Check className="h-5 w-5" aria-hidden="true" />
+                                                                            </span>
+                                                                        ) : null}
+                                                                    </>
+                                                                )}
+                                                            </ComboboxOption>
+                                                        ))}
+                                                        {filteredParties.length > partyLimit && (
+                                                            <div className="p-1">
+                                                                <button
+                                                                    type="button"
+                                                                    className="w-full text-center py-2 text-sm text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-md font-bold"
+                                                                    onClick={(e) => {
+                                                                        e.preventDefault();
+                                                                        e.stopPropagation();
+                                                                        setPartyLimit(prev => prev + 30);
+                                                                    }}
+                                                                >
+                                                                    عرض المزيد...
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                    </>
+                                                )}
+                                            </ComboboxOptions>
+                                        </div>
+                                    )}
+                                </Combobox>
+                            </div>
+                            <Button type="button" onClick={() => setIsAddPartyOpen(true)} className="px-3">
+                                <Plus size={18} />
+                            </Button>
+                        </div>
+                    </div>
+
                     {!isMultiMode && (
                         <>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -848,93 +935,6 @@ export default function SalesPage() {
                                 value={formData.tx_date}
                                 onChange={val => setFormData({ ...formData, tx_date: val })}
                             />
-                        </div>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium mb-1 text-primary">الجهة (المشتري)</label>
-                        <div className="flex items-center gap-2">
-                            <div className="relative w-full">
-                                <Combobox value={formData.party_id} onChange={(val) => setFormData({ ...formData, party_id: val })} onClose={() => setQuery('')}>
-                                    {({ open }) => (
-                                        <div className="relative">
-                                            <div className="relative w-full cursor-default overflow-hidden rounded-lg bg-popover text-right shadow-md border focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm">
-                                                <ComboboxInput
-                                                    className="w-full border-none py-3 pl-3 pr-10 text-sm leading-5 text-foreground bg-popover focus:ring-0 text-right"
-                                                    displayValue={(party) => party?.name || ''}
-                                                    onFocus={(e) => e.target.select()}
-                                                    onClick={() => !open && partyComboRef.current?.click()}
-                                                    onChange={(event) => setQuery(event.target.value)}
-                                                    placeholder="ابحث عن جهة..."
-                                                />
-                                                <ComboboxButton ref={partyComboRef} className="absolute inset-y-0 right-0 flex items-center pr-2">
-                                                    <ChevronsUpDown
-                                                        className="h-5 w-5 text-gray-400"
-                                                        aria-hidden="true"
-                                                    />
-                                                </ComboboxButton>
-                                            </div>
-                                            <ComboboxOptions className="absolute mt-1 max-h-44 w-full overflow-auto rounded-md bg-popover py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-50">
-                                                {filteredParties.length === 0 && query !== '' ? (
-                                                    <div className="relative cursor-default select-none px-4 py-2 text-muted-foreground font-bold">
-                                                        لا توجد بيانات.
-                                                    </div>
-                                                ) : (
-                                                    <>
-                                                        {filteredParties.slice(0, partyLimit).map((party) => (
-                                                            <ComboboxOption
-                                                                key={party.id}
-                                                                className={({ active }) =>
-                                                                    `relative cursor-default select-none py-2 pl-10 pr-4 ${active ? 'bg-primary text-primary-foreground' : 'text-foreground'
-                                                                    }`
-                                                                }
-                                                                value={party}
-                                                            >
-                                                                {({ selected, active }) => (
-                                                                    <>
-                                                                        <span
-                                                                            className={`block truncate ${selected ? 'font-medium' : 'font-normal'
-                                                                                }`}
-                                                                        >
-                                                                            {party.name}
-                                                                        </span>
-                                                                        {selected ? (
-                                                                            <span
-                                                                                className={`absolute inset-y-0 left-0 flex items-center pl-3 ${active ? 'text-white' : 'text-primary'
-                                                                                    }`}
-                                                                            >
-                                                                                <Check className="h-5 w-5" aria-hidden="true" />
-                                                                            </span>
-                                                                        ) : null}
-                                                                    </>
-                                                                )}
-                                                            </ComboboxOption>
-                                                        ))}
-                                                        {filteredParties.length > partyLimit && (
-                                                            <div className="p-1">
-                                                                <button
-                                                                    type="button"
-                                                                    className="w-full text-center py-2 text-sm text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-md font-bold"
-                                                                    onClick={(e) => {
-                                                                        e.preventDefault();
-                                                                        e.stopPropagation();
-                                                                        setPartyLimit(prev => prev + 30);
-                                                                    }}
-                                                                >
-                                                                    عرض المزيد...
-                                                                </button>
-                                                            </div>
-                                                        )}
-                                                    </>
-                                                )}
-                                            </ComboboxOptions>
-                                        </div>
-                                    )}
-                                </Combobox>
-                            </div>
-                            <Button type="button" onClick={() => setIsAddPartyOpen(true)} className="px-3">
-                                <Plus size={18} />
-                            </Button>
                         </div>
                     </div>
 
