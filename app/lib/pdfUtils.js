@@ -1,4 +1,3 @@
-import html2pdf from 'html2pdf.js';
 import { save } from '@tauri-apps/plugin-dialog';
 import { writeFile } from '@tauri-apps/plugin-fs';
 
@@ -35,6 +34,9 @@ export const exportToPDF = async (element, fileName, options = {}) => {
         });
 
         if (!savePath) return; // User canceled the save dialog
+
+        // Dynamically import html2pdf only on the client-side to prevent SSR errors
+        const html2pdf = (await import('html2pdf.js')).default;
 
         // Get the PDF as a base64 Data URI string
         const pdfBase64DataUri = await html2pdf().set(finalOptions).from(element).outputPdf('datauristring');

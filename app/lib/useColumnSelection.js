@@ -22,10 +22,19 @@ export function useColumnSelection(columns, data) {
                 }
             }
         } else {
-            if (newSelected.has(colIndex)) {
-                newSelected.delete(colIndex);
+            const isMultiSelect = e.ctrlKey || e.metaKey;
+            if (isMultiSelect) {
+                if (newSelected.has(colIndex)) {
+                    newSelected.delete(colIndex);
+                } else {
+                    newSelected.add(colIndex);
+                }
             } else {
-                newSelected.add(colIndex);
+                if (selectedCols.has(colIndex) && selectedCols.size === 1) {
+                    // Do nothing, newSelected is already empty so it deselects
+                } else {
+                    newSelected.add(colIndex);
+                }
             }
         }
         setSelectedCols(newSelected);
