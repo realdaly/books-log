@@ -12,6 +12,8 @@ import {
 import { PaginationControls } from "../../components/ui/PaginationControls";
 import { ask } from '@tauri-apps/plugin-dialog';
 import { NotesCell } from "../../components/ui/NotesCell";
+import { useColumnSelection } from "../../lib/useColumnSelection";
+import { ColumnActions } from "../../components/ui/ColumnActions";
 
 export default function StoresPage() {
     const [itemsPerPage, setItemsPerPage] = useState(50);
@@ -101,6 +103,20 @@ export default function StoresPage() {
     useEffect(() => {
         setPage(1);
     }, [filterCategoryIds]);
+
+    // Column Selection & Export
+    const COLUMNS = [
+        { id: 'select', label: '', selectable: false },
+        { id: 'index', label: 'ت', accessor: (r, i) => i + 1 + (page - 1) * itemsPerPage },
+        { id: 'tx_date', label: 'التاريخ', accessor: r => r.tx_date?.split('-').reverse().join('/') },
+        { id: 'qty', label: 'العدد', accessor: r => r.qty },
+        { id: 'book_title', label: 'اسم الكتاب', accessor: r => r.book_title },
+        { id: 'categories', label: 'التصنيفات', accessor: r => r.category_names?.join(', ') || "-" },
+        { id: 'notes', label: 'الملاحظات', accessor: r => r.notes || "" },
+        { id: 'actions', label: '', selectable: false }
+    ];
+
+    const { selectedCols, setSelectedCols, handleColumnClick } = useColumnSelection(COLUMNS, transactions);
 
     const fetchData = useCallback(async () => {
         try {
@@ -377,7 +393,10 @@ export default function StoresPage() {
     };
 
     return (
-        <div className="space-y-6 h-full flex flex-col">
+        <div
+            className="space-y-6 h-full flex flex-col"
+            onClick={() => setSelectedCols(new Set())}
+        >
             <div className="flex justify-between items-center">
                 <div className="flex items-center gap-4">
                     <h1 className="text-xl md:text-3xl font-bold text-primary">سجل المخازن الأخرى</h1>
@@ -448,13 +467,13 @@ export default function StoresPage() {
                                 <th className="p-4 border-l border-primary-foreground/10 text-center w-10">
                                     <input type="checkbox" className="w-4 h-4 rounded border-primary-foreground/20 accent-white" checked={transactions.length > 0 && selectedIds.length === transactions.length} onChange={toggleSelectAll} />
                                 </th>
-                                <th className="p-4 border-l border-primary-foreground/10 whitespace-nowrap w-max">ت</th>
-                                <th className="p-4 border-l border-primary-foreground/10 whitespace-nowrap text-center">التاريخ</th>
-                                <th className="p-4 border-l border-primary-foreground/10 whitespace-nowrap text-center">العدد</th>
-                                <th className="p-4 border-l border-primary-foreground/10 w-1/2 text-right">اسم الكتاب</th>
-                                <th className="p-4 border-l border-primary-foreground/10 w-[200px] text-right whitespace-nowrap">التصنيفات</th>
-                                <th className="p-4 border-l border-primary-foreground/10 w-[210px] text-right whitespace-nowrap">الملاحظات</th>
-                                <th className="p-4 text-center">إجراءات</th>
+                                <th onClick={(e) => handleColumnClick(1, e)} className={`p-4 border-l border-primary-foreground/10 whitespace-nowrap w-max cursor-pointer transition-colors ${selectedCols.has(1) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100' : ''}`}>ت</th>
+                                <th onClick={(e) => handleColumnClick(2, e)} className={`p-4 border-l border-primary-foreground/10 whitespace-nowrap text-center cursor-pointer transition-colors ${selectedCols.has(2) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100' : ''}`}>التاريخ</th>
+                                <th onClick={(e) => handleColumnClick(3, e)} className={`p-4 border-l border-primary-foreground/10 whitespace-nowrap text-center cursor-pointer transition-colors ${selectedCols.has(3) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100' : ''}`}>العدد</th>
+                                <th onClick={(e) => handleColumnClick(4, e)} className={`p-4 border-l border-primary-foreground/10 w-1/2 text-right cursor-pointer transition-colors ${selectedCols.has(4) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100' : ''}`}>اسم الكتاب</th>
+                                <th onClick={(e) => handleColumnClick(5, e)} className={`p-4 border-l border-primary-foreground/10 w-[200px] text-right whitespace-nowrap cursor-pointer transition-colors ${selectedCols.has(5) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100' : ''}`}>التصنيفات</th>
+                                <th onClick={(e) => handleColumnClick(6, e)} className={`p-4 border-l border-primary-foreground/10 w-[210px] text-right whitespace-nowrap cursor-pointer transition-colors ${selectedCols.has(6) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100' : ''}`}>الملاحظات</th>
+                                <th className="p-4 text-center cursor-default">إجراءات</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
@@ -469,11 +488,11 @@ export default function StoresPage() {
                                             readOnly
                                         />
                                     </td>
-                                    <td className="p-4 text-center text-muted-foreground border-l border-border/50">{idx + 1}</td>
-                                    <td className="p-4 text-center text-muted-foreground border-l border-border/50 tracking-tighter">{t.tx_date?.split('-').reverse().join('/')}</td>
-                                    <td className="p-4 text-center font-bold text-primary border-l border-border/50">{t.qty}</td>
-                                    <td className="p-4 font-bold text-foreground border-l border-border/50">{t.book_title}</td>
-                                    <td className="p-4 w-[200px] border-l border-border/50">
+                                    <td className={`p-4 text-center text-muted-foreground border-l border-border/50 ${selectedCols.has(1) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>{idx + 1}</td>
+                                    <td className={`p-4 text-center text-muted-foreground border-l border-border/50 tracking-tighter ${selectedCols.has(2) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>{t.tx_date?.split('-').reverse().join('/')}</td>
+                                    <td className={`p-4 text-center font-bold text-primary border-l border-border/50 ${selectedCols.has(3) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>{t.qty}</td>
+                                    <td className={`p-4 font-bold text-foreground border-l border-border/50 ${selectedCols.has(4) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>{t.book_title}</td>
+                                    <td className={`p-4 w-[200px] border-l border-border/50 ${selectedCols.has(5) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
                                         <div className="flex flex-wrap gap-1 overflow-hidden h-6">
                                             {t.category_names.map((name, idx) => (
                                                 <span key={idx} className="px-1.5 py-0.5 bg-muted/50 text-muted-foreground text-[10px] rounded border border-border whitespace-nowrap">{name}</span>
@@ -481,7 +500,7 @@ export default function StoresPage() {
                                             {t.category_names.length === 0 && <span className="text-gray-400 text-xs">-</span>}
                                         </div>
                                     </td>
-                                    <td className="p-4 text-muted-foreground border-l border-border/50 w-[210px] whitespace-nowrap overflow-hidden text-ellipsis"><NotesCell text={t.notes} /></td>
+                                    <td className={`p-4 text-muted-foreground border-l border-border/50 w-[210px] whitespace-nowrap overflow-hidden text-ellipsis ${selectedCols.has(6) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}><NotesCell text={t.notes} /></td>
                                     <td className="p-4 flex justify-center gap-2">
                                         <button onClick={() => openEdit(t)} className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20"><Edit2 size={18} /></button>
                                         <button onClick={() => handleDelete(t.id)} className="p-1.5 rounded-lg text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"><Trash2 size={18} /></button>
@@ -730,6 +749,13 @@ export default function StoresPage() {
                     </div>
                 </div>
             </Modal>
+
+            <ColumnActions
+                selectedCols={selectedCols}
+                columns={COLUMNS}
+                data={transactions}
+                title="سجل المخازن الأخرى"
+            />
         </div>
     );
 }

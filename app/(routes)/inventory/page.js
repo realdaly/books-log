@@ -8,6 +8,8 @@ import { PaginationControls } from "../../components/ui/PaginationControls";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { SortableInventoryRow } from "../../components/SortableInventoryRow";
+import { useColumnSelection } from "../../lib/useColumnSelection";
+import { ColumnActions } from "../../components/ui/ColumnActions";
 
 export default function InventoryPage() {
     const [data, setData] = useState([]);
@@ -24,11 +26,8 @@ export default function InventoryPage() {
     const filteredData = data;
 
     // Column Selection
-    // Column Selection
-    const [selectedCols, setSelectedCols] = useState(new Set());
-
     const COLUMNS = [
-        { id: 'handle', label: '' },
+        { id: 'handle', label: '', selectable: false },
         { id: 'title', label: 'عنوان الكتاب', accessor: r => r.book_title },
         { id: 'total_printed', label: 'المطبوع', accessor: r => r.total_printed || 0 },
         { id: 'sent_to_institution', label: 'الواصل', accessor: r => r.sent_to_institution || 0 },
@@ -51,61 +50,7 @@ export default function InventoryPage() {
         { id: 'remaining_total', label: 'المتبقي الكلي', accessor: r => r.remaining_total }
     ];
 
-    const handleColumnClick = (colIndex, e) => {
-        e.stopPropagation();
-        if (colIndex === 0) return; // Skip handle column
-
-        const newSelected = new Set(e.ctrlKey || e.metaKey ? selectedCols : []);
-
-        if (e.shiftKey && selectedCols.size > 0) {
-            const lastSelected = Array.from(selectedCols).pop();
-            const start = Math.min(lastSelected, colIndex);
-            const end = Math.max(lastSelected, colIndex);
-            for (let i = start; i <= end; i++) {
-                if (i !== 0) newSelected.add(i);
-            }
-        } else {
-            if (newSelected.has(colIndex)) {
-                newSelected.delete(colIndex);
-            } else {
-                newSelected.add(colIndex);
-            }
-        }
-        setSelectedCols(newSelected);
-    };
-
-    useEffect(() => {
-        const handleCopy = (e) => {
-            if (selectedCols.size === 0) return;
-
-            // Allow default copy behavior if user has selected text explicitly
-            const selection = window.getSelection();
-            if (selection.toString().length > 0) return;
-
-            e.preventDefault();
-
-            const sortedCols = Array.from(selectedCols).sort((a, b) => a - b);
-
-            // Build header row
-            /* const headerText = sortedCols.map(idx => COLUMNS[idx].label).join('\t'); */
-
-            // Build data rows
-            const rowsText = filteredData.map(row => {
-                return sortedCols.map(idx => {
-                    const val = COLUMNS[idx].accessor(row);
-                    return val === null || val === undefined ? '' : val;
-                }).join('\t');
-            }).join('\n');
-
-            /* const finalText = `${headerText}\n${rowsText}`; */
-            const finalText = rowsText; // Usually copying raw data is preferred for Excel pasting without headers unless requested
-
-            e.clipboardData.setData('text/plain', finalText);
-        };
-
-        document.addEventListener('copy', handleCopy);
-        return () => document.removeEventListener('copy', handleCopy);
-    }, [selectedCols, filteredData]);
+    const { selectedCols, setSelectedCols, handleColumnClick } = useColumnSelection(COLUMNS, filteredData);
 
     // DnD Sensors
     const sensors = useSensors(
@@ -466,6 +411,13 @@ export default function InventoryPage() {
                 itemsPerPage={itemsPerPage}
                 setItemsPerPage={setItemsPerPage}
                 isLoading={isFetching}
+            />
+
+            <ColumnActions
+                selectedCols={selectedCols}
+                columns={COLUMNS}
+                data={filteredData}
+                title="جرد الكتب"
             />
         </div >
     );

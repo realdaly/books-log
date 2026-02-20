@@ -12,6 +12,8 @@ import {
 import { PaginationControls } from "../../components/ui/PaginationControls";
 import { ask } from '@tauri-apps/plugin-dialog';
 import { NotesCell } from "../../components/ui/NotesCell";
+import { useColumnSelection } from "../../lib/useColumnSelection";
+import { ColumnActions } from "../../components/ui/ColumnActions";
 
 export default function SalesPage() {
     const [transactions, setTransactions] = useState([]);
@@ -84,6 +86,23 @@ export default function SalesPage() {
 
     // Status Filter
     const [filterStatus, setFilterStatus] = useState([]);
+
+    // Column Selection & Export
+    const COLUMNS = [
+        { id: 'select', label: '', selectable: false },
+        { id: 'state', label: 'الحالة', accessor: r => r.state === 'pending' ? 'طور البيع' : 'مكتمل' },
+        { id: 'qty', label: 'العدد', accessor: r => r.qty },
+        { id: 'book_title', label: 'اسم الكتاب', accessor: r => r.book_title },
+        { id: 'party_name', label: 'الجهة (المشتري)', accessor: r => r.party_name || "-" },
+        { id: 'unit_price', label: 'السعر', accessor: r => r.unit_price?.toLocaleString() },
+        { id: 'total_price', label: 'المبلغ الكلي', accessor: r => r.total_price?.toLocaleString() },
+        { id: 'receipt_no', label: 'رقم الوصل', accessor: r => r.receipt_no },
+        { id: 'tx_date', label: 'التاريخ', accessor: r => r.tx_date?.split('-').reverse().join('/') },
+        { id: 'notes', label: 'ملاحظات', accessor: r => r.notes || "" },
+        { id: 'actions', label: '', selectable: false }
+    ];
+
+    const { selectedCols, setSelectedCols, handleColumnClick } = useColumnSelection(COLUMNS, transactions);
 
     const fetchData = useCallback(async () => {
         try {
@@ -423,7 +442,10 @@ export default function SalesPage() {
 
 
     return (
-        <div className="space-y-6 h-full flex flex-col">
+        <div
+            className="space-y-6 h-full flex flex-col"
+            onClick={() => setSelectedCols(new Set())}
+        >
             <div className="flex flex-col gap-4">
                 <div className="flex justify-between items-center">
                     <div className="flex items-center gap-4">
@@ -512,16 +534,16 @@ export default function SalesPage() {
                                         onChange={toggleSelectAll}
                                     />
                                 </th>
-                                <th className="p-4 border-l border-primary-foreground/10 whitespace-nowrap text-center min-w-[100px]">الحالة</th>
-                                <th className="p-4 border-l border-primary-foreground/10 text-center whitespace-nowrap">العدد</th>
-                                <th className="p-4 border-l border-primary-foreground/10 w-1/2 text-right">اسم الكتاب</th>
-                                <th className="p-4 border-l border-primary-foreground/10 w-1/2 text-right">الجهة (المشتري)</th>
-                                <th className="p-4 border-l border-primary-foreground/10 text-center whitespace-nowrap">السعر</th>
-                                <th className="p-4 border-l border-primary-foreground/10 text-center whitespace-nowrap">المبلغ الكلي</th>
-                                <th className="p-4 border-l border-primary-foreground/10 whitespace-nowrap text-right">رقم الوصل</th>
-                                <th className="p-4 border-l border-primary-foreground/10 whitespace-nowrap text-center">التاريخ</th>
-                                <th className="p-4 border-l border-primary-foreground/10 w-20 text-center whitespace-nowrap">ملاحظات</th>
-                                <th className="p-4 text-center">إجراءات</th>
+                                <th onClick={(e) => handleColumnClick(1, e)} className={`p-4 border-l border-primary-foreground/10 whitespace-nowrap text-center min-w-[100px] cursor-pointer transition-colors ${selectedCols.has(1) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100' : ''}`}>الحالة</th>
+                                <th onClick={(e) => handleColumnClick(2, e)} className={`p-4 border-l border-primary-foreground/10 text-center whitespace-nowrap cursor-pointer transition-colors ${selectedCols.has(2) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100' : ''}`}>العدد</th>
+                                <th onClick={(e) => handleColumnClick(3, e)} className={`p-4 border-l border-primary-foreground/10 w-1/2 text-right cursor-pointer transition-colors ${selectedCols.has(3) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100' : ''}`}>اسم الكتاب</th>
+                                <th onClick={(e) => handleColumnClick(4, e)} className={`p-4 border-l border-primary-foreground/10 w-1/2 text-right cursor-pointer transition-colors ${selectedCols.has(4) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100' : ''}`}>الجهة (المشتري)</th>
+                                <th onClick={(e) => handleColumnClick(5, e)} className={`p-4 border-l border-primary-foreground/10 text-center whitespace-nowrap cursor-pointer transition-colors ${selectedCols.has(5) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100' : ''}`}>السعر</th>
+                                <th onClick={(e) => handleColumnClick(6, e)} className={`p-4 border-l border-primary-foreground/10 text-center whitespace-nowrap cursor-pointer transition-colors ${selectedCols.has(6) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100' : ''}`}>المبلغ الكلي</th>
+                                <th onClick={(e) => handleColumnClick(7, e)} className={`p-4 border-l border-primary-foreground/10 whitespace-nowrap text-right cursor-pointer transition-colors ${selectedCols.has(7) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100' : ''}`}>رقم الوصل</th>
+                                <th onClick={(e) => handleColumnClick(8, e)} className={`p-4 border-l border-primary-foreground/10 whitespace-nowrap text-center cursor-pointer transition-colors ${selectedCols.has(8) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100' : ''}`}>التاريخ</th>
+                                <th onClick={(e) => handleColumnClick(9, e)} className={`p-4 border-l border-primary-foreground/10 w-20 text-center whitespace-nowrap cursor-pointer transition-colors ${selectedCols.has(9) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100' : ''}`}>ملاحظات</th>
+                                <th className="p-4 text-center cursor-default">إجراءات</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
@@ -545,22 +567,22 @@ export default function SalesPage() {
                                             readOnly
                                         />
                                     </td>
-                                    <td className="p-4 border-l border-border/50 text-center whitespace-nowrap">
+                                    <td className={`p-4 border-l border-border/50 text-center whitespace-nowrap ${selectedCols.has(1) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
                                         {t.state === 'pending'
                                             ? <span className="px-2 py-1 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-400 text-xs font-bold whitespace-nowrap border border-amber-200 dark:border-amber-800/50">طور البيع</span>
                                             : <span className="px-2 py-1 rounded bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-400 text-xs font-bold whitespace-nowrap border border-emerald-200 dark:border-emerald-800/50">مكتمل</span>
                                         }
                                     </td>
-                                    <td className="p-4 font-bold text-primary border-l border-border/50 text-center">{t.qty}</td>
-                                    <td className="p-4 font-bold text-foreground border-l border-border/50">{t.book_title}</td>
-                                    <td className="p-4 text-foreground border-l border-border/50 font-medium">{t.party_name || "-"}</td>
-                                    <td className="p-4 text-muted-foreground border-l border-border/50 text-center">{t.unit_price?.toLocaleString()}</td>
-                                    <td className="p-4 font-bold text-primary border-l border-border/50 text-center">{t.total_price?.toLocaleString()}</td>
-                                    <td className="p-4 text-muted-foreground border-l border-border/50 text-center">{t.receipt_no}</td>
-                                    <td className="p-4 text-center text-muted-foreground border-l border-border/50 tracking-tighter">
+                                    <td className={`p-4 font-bold text-primary border-l border-border/50 text-center ${selectedCols.has(2) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>{t.qty}</td>
+                                    <td className={`p-4 font-bold text-foreground border-l border-border/50 ${selectedCols.has(3) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>{t.book_title}</td>
+                                    <td className={`p-4 text-foreground border-l border-border/50 font-medium ${selectedCols.has(4) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>{t.party_name || "-"}</td>
+                                    <td className={`p-4 text-muted-foreground border-l border-border/50 text-center ${selectedCols.has(5) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>{t.unit_price?.toLocaleString()}</td>
+                                    <td className={`p-4 font-bold text-primary border-l border-border/50 text-center ${selectedCols.has(6) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>{t.total_price?.toLocaleString()}</td>
+                                    <td className={`p-4 text-muted-foreground border-l border-border/50 text-center ${selectedCols.has(7) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>{t.receipt_no}</td>
+                                    <td className={`p-4 text-center text-muted-foreground border-l border-border/50 tracking-tighter ${selectedCols.has(8) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
                                         {t.tx_date?.split('-').reverse().join('/')}
                                     </td>
-                                    <td className="p-4 text-muted-foreground border-l border-border/50 w-20 text-center">
+                                    <td className={`p-4 text-muted-foreground border-l border-border/50 w-20 text-center ${selectedCols.has(9) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
                                         <NotesCell text={t.notes} iconOnly={true} />
                                     </td>
                                     <td className="p-4 flex justify-center gap-2">
@@ -947,7 +969,13 @@ export default function SalesPage() {
                     <Button type="submit" className="w-full">إضافة</Button>
                 </form>
             </Modal>
+
+            <ColumnActions
+                selectedCols={selectedCols}
+                columns={COLUMNS}
+                data={transactions}
+                title="سجل البيع"
+            />
         </div >
     );
 }
-

@@ -11,6 +11,8 @@ import html2canvas from "html2canvas";
 import { NotesCell } from "../../components/ui/NotesCell";
 import { save, message, ask } from '@tauri-apps/plugin-dialog';
 import { writeFile } from '@tauri-apps/plugin-fs';
+import { useColumnSelection } from "../../lib/useColumnSelection";
+import { ColumnActions } from "../../components/ui/ColumnActions";
 
 export default function PartiesPage() {
     const [parties, setParties] = useState([]);
@@ -77,6 +79,19 @@ export default function PartiesPage() {
         gift: 'سجل إهداءات',
         loan: 'سجل استعارات'
     };
+
+    // Column Selection & Export
+    const COLUMNS = [
+        { id: 'select', label: '', selectable: false },
+        { id: 'name', label: 'اسم الجهة', accessor: r => r.name },
+        { id: 'phone', label: 'الهاتف', accessor: r => r.phone || "" },
+        { id: 'address', label: 'العنوان', accessor: r => r.address || "" },
+        { id: 'categories', label: 'التصنيفات', accessor: r => r.category_names?.join(', ') || "-" },
+        { id: 'notes', label: 'ملاحظات', accessor: r => r.notes || "" },
+        { id: 'actions', label: '', selectable: false }
+    ];
+
+    const { selectedCols, setSelectedCols, handleColumnClick } = useColumnSelection(COLUMNS, parties);
 
     const fetchData = useCallback(async () => {
         try {
@@ -456,7 +471,10 @@ export default function PartiesPage() {
     }, [partyTransactions, filterType, saleStatusFilter]);
 
     return (
-        <div className="space-y-6 h-full flex flex-col">
+        <div
+            className="space-y-6 h-full flex flex-col"
+            onClick={() => setSelectedCols(new Set())}
+        >
             <div className="flex flex-col gap-4">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div className="flex items-center gap-4">
@@ -539,12 +557,12 @@ export default function PartiesPage() {
                                         onChange={toggleSelectAll}
                                     />
                                 </th>
-                                <th className="p-4 border-l border-primary-foreground/10 w-[30%] text-right">اسم الجهة</th>
-                                <th className="p-4 border-l border-primary-foreground/10 w-40 text-right whitespace-nowrap">الهاتف</th>
-                                <th className="p-4 border-l border-primary-foreground/10 w-[25%] text-right">العنوان</th>
-                                <th className="p-4 border-l border-primary-foreground/10 w-[200px] text-right whitespace-nowrap">التصنيفات</th>
-                                <th className="p-4 border-l border-primary-foreground/10 w-[180px] text-right whitespace-nowrap">ملاحظات</th>
-                                <th className="p-4 border-l border-primary-foreground/10 text-center">إجراءات</th>
+                                <th onClick={(e) => handleColumnClick(1, e)} className={`p-4 border-l border-primary-foreground/10 w-[30%] text-right cursor-pointer transition-colors ${selectedCols.has(1) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100' : ''}`}>اسم الجهة</th>
+                                <th onClick={(e) => handleColumnClick(2, e)} className={`p-4 border-l border-primary-foreground/10 w-40 text-right whitespace-nowrap cursor-pointer transition-colors ${selectedCols.has(2) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100' : ''}`}>الهاتف</th>
+                                <th onClick={(e) => handleColumnClick(3, e)} className={`p-4 border-l border-primary-foreground/10 w-[25%] text-right cursor-pointer transition-colors ${selectedCols.has(3) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100' : ''}`}>العنوان</th>
+                                <th onClick={(e) => handleColumnClick(4, e)} className={`p-4 border-l border-primary-foreground/10 w-[200px] text-right whitespace-nowrap cursor-pointer transition-colors ${selectedCols.has(4) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100' : ''}`}>التصنيفات</th>
+                                <th onClick={(e) => handleColumnClick(5, e)} className={`p-4 border-l border-primary-foreground/10 w-[180px] text-right whitespace-nowrap cursor-pointer transition-colors ${selectedCols.has(5) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100' : ''}`}>ملاحظات</th>
+                                <th className="p-4 border-l border-primary-foreground/10 text-center cursor-default">إجراءات</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
@@ -568,12 +586,12 @@ export default function PartiesPage() {
                                             readOnly
                                         />
                                     </td>
-                                    <td className="p-4 font-bold text-foreground border-l border-border/50">
+                                    <td className={`p-4 font-bold text-foreground border-l border-border/50 ${selectedCols.has(1) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
                                         <div>{p.name}</div>
                                     </td>
-                                    <td className="p-4 text-muted-foreground border-l border-border/50 w-40 whitespace-nowrap">{p.phone}</td>
-                                    <td className="p-4 text-muted-foreground border-l border-border/50">{p.address}</td>
-                                    <td className="p-4 w-[200px] border-l border-border/50">
+                                    <td className={`p-4 text-muted-foreground border-l border-border/50 w-40 whitespace-nowrap ${selectedCols.has(2) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>{p.phone}</td>
+                                    <td className={`p-4 text-muted-foreground border-l border-border/50 ${selectedCols.has(3) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>{p.address}</td>
+                                    <td className={`p-4 w-[200px] border-l border-border/50 ${selectedCols.has(4) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
                                         <div className="flex flex-wrap gap-1 overflow-hidden h-6">
                                             {p.category_names && p.category_names.map((name, idx) => (
                                                 <span key={idx} className="px-1.5 py-0.5 bg-muted/50 text-muted-foreground text-[10px] rounded border border-border whitespace-nowrap">{name}</span>
@@ -581,7 +599,7 @@ export default function PartiesPage() {
                                             {(!p.category_names || p.category_names.length === 0) && <span className="text-gray-400 text-xs">-</span>}
                                         </div>
                                     </td>
-                                    <td className="p-4 text-muted-foreground border-l border-border/50 w-[180px] whitespace-nowrap overflow-hidden text-ellipsis">
+                                    <td className={`p-4 text-muted-foreground border-l border-border/50 w-[180px] whitespace-nowrap overflow-hidden text-ellipsis ${selectedCols.has(5) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
                                         <NotesCell text={p.notes} />
                                     </td>
                                     <td className="p-4 flex justify-center gap-2">
@@ -914,6 +932,13 @@ export default function PartiesPage() {
                     </div>
                 </div>
             </Modal >
+
+            <ColumnActions
+                selectedCols={selectedCols}
+                columns={COLUMNS}
+                data={parties}
+                title="الجهات والأشخاص"
+            />
         </div >
     );
 }
