@@ -14,6 +14,9 @@ import { ask } from '@tauri-apps/plugin-dialog';
 import { NotesCell } from "../../components/ui/NotesCell";
 import { useColumnSelection } from "../../lib/useColumnSelection";
 import { ColumnActions } from "../../components/ui/ColumnActions";
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { SortableCategoryItem } from "../../components/SortableCategoryItem";
 
 export default function StoresPage() {
     const [itemsPerPage, setItemsPerPage] = useState(50);
@@ -180,7 +183,7 @@ export default function StoresPage() {
             const booksData = await db.select("SELECT id, title FROM book ORDER BY display_order ASC, title ASC");
             setBooks(booksData);
 
-            const catRows = await db.select("SELECT * FROM store_category ORDER BY name ASC");
+            const catRows = await db.select("SELECT * FROM store_category ORDER BY display_order ASC");
             setCategories(catRows);
 
         } catch (err) {
@@ -238,7 +241,7 @@ export default function StoresPage() {
             const db = await getDb();
             await db.execute("INSERT INTO store_category (name) VALUES ($1)", [newCategoryName.trim()]);
             setNewCategoryName("");
-            const catRows = await db.select("SELECT * FROM store_category ORDER BY name ASC");
+            const catRows = await db.select("SELECT * FROM store_category ORDER BY display_order ASC");
             setCategories(catRows);
         } catch (e) {
             alert("خطأ: ربما التصنيف موجود مسبقاً");
@@ -251,7 +254,7 @@ export default function StoresPage() {
         try {
             const db = await getDb();
             await db.execute("DELETE FROM store_category WHERE id=$1", [id]);
-            const catRows = await db.select("SELECT * FROM store_category ORDER BY name ASC");
+            const catRows = await db.select("SELECT * FROM store_category ORDER BY display_order ASC");
             setCategories(catRows);
         } catch (e) {
             alert("خطأ في الحذف");
@@ -265,7 +268,7 @@ export default function StoresPage() {
             const db = await getDb();
             await db.execute("UPDATE store_category SET name=$1 WHERE id=$2", [editingCategory.name.trim(), editingCategory.id]);
             setEditingCategory(null);
-            const catRows = await db.select("SELECT * FROM store_category ORDER BY name ASC");
+            const catRows = await db.select("SELECT * FROM store_category ORDER BY display_order ASC");
             setCategories(catRows);
         } catch (e) {
             alert("خطأ في التعديل");
@@ -390,6 +393,37 @@ export default function StoresPage() {
 
     const selectAllBooks = () => {
         setSelectedMultiBooks(selectedMultiBooks.length === books.length ? [] : [...books]);
+    };
+
+    const sensors = useSensors(
+        useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+        useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+    );
+
+    const updateCategoryOrder = async (newCats) => {
+        try {
+            const db = await getDb();
+            for (let i = 0; i < newCats.length; i++) {
+                await db.execute("UPDATE store_category SET display_order = $1 WHERE id = $2", [i + 1, newCats[i].id]);
+            }
+        } catch (e) {
+            console.error(e);
+            alert("خطأ في ترتيب التصنيفات");
+        }
+    };
+
+    const handleCategoryDragEnd = async (event) => {
+        const { active, over } = event;
+        if (!over || active.id === over.id) return;
+
+        setCategories((items) => {
+            const oldIndex = items.findIndex((i) => i.id === active.id);
+            const newIndex = items.findIndex((i) => i.id === over.id);
+            const newOrder = arrayMove(items, oldIndex, newIndex);
+
+            updateCategoryOrder(newOrder);
+            return newOrder;
+        });
     };
 
     return (
@@ -726,23 +760,20 @@ export default function StoresPage() {
                         </Button>
                     </form>
                     <div className="space-y-2 max-h-60 overflow-y-auto border rounded-xl p-2 bg-muted/20 custom-scrollbar">
-                        {categories.map(cat => (
-                            <div key={cat.id} className="flex items-center gap-2 bg-card p-2 rounded-lg border shadow-sm group">
-                                {editingCategory?.id === cat.id ? (
-                                    <form onSubmit={handleUpdateCategory} className="flex-1 flex gap-2">
-                                        <Input autoFocus value={editingCategory.name} onChange={e => setEditingCategory({ ...editingCategory, name: e.target.value })} className="h-8" />
-                                        <Button size="sm" type="submit" className="h-8">حفظ</Button>
-                                        <Button size="sm" type="button" variant="ghost" onClick={() => setEditingCategory(null)} className="h-8">إلغاء</Button>
-                                    </form>
-                                ) : (
-                                    <>
-                                        <span className="flex-1 text-sm font-bold text-foreground">{cat.name}</span>
-                                        <button onClick={() => setEditingCategory(cat)} className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors" title="تعديل"><Edit2 size={16} /></button>
-                                        <button onClick={() => handleDeleteCategory(cat.id)} className="p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors" title="حذف"><Trash2 size={16} /></button>
-                                    </>
-                                )}
-                            </div>
-                        ))}
+                        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleCategoryDragEnd}>
+                            <SortableContext items={categories.map(c => c.id)} strategy={verticalListSortingStrategy}>
+                                {categories.map(cat => (
+                                    <SortableCategoryItem
+                                        key={cat.id}
+                                        cat={cat}
+                                        editingCategory={editingCategory}
+                                        setEditingCategory={setEditingCategory}
+                                        handleUpdateCategory={handleUpdateCategory}
+                                        handleDeleteCategory={handleDeleteCategory}
+                                    />
+                                ))}
+                            </SortableContext>
+                        </DndContext>
                         {categories.length === 0 && (
                             <p className="text-muted-foreground text-center text-sm py-4">لا توجد تصنيفات</p>
                         )}

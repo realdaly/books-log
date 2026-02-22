@@ -87,6 +87,13 @@ async function ensureSchema(db) {
             );
         `);
 
+        // Migration for order
+        const otherCatCols = await db.select("SELECT name FROM pragma_table_info('other_category')");
+        if (!otherCatCols.map(c => c.name).includes("display_order")) {
+            await db.execute("ALTER TABLE other_category ADD COLUMN display_order INTEGER DEFAULT 0");
+            await db.execute("UPDATE other_category SET display_order = id WHERE display_order = 0");
+        }
+
         await db.execute(`
             CREATE TABLE IF NOT EXISTS "other_transaction" (
                 "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
@@ -151,6 +158,13 @@ async function ensureSchema(db) {
             );
         `);
 
+        // Migration for order
+        const storeCatCols = await db.select("SELECT name FROM pragma_table_info('store_category')");
+        if (!storeCatCols.map(c => c.name).includes("display_order")) {
+            await db.execute("ALTER TABLE store_category ADD COLUMN display_order INTEGER DEFAULT 0");
+            await db.execute("UPDATE store_category SET display_order = id WHERE display_order = 0");
+        }
+
         await db.execute(`
             CREATE TABLE IF NOT EXISTS "store_category_link" (
                 "transaction_id" INTEGER NOT NULL,
@@ -160,6 +174,16 @@ async function ensureSchema(db) {
                 FOREIGN KEY ("category_id") REFERENCES "store_category" ("id") ON DELETE CASCADE
             );
         `);
+
+        // Migration for party_category if it exists
+        const partyCatCheck = await db.select("SELECT name FROM sqlite_master WHERE type='table' AND name='party_category'");
+        if (partyCatCheck.length > 0) {
+            const partyCatCols = await db.select("SELECT name FROM pragma_table_info('party_category')");
+            if (!partyCatCols.map(c => c.name).includes("display_order")) {
+                await db.execute("ALTER TABLE party_category ADD COLUMN display_order INTEGER DEFAULT 0");
+                await db.execute("UPDATE party_category SET display_order = id WHERE display_order = 0");
+            }
+        }
 
     } catch (e) {
         console.error("Schema check/migration error:", e);

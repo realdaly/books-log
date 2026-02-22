@@ -4,14 +4,14 @@ import { getDb } from "../../lib/db";
 import { normalizeArabic } from "../../lib/utils";
 import { Button, Input, Textarea } from "../../components/ui/Base";
 import { Modal } from "../../components/ui/Modal";
-import { Loader2, Plus, Trash2, Edit2, Image as ImageIcon, BarChart3, BookOpenText, Search, X, Settings, Tag, Filter, Check, ChevronsUpDown } from "lucide-react";
+import { Loader2, Plus, Trash2, Image as ImageIcon, BarChart3, BookOpenText, Search, X, Settings, Tag, Filter, Check, ChevronsUpDown } from "lucide-react";
 import { PaginationControls } from "../../components/ui/PaginationControls";
 import { ask, open, message } from '@tauri-apps/plugin-dialog';
 import { readFile } from '@tauri-apps/plugin-fs';
 import { Combobox, ComboboxInput, ComboboxButton, ComboboxOptions, ComboboxOption, Transition } from '@headlessui/react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, Legend } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
-import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, rectSortingStrategy, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { SortableBookCard } from "../../components/SortableBookCard";
 import { SortableCategoryItem } from "../../components/SortableCategoryItem";
 
