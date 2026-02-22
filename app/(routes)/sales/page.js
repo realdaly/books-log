@@ -887,14 +887,14 @@ export default function SalesPage() {
                                             <button
                                                 type="button"
                                                 onClick={() => handlePriceTypeChange('retail')}
-                                                className={`px-2 py-0.5 text-[10px] font-bold rounded-md transition-all ${priceType === 'retail' ? 'bg-indigo-100 text-indigo-700 shadow-sm border border-indigo-200' : 'text-muted-foreground hover:text-foreground'}`}
+                                                className={`px-2 py-0.5 text-[10px] font-bold rounded-md transition-all ${priceType === 'retail' ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-400 shadow-sm border border-indigo-200 dark:border-indigo-800/50' : 'text-muted-foreground hover:text-foreground'}`}
                                             >
                                                 مفرد
                                             </button>
                                             <button
                                                 type="button"
                                                 onClick={() => handlePriceTypeChange('wholesale')}
-                                                className={`px-2 py-0.5 text-[10px] font-bold rounded-md transition-all ${priceType === 'wholesale' ? 'bg-indigo-100 text-indigo-700 shadow-sm border border-indigo-200' : 'text-muted-foreground hover:text-foreground'}`}
+                                                className={`px-2 py-0.5 text-[10px] font-bold rounded-md transition-all ${priceType === 'wholesale' ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-400 shadow-sm border border-indigo-200 dark:border-indigo-800/50' : 'text-muted-foreground hover:text-foreground'}`}
                                             >
                                                 جملة
                                             </button>
