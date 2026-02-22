@@ -1038,12 +1038,12 @@ export default function BooksPage() {
                                         categories
                                             .filter(cat => formData.categoryIds.includes(cat.id))
                                             .map(cat => (
-                                                <span key={cat.id} className="bg-emerald-50 text-emerald-700 text-xs px-2 py-1 rounded-md border border-emerald-100 font-bold flex items-center gap-1">
+                                                <span key={cat.id} className="bg-emerald-50 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 text-xs px-2 py-1 rounded-md border border-emerald-100 dark:border-emerald-800/50 font-bold flex items-center gap-1">
                                                     {cat.name}
                                                     <button
                                                         type="button"
                                                         onClick={() => toggleFormCategory(cat.id)}
-                                                        className="text-emerald-500 hover:text-emerald-800"
+                                                        className="text-emerald-500 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300"
                                                     >
                                                         <X size={14} />
                                                     </button>
