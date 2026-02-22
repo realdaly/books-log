@@ -11,8 +11,9 @@ import { readFile } from '@tauri-apps/plugin-fs';
 import { Combobox, ComboboxInput, ComboboxButton, ComboboxOptions, ComboboxOption, Transition } from '@headlessui/react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, Legend } from 'recharts';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
-import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, rectSortingStrategy } from '@dnd-kit/sortable';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, rectSortingStrategy, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { SortableBookCard } from "../../components/SortableBookCard";
+import { SortableCategoryItem } from "../../components/SortableCategoryItem";
 
 // Modern Color Palette for Charts
 const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#6b7280', '#8b5cf6']; // Emerald, Blue, Amber, Red, Gray, Purple
@@ -115,27 +116,13 @@ export default function BooksPage() {
     const updateDisplayOrder = async (items) => {
         try {
             const db = await getDb();
-            // We can do this efficiently with a transaction or batch update
-            // Strategy: Just update the display_order for all items in the current view based on their index
-            // Note: This only reorders the current page. Global reordering with pagination is complex.
-            // Assumption: User drags within the page. We assign order based on global offset?
-            // Simplified: Just update the order of dragged items relative to each other?
-            // Let's use a loop for now for simplicity.
-
-            // To maintain global order across pages, we need to know the 'start' index of this page.
-            const startOrder = (page - 1) * itemsPerPage;
-
-            // NOTE: If we want true reordering, we should probably update the DB integers.
-            // Let's iterate and update. 
+            const currentOrders = items.map(b => b.display_order).sort((a, b) => a - b);
 
             for (let i = 0; i < items.length; i++) {
                 const book = items[i];
-                // Update order to be consistent with visual order
-                // You might want to use a large gap or just sequential
-                // Using offset + i to keep it consistent with pagination
-                await db.execute("UPDATE book SET display_order = $1 WHERE id = $2", [startOrder + i + 1, book.id]);
+                book.display_order = currentOrders[i];
+                await db.execute("UPDATE book SET display_order = $1 WHERE id = $2", [currentOrders[i], book.id]);
             }
-
         } catch (e) {
             console.error("Failed to update order", e);
         }
@@ -203,7 +190,8 @@ export default function BooksPage() {
                     COALESCE(pending.pending_qty, 0) as pending_inst,
 
                     GROUP_CONCAT(cat.name) as category_names,
-                    GROUP_CONCAT(cat.id) as category_ids
+                    GROUP_CONCAT(cat.id) as category_ids,
+                    COALESCE(MIN(cat.display_order), 999999) as min_cat_order
 
                 FROM book b
                 LEFT JOIN vw_other_stores_total ot ON ot.book_id = b.id
@@ -214,9 +202,10 @@ export default function BooksPage() {
                 LEFT JOIN vw_book_pending_sales_qty pending ON pending.book_id = b.id
                 LEFT JOIN book_category_link bcl ON b.id = bcl.book_id
                 LEFT JOIN book_category cat ON bcl.category_id = cat.id
+                ${filterCategoryIds.length === 1 ? `LEFT JOIN book_category_link bcl_filter ON b.id = bcl_filter.book_id AND bcl_filter.category_id = ${filterCategoryIds[0]}` : ""}
                 ${finalWhere}
                 GROUP BY b.id
-                ORDER BY b.display_order ASC, b.id DESC
+                ORDER BY min_cat_order ASC, b.display_order ASC, b.id DESC
                 LIMIT ${itemsPerPage} OFFSET ${offset}
             `, params);
 
@@ -229,7 +218,7 @@ export default function BooksPage() {
             setBooks(normalizedRows);
 
             // Fetch categories only once if empty (usually)
-            const catRows = await db.select("SELECT * FROM book_category ORDER BY name ASC");
+            const catRows = await db.select("SELECT * FROM book_category ORDER BY display_order ASC, name ASC");
             setCategories(catRows);
         } catch (err) {
             console.error(err);
@@ -347,9 +336,9 @@ export default function BooksPage() {
         if (!newCategoryName.trim()) return;
         try {
             const db = await getDb();
-            await db.execute("INSERT INTO book_category (name) VALUES ($1)", [newCategoryName.trim()]);
+            await db.execute("INSERT INTO book_category (name, display_order) VALUES ($1, (SELECT COALESCE(MAX(display_order), 0) + 1 FROM book_category))", [newCategoryName.trim()]);
             setNewCategoryName("");
-            const catRows = await db.select("SELECT * FROM book_category ORDER BY name ASC");
+            const catRows = await db.select("SELECT * FROM book_category ORDER BY display_order ASC, name ASC");
             setCategories(catRows);
         } catch (e) {
             alert("خطأ: ربما التصنيف موجود مسبقاً");
@@ -363,7 +352,7 @@ export default function BooksPage() {
             const db = await getDb();
             await db.execute("UPDATE book_category SET name=$1 WHERE id=$2", [editingCategory.name.trim(), editingCategory.id]);
             setEditingCategory(null);
-            const catRows = await db.select("SELECT * FROM book_category ORDER BY name ASC");
+            const catRows = await db.select("SELECT * FROM book_category ORDER BY display_order ASC, name ASC");
             setCategories(catRows);
             fetchData(); // Refresh books to update names
         } catch (e) {
@@ -371,12 +360,39 @@ export default function BooksPage() {
         }
     };
 
+    const updateCategoryOrder = async (newCats) => {
+        try {
+            const db = await getDb();
+            for (let i = 0; i < newCats.length; i++) {
+                await db.execute("UPDATE book_category SET display_order = $1 WHERE id = $2", [i + 1, newCats[i].id]);
+            }
+            fetchData();
+        } catch (e) {
+            console.error(e);
+            alert("خطأ في ترتيب التصنيفات");
+        }
+    };
+
+    const handleCategoryDragEnd = async (event) => {
+        const { active, over } = event;
+        if (!over || active.id === over.id) return;
+
+        setCategories((items) => {
+            const oldIndex = items.findIndex((i) => i.id === active.id);
+            const newIndex = items.findIndex((i) => i.id === over.id);
+            const newOrder = arrayMove(items, oldIndex, newIndex);
+
+            updateCategoryOrder(newOrder);
+            return newOrder;
+        });
+    };
+
     const handleDeleteCategory = async (id) => {
         if (!await ask("هل أنت متأكد من حذف هذا التصنيف؟")) return;
         try {
             const db = await getDb();
             await db.execute("DELETE FROM book_category WHERE id=$1", [id]);
-            const catRows = await db.select("SELECT * FROM book_category ORDER BY name ASC");
+            const catRows = await db.select("SELECT * FROM book_category ORDER BY display_order ASC, name ASC");
             setCategories(catRows);
             fetchData();
         } catch (e) {
@@ -416,7 +432,7 @@ export default function BooksPage() {
                 // Update Categories
                 await db.execute("DELETE FROM book_category_link WHERE book_id=$1", [editId]);
                 for (const catId of formData.categoryIds) {
-                    await db.execute("INSERT INTO book_category_link (book_id, category_id) VALUES ($1, $2)", [editId, catId]);
+                    await db.execute("INSERT INTO book_category_link (book_id, category_id, display_order) VALUES ($1, $2, $1)", [editId, catId]);
                 }
 
             } else {
@@ -441,9 +457,13 @@ export default function BooksPage() {
                     const idRes = await db.select("SELECT last_insert_rowid() as id");
                     const newId = idRes[0]?.id;
 
+                    if (newId) {
+                        await db.execute("UPDATE book SET display_order = id WHERE id = $1", [newId]);
+                    }
+
                     if (newId && formData.categoryIds.length > 0) {
                         for (const catId of formData.categoryIds) {
-                            await db.execute("INSERT INTO book_category_link (book_id, category_id) VALUES ($1, $2)", [newId, catId]);
+                            await db.execute("INSERT INTO book_category_link (book_id, category_id, display_order) VALUES ($1, $2, $1)", [newId, catId]);
                         }
                     }
                     addedCount++;
@@ -1057,24 +1077,21 @@ export default function BooksPage() {
                             إضافة
                         </Button>
                     </form>
-                    <div className="space-y-2 max-h-60 overflow-y-auto border rounded-xl p-2 bg-muted/20 custom-scrollbar">
-                        {categories.map(cat => (
-                            <div key={cat.id} className="flex items-center gap-2 bg-card p-2 rounded-lg border shadow-sm group">
-                                {editingCategory?.id === cat.id ? (
-                                    <form onSubmit={handleUpdateCategory} className="flex-1 flex gap-2">
-                                        <Input autoFocus value={editingCategory.name} onChange={e => setEditingCategory({ ...editingCategory, name: e.target.value })} className="h-8" />
-                                        <Button size="sm" type="submit" className="h-8">حفظ</Button>
-                                        <Button size="sm" type="button" variant="ghost" onClick={() => setEditingCategory(null)} className="h-8">إلغاء</Button>
-                                    </form>
-                                ) : (
-                                    <>
-                                        <span className="flex-1 text-sm font-bold text-foreground">{cat.name}</span>
-                                        <button onClick={() => setEditingCategory(cat)} className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors" title="تعديل"><Edit2 size={16} /></button>
-                                        <button onClick={() => handleDeleteCategory(cat.id)} className="p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors" title="حذف"><Trash2 size={16} /></button>
-                                    </>
-                                )}
-                            </div>
-                        ))}
+                    <div className="space-y-2 max-h-96 overflow-y-auto border rounded-xl p-2 bg-muted/20 custom-scrollbar">
+                        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleCategoryDragEnd}>
+                            <SortableContext items={categories.map(c => c.id)} strategy={verticalListSortingStrategy}>
+                                {categories.map((cat) => (
+                                    <SortableCategoryItem
+                                        key={cat.id}
+                                        cat={cat}
+                                        editingCategory={editingCategory}
+                                        setEditingCategory={setEditingCategory}
+                                        handleUpdateCategory={handleUpdateCategory}
+                                        handleDeleteCategory={handleDeleteCategory}
+                                    />
+                                ))}
+                            </SortableContext>
+                        </DndContext>
                         {categories.length === 0 && <p className="text-center text-muted-foreground py-4 text-sm">لا توجد تصنيفات بعد.</p>}
                     </div>
                 </div>

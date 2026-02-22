@@ -75,13 +75,13 @@ export default function InventoryPage() {
     const updateDisplayOrder = async (items) => {
         try {
             const db = await getDb();
-            const startOrder = (page - 1) * itemsPerPage;
+            const currentOrders = items.map(b => b.display_order).sort((a, b) => a - b);
 
             for (let i = 0; i < items.length; i++) {
-                const row = items[i]; // row has book_id
-                await db.execute("UPDATE book SET display_order = $1 WHERE id = $2", [startOrder + i + 1, row.book_id]);
+                const row = items[i];
+                row.display_order = currentOrders[i];
+                await db.execute("UPDATE book SET display_order = $1 WHERE id = $2", [currentOrders[i], row.book_id]);
             }
-
         } catch (e) {
             console.error("Failed to update order", e);
         }
@@ -148,11 +148,15 @@ export default function InventoryPage() {
                    b.total_printed,
                    b.sent_to_institution,
                    b.loss_manual,
-                   b.display_order
+                   b.display_order,
+                   COALESCE(MIN(cat.display_order), 999999) as min_cat_order
                 FROM vw_inventory_central v
                 JOIN book b ON b.id = v.book_id
+                LEFT JOIN book_category_link bcl ON b.id = bcl.book_id
+                LEFT JOIN book_category cat ON bcl.category_id = cat.id
                 ${whereSQL}
-                ORDER BY b.display_order ASC, v.book_title ASC
+                GROUP BY v.book_id
+                ORDER BY min_cat_order ASC, b.display_order ASC, v.book_title ASC
                 LIMIT ${itemsPerPage} OFFSET ${offset}
             `;
 

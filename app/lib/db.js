@@ -118,6 +118,13 @@ async function ensureSchema(db) {
             );
         `);
 
+        // Migration for order
+        const bookCatCols = await db.select("SELECT name FROM pragma_table_info('book_category')");
+        if (!bookCatCols.map(c => c.name).includes("display_order")) {
+            await db.execute("ALTER TABLE book_category ADD COLUMN display_order INTEGER DEFAULT 0");
+            await db.execute("UPDATE book_category SET display_order = id WHERE display_order = 0");
+        }
+
         await db.execute(`
             CREATE TABLE IF NOT EXISTS "book_category_link" (
                 "book_id" INTEGER NOT NULL,
@@ -127,6 +134,13 @@ async function ensureSchema(db) {
                 FOREIGN KEY ("category_id") REFERENCES "book_category" ("id") ON DELETE CASCADE
             );
         `);
+
+        // Migration for link order
+        const bookCatLinkCols = await db.select("SELECT name FROM pragma_table_info('book_category_link')");
+        if (!bookCatLinkCols.map(c => c.name).includes("display_order")) {
+            await db.execute("ALTER TABLE book_category_link ADD COLUMN display_order INTEGER DEFAULT 0");
+            await db.execute("UPDATE book_category_link SET display_order = book_id WHERE display_order = 0");
+        }
 
         // Store Categories (Transactions)
         await db.execute(`
