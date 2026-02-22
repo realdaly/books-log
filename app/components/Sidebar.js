@@ -145,7 +145,7 @@ export default function Sidebar() {
                         isOpen ? "opacity-100 max-w-[200px]" : "opacity-0 max-w-0"
                     )}>
                         <h1 className="text-lg font-extrabold tracking-tight text-foreground leading-tight">نظام إدارة الكتب</h1>
-                        <p className="text-[10px] text-primary/60 font-black">1.0.0</p>
+                        <p className="text-[10px] text-primary/60 font-black">1.1.0</p>
                     </div>
                 </div>
             </div>

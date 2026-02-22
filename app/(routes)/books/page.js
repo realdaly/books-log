@@ -555,7 +555,8 @@ export default function BooksPage() {
     const resetForm = () => {
         setFormData({
             title: "", notes: "", total_printed: "0", sent_to_institution: "0",
-            loss_manual: "0", retail_price: "0", wholesale_price: "0", cover_image: null, categoryIds: []
+            loss_manual: "0", retail_price: "0", wholesale_price: "0", cover_image: null,
+            categoryIds: [...filterCategoryIds]
         });
     };
 

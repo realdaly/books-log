@@ -90,7 +90,7 @@ export default function SalesPage() {
     // Column Selection & Export
     const COLUMNS = [
         { id: 'select', label: '', selectable: false },
-        { id: 'state', label: 'الحالة', accessor: r => r.state === 'pending' ? 'طور البيع' : 'مكتمل' },
+        { id: 'state', label: 'الحالة', accessor: r => r.state === 'pending' ? 'آجـــــل' : 'نقــــدا' },
         { id: 'qty', label: 'العدد', accessor: r => r.qty },
         { id: 'book_title', label: 'اسم الكتاب', accessor: r => r.book_title },
         { id: 'party_name', label: 'الجهة (المشتري)', accessor: r => r.party_name || "-" },
@@ -503,7 +503,7 @@ export default function SalesPage() {
                                 : "bg-card text-muted-foreground border-border hover:border-primary/50"
                                 }`}
                         >
-                            مكتمل
+                            نقــــدا
                         </button>
                         <button
                             onClick={() => setFilterStatus(prev => prev.includes('pending') ? [] : ['pending'])}
@@ -512,7 +512,7 @@ export default function SalesPage() {
                                 : "bg-card text-muted-foreground border-border hover:border-primary/50"
                                 }`}
                         >
-                            طور البيع
+                            آجـــــل
                         </button>
                         {filterStatus.length > 0 && (
                             <button onClick={() => setFilterStatus([])} className="px-2 py-1 text-xs text-red-500 hover:text-red-700 font-bold">مسح</button>
@@ -569,8 +569,8 @@ export default function SalesPage() {
                                     </td>
                                     <td className={`p-4 border-l border-border/50 text-center whitespace-nowrap ${selectedCols.has(1) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
                                         {t.state === 'pending'
-                                            ? <span className="px-2 py-1 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-400 text-xs font-bold whitespace-nowrap border border-amber-200 dark:border-amber-800/50">طور البيع</span>
-                                            : <span className="px-2 py-1 rounded bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-400 text-xs font-bold whitespace-nowrap border border-emerald-200 dark:border-emerald-800/50">مكتمل</span>
+                                            ? <span className="px-2 py-1 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-400 text-xs font-bold whitespace-nowrap border border-amber-200 dark:border-amber-800/50">آجـــــل</span>
+                                            : <span className="px-2 py-1 rounded bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-400 text-xs font-bold whitespace-nowrap border border-emerald-200 dark:border-emerald-800/50">نقــــدا</span>
                                         }
                                     </td>
                                     <td className={`p-4 font-bold text-primary border-l border-border/50 text-center ${selectedCols.has(2) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>{t.qty}</td>
@@ -778,7 +778,7 @@ export default function SalesPage() {
                             onChange={e => setFormData({ ...formData, is_pending: e.target.checked })}
                         />
                         <label htmlFor="is_pending" className="text-sm font-bold text-amber-900 dark:text-amber-400 cursor-pointer">
-                            في طور البيع (لم يتم استلام المبلغ بعد)
+                            بيع بالآجل (لم يتم استلام المبلغ بعد)
                         </label>
                     </div>
 
