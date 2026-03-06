@@ -670,7 +670,7 @@ export default function BooksPage() {
                     items={books}
                     strategy={rectSortingStrategy}
                 >
-                    <div className="flex-1 overflow-y-auto grid grid-cols-2 md:grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-4 md:gap-8 pl-2 content-start">
+                    <div className="flex-1 overflow-y-auto grid grid-cols-2 md:grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-4 md:gap-8 pl-2 pb-2 content-start">
                         {loading && (
                             <div className="col-span-full flex flex-col items-center justify-center h-64 text-muted-foreground">
                                 <Loader2 className="animate-spin mb-4 text-primary" size={48} />
