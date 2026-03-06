@@ -31,6 +31,7 @@ export default async function initDatabase(db) {
       "unit_price" REAL DEFAULT 0,
       "loss_manual" INTEGER DEFAULT 0,
       "cover_image" TEXT DEFAULT NULL,
+      "print_year" INTEGER DEFAULT NULL,
 
       -- العدد الكلي الواصل للمؤسسة
       "sent_to_institution" INTEGER NOT NULL DEFAULT 0,
@@ -128,6 +129,7 @@ export default async function initDatabase(db) {
       "total_price" REAL DEFAULT NULL,
       "state" VARCHAR(50) DEFAULT 'final', -- pending | final | canceled
       "receipt_no" TEXT DEFAULT NULL,
+      "receipt_image" TEXT DEFAULT NULL,
       "tx_date" TEXT NOT NULL DEFAULT (date('now')),
       "notes" TEXT DEFAULT NULL,
       "created_at" TEXT DEFAULT (datetime('now')),

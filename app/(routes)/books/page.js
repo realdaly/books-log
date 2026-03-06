@@ -41,7 +41,7 @@ export default function BooksPage() {
     const [selectedIds, setSelectedIds] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [formData, setFormData] = useState({
-        title: "", notes: "", total_printed: "0", sent_to_institution: "0",
+        title: "", notes: "", total_printed: "0", print_year: "", sent_to_institution: "0",
         loss_manual: "0", retail_price: "0", wholesale_price: "0",
         cover_image: null,
         categoryIds: []
@@ -180,7 +180,7 @@ export default function BooksPage() {
             // Fetch books
             const rows = await db.select(`
                 SELECT 
-                    b.id, b.title, b.cover_image, b.notes, b.total_printed, b.sent_to_institution, b.loss_manual, b.unit_price, b.retail_price, b.wholesale_price, b.created_at, b.updated_at, b.display_order,
+                    b.id, b.title, b.cover_image, b.notes, b.total_printed, b.print_year, b.sent_to_institution, b.loss_manual, b.unit_price, b.retail_price, b.wholesale_price, b.created_at, b.updated_at, b.display_order,
                     COALESCE(ot.other_qty, 0) as other_stores_total,
                     
                     COALESCE(sales.sold_qty, 0) as sold_inst,
@@ -264,7 +264,7 @@ export default function BooksPage() {
         setDetailsLoading(true);
         try {
             const db = await getDb();
-            // Fetch full book details (for image)
+            // Fetch full book details (for image and print_year)
             const bookRes = await db.select("SELECT * FROM book WHERE id=$1", [book.id]);
             if (bookRes[0]) {
                 setDetailsBook(prev => ({ ...prev, ...bookRes[0] }));
@@ -414,20 +414,21 @@ export default function BooksPage() {
         e.preventDefault();
         try {
             const db = await getDb();
-            const { title, notes, total_printed, sent_to_institution, loss_manual, retail_price, wholesale_price, cover_image } = formData;
+            const { title, notes, total_printed, print_year, sent_to_institution, loss_manual, retail_price, wholesale_price, cover_image } = formData;
 
             const nTotal = Number(total_printed) || 0;
             const nSent = Number(sent_to_institution) || 0;
             const nLoss = Number(loss_manual) || 0;
             const nRetail = Number(retail_price) || 0;
             const nWholesale = Number(wholesale_price) || 0;
+            const nPrintYear = print_year ? Number(print_year) : null;
 
             if (editId) {
                 // Update Single
                 await db.execute(`
-                    UPDATE book SET title = $1, notes = $2, total_printed = $3, sent_to_institution = $4,
-                    loss_manual = $5, retail_price = $6, wholesale_price = $7, unit_price = $6, cover_image = $8 WHERE id = $9
-                        `, [title, notes, nTotal, nSent, nLoss, nRetail, nWholesale, cover_image, editId]);
+                    UPDATE book SET title = $1, notes = $2, total_printed = $3, print_year = $4, sent_to_institution = $5,
+                    loss_manual = $6, retail_price = $7, wholesale_price = $8, unit_price = $7, cover_image = $9 WHERE id = $10
+                        `, [title, notes, nTotal, nPrintYear, nSent, nLoss, nRetail, nWholesale, cover_image, editId]);
 
                 // Update Categories
                 await db.execute("DELETE FROM book_category_link WHERE book_id=$1", [editId]);
@@ -450,9 +451,9 @@ export default function BooksPage() {
                     }
 
                     await db.execute(`
-                        INSERT INTO book(title, notes, total_printed, sent_to_institution,
-                            loss_manual, retail_price, wholesale_price, unit_price, cover_image) VALUES($1, $2, $3, $4, $5, $6, $7, $6, $8)
-                    `, [t, notes, nTotal, nSent, nLoss, nRetail, nWholesale, cover_image]);
+                        INSERT INTO book(title, notes, total_printed, print_year, sent_to_institution,
+                            loss_manual, retail_price, wholesale_price, unit_price, cover_image) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $7, $9)
+                    `, [t, notes, nTotal, nPrintYear, nSent, nLoss, nRetail, nWholesale, cover_image]);
 
                     const idRes = await db.select("SELECT last_insert_rowid() as id");
                     const newId = idRes[0]?.id;
@@ -538,6 +539,7 @@ export default function BooksPage() {
                 title: fullBook.title,
                 notes: fullBook.notes || "",
                 total_printed: String(fullBook.total_printed || 0),
+                print_year: fullBook.print_year ? String(fullBook.print_year) : "",
                 sent_to_institution: String(fullBook.sent_to_institution || 0),
                 loss_manual: String(fullBook.loss_manual || 0),
                 retail_price: String(fullBook.retail_price || fullBook.unit_price || 0),
@@ -554,7 +556,7 @@ export default function BooksPage() {
 
     const resetForm = () => {
         setFormData({
-            title: "", notes: "", total_printed: "0", sent_to_institution: "0",
+            title: "", notes: "", total_printed: "0", print_year: "", sent_to_institution: "0",
             loss_manual: "0", retail_price: "0", wholesale_price: "0", cover_image: null,
             categoryIds: [...filterCategoryIds]
         });
@@ -668,7 +670,7 @@ export default function BooksPage() {
                     items={books}
                     strategy={rectSortingStrategy}
                 >
-                    <div className="flex-1 overflow-y-auto grid grid-cols-2 md:grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-4 md:gap-8 pl-2 content-start">
+                    <div className="flex-1 overflow-y-auto grid grid-cols-2 md:grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-4 md:gap-8 pl-2 pb-2 content-start">
                         {loading && (
                             <div className="col-span-full flex flex-col items-center justify-center h-64 text-muted-foreground">
                                 <Loader2 className="animate-spin mb-4 text-primary" size={48} />
@@ -737,7 +739,11 @@ export default function BooksPage() {
                                 <h2 className="text-xl font-black text-foreground mb-2 leading-tight">{detailsBook.title}</h2>
                                 <p className="text-gray-500 text-sm mb-6 max-w-xs mx-auto">{detailsBook.notes || "لا توجد ملاحظات إضافية"}</p>
 
-                                <div className="grid grid-cols-2 gap-4 w-full">
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 w-full">
+                                    <div className="flex flex-col justify-center gap-2 bg-card p-3 rounded-xl shadow-sm border border-border">
+                                        <div className="my-auto text-xs text-muted-foreground font-bold mb-1">سنة الطبع</div>
+                                        <div className="text-xl font-black text-primary">{detailsBook.print_year || "-"}</div>
+                                    </div>
                                     <div className="flex flex-col justify-center gap-2 bg-card p-3 rounded-xl shadow-sm border border-border">
                                         <div className="my-auto text-xs text-muted-foreground font-bold mb-1">العدد المطبوع</div>
                                         <div className="text-xl font-black text-primary">{detailsBook.total_printed}</div>
@@ -917,9 +923,15 @@ export default function BooksPage() {
                                         rows={editId ? 1 : 5}
                                     />
                                 </div>
-                                <div className="col-span-2 md:col-span-1">
-                                    <label className="block text-sm font-bold mb-1 border-primary pr-2">العدد الكلي المطبوع</label>
-                                    <Input type="number" min={0} required value={formData.total_printed} onChange={e => setFormData({ ...formData, total_printed: e.target.value })} />
+                                <div className="col-span-2 md:col-span-1 flex gap-2">
+                                    <div className="flex-1">
+                                        <label className="block text-sm font-bold mb-1 border-primary pr-2">العدد الكلي المطبوع</label>
+                                        <Input type="number" min={0} required value={formData.total_printed} onChange={e => setFormData({ ...formData, total_printed: e.target.value })} />
+                                    </div>
+                                    <div className="flex-1">
+                                        <label className="block text-sm font-bold mb-1 border-primary pr-2">سنة الطبع</label>
+                                        <Input type="number" min={0} placeholder="سنـة الطبع (اختياري)" value={formData.print_year} onChange={e => setFormData({ ...formData, print_year: e.target.value })} />
+                                    </div>
                                 </div>
                                 <div>
                                     <label className="block text-sm font-bold mb-1 border-primary pr-2">الواصل للمؤسسة</label>

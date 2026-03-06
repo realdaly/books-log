@@ -65,6 +65,9 @@ async function ensureSchema(db) {
         if (!columnNames.includes("cover_image")) {
             await db.execute("ALTER TABLE book ADD COLUMN cover_image TEXT");
         }
+        if (!columnNames.includes("print_year")) {
+            await db.execute("ALTER TABLE book ADD COLUMN print_year INTEGER DEFAULT NULL");
+        }
         if (!columnNames.includes("display_order")) {
             await db.execute("ALTER TABLE book ADD COLUMN display_order INTEGER DEFAULT 0");
             // Basic initialization for existing rows
@@ -76,6 +79,9 @@ async function ensureSchema(db) {
         const txColumnNames = txColumns.map(c => c.name);
         if (!txColumnNames.includes("receipt_no")) {
             await db.execute("ALTER TABLE `transaction` ADD COLUMN receipt_no TEXT DEFAULT NULL");
+        }
+        if (!txColumnNames.includes("receipt_image")) {
+            await db.execute("ALTER TABLE `transaction` ADD COLUMN receipt_image TEXT DEFAULT NULL");
         }
 
         // New Tables for Other Stores

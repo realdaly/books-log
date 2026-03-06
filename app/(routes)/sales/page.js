@@ -7,10 +7,11 @@ import { Modal } from "../../components/ui/Modal";
 import { DateInput } from "../../components/ui/DateInput";
 import { Combobox, ComboboxInput, ComboboxButton, ComboboxOptions, ComboboxOption } from '@headlessui/react';
 import {
-    Loader2, Plus, GripVertical, Trash2, Edit2, Search, X, Check, ChevronsUpDown, Filter, Printer, Download, Share2
+    Loader2, Plus, GripVertical, Trash2, Edit2, Search, X, Check, ChevronsUpDown, Filter, Printer, Download, Share2, Image as ImageIcon
 } from "lucide-react";
 import { PaginationControls } from "../../components/ui/PaginationControls";
-import { ask } from '@tauri-apps/plugin-dialog';
+import { ask, open, message } from '@tauri-apps/plugin-dialog';
+import { readFile } from '@tauri-apps/plugin-fs';
 import { NotesCell } from "../../components/ui/NotesCell";
 import { useColumnSelection } from "../../lib/useColumnSelection";
 import { ColumnActions } from "../../components/ui/ColumnActions";
@@ -39,8 +40,11 @@ export default function SalesPage() {
         party_id: null,
         tx_date: new Date().toISOString().split('T')[0],
         notes: "",
-        is_pending: false
+        is_pending: false,
+        receipt_image: null
     });
+    const [viewImageModalOpen, setViewImageModalOpen] = useState(false);
+    const [currentViewImage, setCurrentViewImage] = useState(null);
     const [editId, setEditId] = useState(null);
     const [isMultiMode, setIsMultiMode] = useState(false);
     const [selectedMultiBooks, setSelectedMultiBooks] = useState([]); // Array of { book, qty, unit_price }
@@ -98,6 +102,7 @@ export default function SalesPage() {
         { id: 'total_price', label: 'المبلغ الكلي', accessor: r => r.total_price?.toLocaleString() },
         { id: 'receipt_no', label: 'رقم الوصل', accessor: r => r.receipt_no },
         { id: 'tx_date', label: 'التاريخ', accessor: r => r.tx_date?.split('-').reverse().join('/') },
+        { id: 'receipt_image', label: 'صورة الفاتورة', selectable: false },
         { id: 'notes', label: 'ملاحظات', accessor: r => r.notes || "" },
         { id: 'actions', label: '', selectable: false }
     ];
@@ -153,7 +158,7 @@ export default function SalesPage() {
 
             const rows = await db.select(`
                 SELECT 
-                  t.id, t.qty, t.unit_price, t.total_price, t.receipt_no, t.tx_date, t.notes, t.state,
+                  t.id, t.qty, t.unit_price, t.total_price, t.receipt_no, t.tx_date, t.notes, t.state, t.receipt_image,
                   b.title as book_title, b.id as book_id,
                   p.name as party_name, p.id as party_id
                 FROM "transaction" t
@@ -259,33 +264,33 @@ export default function SalesPage() {
                 const bookId = formData.book_id?.id || formData.book_id;
                 await db.execute(`
           UPDATE "transaction" 
-          SET book_id=$1, party_id=$2, qty=$3, unit_price=$4, total_price=$5, receipt_no=$6, tx_date=$7, notes=$8, state=$9
-          WHERE id=$10
+          SET book_id=$1, party_id=$2, qty=$3, unit_price=$4, total_price=$5, receipt_no=$6, tx_date=$7, notes=$8, state=$9, receipt_image=$10
+          WHERE id=$11
         `, [
                     bookId, partyId, formData.qty, formData.unit_price, formData.total_price,
-                    formData.receipt_no, formData.tx_date, formData.notes, state, editId
+                    formData.receipt_no, formData.tx_date, formData.notes, state, formData.receipt_image, editId
                 ]);
             } else if (isMultiMode) {
                 for (const item of selectedMultiBooks) {
                     const partyId = formData.party_id?.id || formData.party_id || null;
                     const totalPrice = (parseFloat(item.qty) || 0) * (parseFloat(item.unit_price) || 0);
                     await db.execute(`
-                        INSERT INTO "transaction" (type, state, book_id, party_id, qty, unit_price, total_price, receipt_no, tx_date, notes)
-                        VALUES ('sale', $1, $2, $3, $4, $5, $6, $7, $8, $9)
+                        INSERT INTO "transaction" (type, state, book_id, party_id, qty, unit_price, total_price, receipt_no, tx_date, notes, receipt_image)
+                        VALUES ('sale', $1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
                     `, [
                         state, item.book.id, partyId, item.qty, item.unit_price, totalPrice,
-                        formData.receipt_no, formData.tx_date, formData.notes
+                        formData.receipt_no, formData.tx_date, formData.notes, formData.receipt_image
                     ]);
                 }
             } else {
                 const partyId = formData.party_id?.id || formData.party_id || null;
                 const bookId = formData.book_id?.id || formData.book_id;
                 await db.execute(`
-          INSERT INTO "transaction" (type, state, book_id, party_id, qty, unit_price, total_price, receipt_no, tx_date, notes)
-          VALUES ('sale', $1, $2, $3, $4, $5, $6, $7, $8, $9)
+          INSERT INTO "transaction" (type, state, book_id, party_id, qty, unit_price, total_price, receipt_no, tx_date, notes, receipt_image)
+          VALUES ('sale', $1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         `, [
                     state, bookId, partyId, formData.qty, formData.unit_price, formData.total_price,
-                    formData.receipt_no, formData.tx_date, formData.notes
+                    formData.receipt_no, formData.tx_date, formData.notes, formData.receipt_image
                 ]);
             }
 
@@ -380,7 +385,8 @@ export default function SalesPage() {
             party_id: p || null,
             tx_date: row.tx_date,
             notes: row.notes || "",
-            is_pending: row.state === 'pending'
+            is_pending: row.state === 'pending',
+            receipt_image: row.receipt_image || null
         });
         // Detect Price Type
         if (b) {
@@ -405,7 +411,8 @@ export default function SalesPage() {
             party_id: parties[0] || null,
             tx_date: new Date().toISOString().split('T')[0],
             notes: "",
-            is_pending: false
+            is_pending: false,
+            receipt_image: null
         });
 
         setPriceType('retail');
@@ -437,6 +444,28 @@ export default function SalesPage() {
         }
     };
 
+    const handleImageUpload = async () => {
+        try {
+            const selected = await open({
+                multiple: false,
+                filters: [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'webp'] }]
+            });
+
+            if (selected) {
+                const contents = await readFile(selected);
+                const base64 = typeof window !== 'undefined' ?
+                    btoa(new Uint8Array(contents).reduce((data, byte) => data + String.fromCharCode(byte), '')) : '';
+
+                const mimeType = selected.toLowerCase().endsWith('.png') ? 'image/png' :
+                    selected.toLowerCase().endsWith('.webp') ? 'image/webp' : 'image/jpeg';
+
+                setFormData({ ...formData, receipt_image: `data:${mimeType};base64,${base64}` });
+            }
+        } catch (err) {
+            console.error("Image upload failed", err);
+            await message("فشل تحميل الصورة. الرجاء المحاولة مرة أخرى.", { title: "خطأ", kind: "error" });
+        }
+    };
 
     /* if (loading) return <Loader2 className="animate-spin" />; */
 
@@ -540,7 +569,8 @@ export default function SalesPage() {
                                 <th onClick={(e) => handleColumnClick(4, e)} className={`p-4 border-l border-primary-foreground/10 w-1/2 text-right cursor-pointer transition-colors ${selectedCols.has(4) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100' : ''}`}>الجهة (المشتري)</th>
                                 <th onClick={(e) => handleColumnClick(5, e)} className={`p-4 border-l border-primary-foreground/10 text-center whitespace-nowrap cursor-pointer transition-colors ${selectedCols.has(5) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100' : ''}`}>السعر</th>
                                 <th onClick={(e) => handleColumnClick(6, e)} className={`p-4 border-l border-primary-foreground/10 text-center whitespace-nowrap cursor-pointer transition-colors ${selectedCols.has(6) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100' : ''}`}>المبلغ الكلي</th>
-                                <th onClick={(e) => handleColumnClick(7, e)} className={`p-4 border-l border-primary-foreground/10 whitespace-nowrap text-right cursor-pointer transition-colors ${selectedCols.has(7) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100' : ''}`}>رقم الوصل</th>
+                                <th onClick={(e) => handleColumnClick(7, e)} className={`p-4 border-l border-primary-foreground/10 whitespace-nowrap text-right cursor-pointer transition-colors ${selectedCols.has(7) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100' : ''}`}>رقم الفاتورة</th>
+                                <th className={`p-4 border-l border-primary-foreground/10 text-center whitespace-nowrap`}>صورة الفاتورة</th>
                                 <th onClick={(e) => handleColumnClick(8, e)} className={`p-4 border-l border-primary-foreground/10 whitespace-nowrap text-center cursor-pointer transition-colors ${selectedCols.has(8) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100' : ''}`}>التاريخ</th>
                                 <th onClick={(e) => handleColumnClick(9, e)} className={`p-4 border-l border-primary-foreground/10 w-20 text-center whitespace-nowrap cursor-pointer transition-colors ${selectedCols.has(9) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100' : ''}`}>ملاحظات</th>
                                 <th className="p-4 text-center cursor-default">إجراءات</th>
@@ -579,6 +609,14 @@ export default function SalesPage() {
                                     <td className={`p-4 text-muted-foreground border-l border-border/50 text-center ${selectedCols.has(5) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>{t.unit_price?.toLocaleString()}</td>
                                     <td className={`p-4 font-bold text-primary border-l border-border/50 text-center ${selectedCols.has(6) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>{t.total_price?.toLocaleString()}</td>
                                     <td className={`p-4 text-muted-foreground border-l border-border/50 text-center ${selectedCols.has(7) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>{t.receipt_no}</td>
+                                    <td className={`p-4 text-center border-l border-border/50`}>
+                                        {t.receipt_image && (
+                                            <Button variant="outline" size="sm" onClick={() => { setCurrentViewImage(t.receipt_image); setViewImageModalOpen(true); }} className="h-8 text-xs font-bold text-blue-600 border-blue-200 hover:bg-blue-50">
+                                                <ImageIcon size={14} className="ml-1" />
+                                                عرض الصورة
+                                            </Button>
+                                        )}
+                                    </td>
                                     <td className={`p-4 text-center text-muted-foreground border-l border-border/50 tracking-tighter ${selectedCols.has(8) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
                                         {t.tx_date?.split('-').reverse().join('/')}
                                     </td>
@@ -938,13 +976,36 @@ export default function SalesPage() {
                         </div>
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium mb-1">ملاحظات</label>
-                        <Textarea
-                            rows={3}
-                            value={formData.notes}
-                            onChange={e => setFormData({ ...formData, notes: e.target.value })}
-                        />
+                    <div className="flex flex-col md:flex-row gap-4">
+                        <div className="flex-1">
+                            <label className="block text-sm font-medium mb-1">ملاحظات</label>
+                            <Textarea
+                                rows={3}
+                                value={formData.notes}
+                                onChange={e => setFormData({ ...formData, notes: e.target.value })}
+                            />
+                        </div>
+                        <div className="w-full md:w-32 flex flex-col gap-1">
+                            <label className="block text-sm font-medium mb-1">صورة الفاتورة</label>
+                            <div
+                                onClick={handleImageUpload}
+                                className="flex-1 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors relative overflow-hidden group min-h-[80px]"
+                            >
+                                {formData.receipt_image ? (
+                                    <>
+                                        <img src={formData.receipt_image} className="w-full h-full object-cover absolute inset-0" alt="Preview" />
+                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-white text-xs font-bold">
+                                            تغيير
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="text-center p-2 text-gray-400">
+                                        <ImageIcon size={24} className="mx-auto mb-1 opacity-50" />
+                                        <span className="text-[10px]">اضغط للرفع</span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
                     </div>
 
                     <Button type="submit" className="w-full">حفظ</Button>
@@ -976,6 +1037,17 @@ export default function SalesPage() {
                 data={transactions}
                 title="سجل البيع"
             />
+
+            {/* View Image Modal */}
+            <Modal isOpen={viewImageModalOpen} onClose={() => setViewImageModalOpen(false)} title="عرض صورة الفاتورة" maxWidth="max-w-3xl">
+                <div className="flex items-center justify-center bg-muted/10 rounded-xl overflow-hidden min-h-[300px]">
+                    {currentViewImage ? (
+                        <img src={currentViewImage} alt="Receipt" className="max-w-full max-h-[70vh] object-contain rounded-lg shadow-sm" />
+                    ) : (
+                        <p className="text-muted-foreground">الصورة غير متوفرة</p>
+                    )}
+                </div>
+            </Modal>
         </div >
     );
 }
