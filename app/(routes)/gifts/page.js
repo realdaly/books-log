@@ -34,9 +34,11 @@ export default function GiftsPage() {
     const [formData, setFormData] = useState({
         book_id: null,
         qty: 1,
-        party_id: null, // Changed from "" to null for Combobox
+        party_id: null,
         tx_date: new Date().toISOString().split('T')[0],
-        notes: ""
+        notes: "",
+        reading_no: "",
+        deliverer: ""
     });
     const [editId, setEditId] = useState(null);
     const [isMultiMode, setIsMultiMode] = useState(false);
@@ -85,7 +87,9 @@ export default function GiftsPage() {
         { id: 'tx_date', label: 'التاريخ', accessor: r => r.tx_date?.split('-').reverse().join('/') },
         { id: 'qty', label: 'العدد', accessor: r => r.qty },
         { id: 'party_name', label: 'الجهة المستلمة', accessor: r => r.party_name || "-" },
+        { id: 'deliverer', label: 'المُسلم', accessor: r => r.deliverer || "-" },
         { id: 'book_title', label: 'اسم الكتاب', accessor: r => r.book_title },
+        { id: 'reading_no', label: 'رقم المطالعة', accessor: r => r.reading_no || "-" },
         { id: 'notes', label: 'الملاحظات', accessor: r => r.notes || "" },
         { id: 'actions', label: '', selectable: false }
     ];
@@ -132,7 +136,7 @@ export default function GiftsPage() {
 
             const rows = await db.select(`
                 SELECT 
-                  t.id, t.qty, t.tx_date, t.notes,
+                  t.id, t.qty, t.tx_date, t.notes, t.reading_no, t.deliverer,
                   b.title as book_title, b.id as book_id,
                   p.name as party_name, p.id as party_id
                 FROM "transaction" t
@@ -205,24 +209,24 @@ export default function GiftsPage() {
                 const partyId = formData.party_id?.id || formData.party_id;
                 await db.execute(`
           UPDATE "transaction" 
-          SET book_id=$1, party_id=$2, qty=$3, tx_date=$4, notes=$5
-          WHERE id=$6
-        `, [bookId, partyId, formData.qty, formData.tx_date, formData.notes, editId]);
+          SET book_id=$1, party_id=$2, qty=$3, tx_date=$4, notes=$5, reading_no=$6, deliverer=$7
+          WHERE id=$8
+        `, [bookId, partyId, formData.qty, formData.tx_date, formData.notes, formData.reading_no, formData.deliverer, editId]);
             } else if (isMultiMode) {
                 const partyId = formData.party_id?.id || formData.party_id;
                 for (const book of selectedMultiBooks) {
                     await db.execute(`
-                        INSERT INTO "transaction" (type, state, book_id, party_id, qty, tx_date, notes)
-                        VALUES ('gift', 'final', $1, $2, $3, $4, $5)
-                    `, [book.id, partyId, formData.qty, formData.tx_date, formData.notes]);
+                        INSERT INTO "transaction" (type, state, book_id, party_id, qty, tx_date, notes, reading_no, deliverer)
+                        VALUES ('gift', 'final', $1, $2, $3, $4, $5, $6, $7)
+                    `, [book.id, partyId, formData.qty, formData.tx_date, formData.notes, formData.reading_no, formData.deliverer]);
                 }
             } else {
                 const bookId = formData.book_id?.id || formData.book_id;
                 const partyId = formData.party_id?.id || formData.party_id;
                 await db.execute(`
-          INSERT INTO "transaction" (type, state, book_id, party_id, qty, tx_date, notes)
-          VALUES ('gift', 'final', $1, $2, $3, $4, $5)
-        `, [bookId, partyId, formData.qty, formData.tx_date, formData.notes]);
+          INSERT INTO "transaction" (type, state, book_id, party_id, qty, tx_date, notes, reading_no, deliverer)
+          VALUES ('gift', 'final', $1, $2, $3, $4, $5, $6, $7)
+        `, [bookId, partyId, formData.qty, formData.tx_date, formData.notes, formData.reading_no, formData.deliverer]);
             }
 
             setIsModalOpen(false);
@@ -309,7 +313,9 @@ export default function GiftsPage() {
             qty: row.qty,
             party_id: p || null,
             tx_date: row.tx_date,
-            notes: row.notes || ""
+            notes: row.notes || "",
+            reading_no: row.reading_no || "",
+            deliverer: row.deliverer || ""
         });
         setEditId(row.id);
         setIsMultiMode(false);
@@ -322,7 +328,9 @@ export default function GiftsPage() {
             qty: 1,
             party_id: parties[0] || null,
             tx_date: new Date().toISOString().split('T')[0],
-            notes: ""
+            notes: "",
+            reading_no: "",
+            deliverer: ""
         });
         setIsMultiMode(false);
         setSelectedMultiBooks([]);
@@ -410,9 +418,11 @@ export default function GiftsPage() {
                                 <th onClick={(e) => handleColumnClick(1, e)} className={`p-4 border-l border-primary-foreground/10 whitespace-nowrap w-max cursor-pointer transition-colors ${selectedCols.has(1) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100' : ''}`}>ت</th>
                                 <th onClick={(e) => handleColumnClick(2, e)} className={`p-4 border-l border-primary-foreground/10 whitespace-nowrap text-center cursor-pointer transition-colors ${selectedCols.has(2) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100' : ''}`}>التاريخ</th>
                                 <th onClick={(e) => handleColumnClick(3, e)} className={`p-4 border-l border-primary-foreground/10 whitespace-nowrap text-center cursor-pointer transition-colors ${selectedCols.has(3) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100' : ''}`}>العدد</th>
-                                <th onClick={(e) => handleColumnClick(4, e)} className={`p-4 border-l border-primary-foreground/10 w-1/2 text-right cursor-pointer transition-colors ${selectedCols.has(4) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100' : ''}`}>الجهة المستلمة</th>
-                                <th onClick={(e) => handleColumnClick(5, e)} className={`p-4 border-l border-primary-foreground/10 w-1/2 text-right cursor-pointer transition-colors ${selectedCols.has(5) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100' : ''}`}>اسم الكتاب</th>
-                                <th onClick={(e) => handleColumnClick(6, e)} className={`p-4 border-l border-primary-foreground/10 w-[210px] text-right whitespace-nowrap cursor-pointer transition-colors ${selectedCols.has(6) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100' : ''}`}>الملاحظات</th>
+                                <th onClick={(e) => handleColumnClick(4, e)} className={`p-4 border-l border-primary-foreground/10 w-1/4 text-right cursor-pointer transition-colors ${selectedCols.has(4) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100' : ''}`}>الجهة المستلمة</th>
+                                <th onClick={(e) => handleColumnClick(5, e)} className={`p-4 border-l border-primary-foreground/10 text-center whitespace-nowrap cursor-pointer transition-colors ${selectedCols.has(5) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100' : ''}`}>المُسلم</th>
+                                <th onClick={(e) => handleColumnClick(6, e)} className={`p-4 border-l border-primary-foreground/10 w-1/4 text-right cursor-pointer transition-colors ${selectedCols.has(6) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100' : ''}`}>اسم الكتاب</th>
+                                <th onClick={(e) => handleColumnClick(7, e)} className={`p-4 border-l border-primary-foreground/10 text-center whitespace-nowrap cursor-pointer transition-colors ${selectedCols.has(7) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100' : ''}`}>رقم المطالعة</th>
+                                <th onClick={(e) => handleColumnClick(8, e)} className={`p-4 border-l border-primary-foreground/10 w-[210px] text-right whitespace-nowrap cursor-pointer transition-colors ${selectedCols.has(8) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100' : ''}`}>الملاحظات</th>
                                 <th className="p-4 text-center cursor-default">إجراءات</th>
                             </tr>
                         </thead>
@@ -443,8 +453,10 @@ export default function GiftsPage() {
                                     </td>
                                     <td className={`p-4 text-center font-bold text-primary border-l border-border/50 ${selectedCols.has(3) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>{t.qty}</td>
                                     <td className={`p-4 text-foreground border-l border-border/50 ${selectedCols.has(4) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>{t.party_name || "-"}</td>
-                                    <td className={`p-4 font-bold text-foreground border-l border-border/50 ${selectedCols.has(5) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>{t.book_title}</td>
-                                    <td className={`p-4 text-muted-foreground border-l border-border/50 w-[210px] whitespace-nowrap overflow-hidden text-ellipsis ${selectedCols.has(6) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
+                                    <td className={`p-4 text-center text-foreground border-l border-border/50 ${selectedCols.has(5) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>{t.deliverer || "-"}</td>
+                                    <td className={`p-4 font-bold text-foreground border-l border-border/50 ${selectedCols.has(6) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>{t.book_title}</td>
+                                    <td className={`p-4 text-center text-foreground border-l border-border/50 tracking-tighter ${selectedCols.has(7) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>{t.reading_no || "-"}</td>
+                                    <td className={`p-4 text-muted-foreground border-l border-border/50 w-[210px] whitespace-nowrap overflow-hidden text-ellipsis ${selectedCols.has(8) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
                                         <NotesCell text={t.notes} />
                                     </td>
                                     <td className="p-4 flex justify-center gap-2">
@@ -708,6 +720,25 @@ export default function GiftsPage() {
                             <DateInput
                                 value={formData.tx_date}
                                 onChange={val => setFormData({ ...formData, tx_date: val })}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium mb-1">رقم المطالعة</label>
+                            <Input
+                                value={formData.reading_no}
+                                onChange={e => setFormData({ ...formData, reading_no: e.target.value })}
+                                placeholder="يترك فارغاً إذا لم يوجد"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium mb-1">المُسلم</label>
+                            <Input
+                                value={formData.deliverer}
+                                onChange={e => setFormData({ ...formData, deliverer: e.target.value })}
+                                placeholder="اسم الشخص المُسلم"
                             />
                         </div>
                     </div>

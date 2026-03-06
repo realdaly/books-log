@@ -62,6 +62,9 @@ async function ensureSchema(db) {
         if (!columnNames.includes("loss_manual")) {
             await db.execute("ALTER TABLE book ADD COLUMN loss_manual INTEGER DEFAULT 0");
         }
+        if (!columnNames.includes("print_year")) {
+            await db.execute("ALTER TABLE book ADD COLUMN print_year TEXT");
+        }
         if (!columnNames.includes("cover_image")) {
             await db.execute("ALTER TABLE book ADD COLUMN cover_image TEXT");
         }
@@ -76,6 +79,9 @@ async function ensureSchema(db) {
         const txColumnNames = txColumns.map(c => c.name);
         if (!txColumnNames.includes("receipt_no")) {
             await db.execute("ALTER TABLE `transaction` ADD COLUMN receipt_no TEXT DEFAULT NULL");
+        }
+        if (!txColumnNames.includes("deliverer")) {
+            await db.execute("ALTER TABLE `transaction` ADD COLUMN deliverer TEXT DEFAULT NULL");
         }
 
         // New Tables for Other Stores

@@ -145,6 +145,13 @@ export default async function initDatabase(db) {
   await db.execute(`CREATE INDEX IF NOT EXISTS "idx_transaction_state" ON "transaction" ("state");`);
   await db.execute(`CREATE INDEX IF NOT EXISTS "idx_transaction_date" ON "transaction" ("tx_date");`);
 
+  // Migration for adding reading_no
+  try {
+    await db.execute(`ALTER TABLE "transaction" ADD COLUMN "reading_no" VARCHAR(255) DEFAULT NULL;`);
+  } catch (e) {
+    // Column might already exist, ignore error
+  }
+
   // =====================================================================
   // Views
   // =====================================================================
