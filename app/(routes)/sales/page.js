@@ -23,6 +23,8 @@ export default function SalesPage() {
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(50);
+    const [filteredTotalSum, setFilteredTotalSum] = useState(0);
+    const [showTotalSum, setShowTotalSum] = useState(false);
 
     const [books, setBooks] = useState([]);
     const [parties, setParties] = useState([]);
@@ -170,6 +172,17 @@ export default function SalesPage() {
             `, params);
 
             setTransactions(rows);
+
+            // Fetch Total Sum for filtered records
+            const sumQuery = `
+                SELECT SUM(t.total_price) as total_sum
+                FROM "transaction" t
+                JOIN book b ON t.book_id = b.id
+                LEFT JOIN party p ON t.party_id = p.id
+                ${whereClause}
+            `;
+            const sumResult = await db.select(sumQuery, params);
+            setFilteredTotalSum(sumResult[0]?.total_sum || 0);
 
             const booksData = await db.select("SELECT id, title, unit_price, retail_price, wholesale_price FROM book ORDER BY display_order ASC, title ASC");
             setBooks(booksData);
@@ -550,8 +563,8 @@ export default function SalesPage() {
                 </div>
             </div>
 
-            <Card className="flex-1 p-0 overflow-hidden border-0 shadow-lg bg-card/40">
-                <div className="h-full overflow-auto">
+            <Card className="flex-1 p-0 overflow-hidden border-0 shadow-lg bg-card/40 flex flex-col">
+                <div className="flex-1 overflow-auto">
                     <table className="w-full text-right text-sm border-collapse border-b border-border">
                         <thead className="bg-primary text-primary-foreground font-bold sticky top-0 z-10 shadow-md">
                             <tr>
@@ -639,17 +652,38 @@ export default function SalesPage() {
                         </tbody>
                     </table>
                 </div>
+                {!loading && showTotalSum && transactions.length > 0 && (
+                    <div className="p-3 border-t bg-primary/5 flex justify-center items-center">
+                        <div className="text-center space-y-1">
+                            <div className="text-xl md:text-2xl font-black text-primary flex items-center gap-3">
+                                <span className="text-sm font-bold text-muted-foreground">المجموع الكلي:</span>
+                                <span>{filteredTotalSum?.toLocaleString()}</span>
+                                <span className="text-sm font-bold text-muted-foreground">دينار عراقي</span>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </Card>
 
-            {/* Pagination Controls */}
-            <PaginationControls
-                page={page}
-                totalPages={totalPages}
-                setPage={setPage}
-                isLoading={isFetching}
-                itemsPerPage={itemsPerPage}
-                setItemsPerPage={setItemsPerPage}
-            />
+            <div className="flex flex-col md:flex-row items-center gap-4">
+
+                <PaginationControls
+                    page={page}
+                    totalPages={totalPages}
+                    setPage={setPage}
+                    isLoading={isFetching}
+                    itemsPerPage={itemsPerPage}
+                    setItemsPerPage={setItemsPerPage}
+                />
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowTotalSum(!showTotalSum)}
+                    className={`h-9 px-4 font-bold transition-all ${showTotalSum ? 'bg-primary text-white border-primary hover:bg-primary/90' : 'text-primary border-primary/20 hover:border-primary/50'}`}
+                >
+                    {showTotalSum ? "إخفاء المجموع" : "عرض المجموع"}
+                </Button>
+            </div>
 
             <Modal
                 isOpen={isModalOpen}

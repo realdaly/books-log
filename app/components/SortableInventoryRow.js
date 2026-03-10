@@ -62,7 +62,7 @@ export function SortableInventoryRow({ row, index, updateField, successMap, sele
             </td>
 
             {/* Computed: Remaining Inst */}
-            <td className={`p-3 text-center font-bold border-l border-border/50 ${(row.remaining_institution || 0) <= (threshold ?? 11)
+            <td className={`p-3 text-center font-bold border-l border-border/50 ${(row.remaining_institution || 0) <= (threshold)
                 ? "bg-red-500/20 text-red-700 font-black"
                 : "text-primary"
                 } ${selectedCols.has(6) ? 'bg-blue-100 dark:bg-blue-900/30' : ''}`}>
