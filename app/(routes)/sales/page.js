@@ -15,6 +15,7 @@ import { readFile } from '@tauri-apps/plugin-fs';
 import { NotesCell } from "../../components/ui/NotesCell";
 import { useColumnSelection } from "../../lib/useColumnSelection";
 import { ColumnActions } from "../../components/ui/ColumnActions";
+import { ImagePicker } from "../../components/ImagePicker";
 
 export default function SalesPage() {
     const [transactions, setTransactions] = useState([]);
@@ -477,27 +478,25 @@ export default function SalesPage() {
         }
     };
 
-    const handleImageUpload = async () => {
-        try {
-            const selected = await open({
-                multiple: false,
-                filters: [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'webp'] }]
-            });
-
-            if (selected) {
-                const contents = await readFile(selected);
-                const base64 = typeof window !== 'undefined' ?
-                    btoa(new Uint8Array(contents).reduce((data, byte) => data + String.fromCharCode(byte), '')) : '';
-
-                const mimeType = selected.toLowerCase().endsWith('.png') ? 'image/png' :
-                    selected.toLowerCase().endsWith('.webp') ? 'image/webp' : 'image/jpeg';
-
-                setFormData({ ...formData, receipt_image: `data:${mimeType};base64,${base64}` });
+    const handleViewImage = async (idOrData) => {
+        if (!idOrData) return;
+        if (idOrData.startsWith && idOrData.startsWith('data:')) {
+            setCurrentViewImage(idOrData);
+        } else {
+            const db = await getDb();
+            try {
+                const res = await db.select('SELECT data FROM image_center WHERE id = $1', [parseInt(idOrData)]);
+                if (res.length > 0) {
+                    setCurrentViewImage(res[0].data);
+                } else {
+                    setCurrentViewImage(null);
+                }
+            } catch (err) {
+                console.error("View image error:", err);
+                setCurrentViewImage(null);
             }
-        } catch (err) {
-            console.error("Image upload failed", err);
-            await message("فشل تحميل الصورة. الرجاء المحاولة مرة أخرى.", { title: "خطأ", kind: "error" });
         }
+        setViewImageModalOpen(true);
     };
 
     /* if (loading) return <Loader2 className="animate-spin" />; */
@@ -644,7 +643,7 @@ export default function SalesPage() {
                                     <td className={`p-4 text-muted-foreground border-l border-border/50 text-center ${selectedCols.has(7) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>{t.receipt_no}</td>
                                     <td className={`p-4 text-center border-l border-border/50`}>
                                         {t.receipt_image && (
-                                            <Button variant="outline" size="sm" onClick={() => { setCurrentViewImage(t.receipt_image); setViewImageModalOpen(true); }} className="h-8 text-xs font-bold text-blue-600 border-blue-200 hover:bg-blue-50">
+                                            <Button variant="outline" size="sm" type="button" onClick={(e) => { e.stopPropagation(); handleViewImage(t.receipt_image); }} className="h-8 text-xs font-bold text-blue-600 border-blue-200 hover:bg-blue-50">
                                                 <ImageIcon size={14} className="ml-1" />
                                                 عرض الصورة
                                             </Button>
@@ -1069,26 +1068,13 @@ export default function SalesPage() {
                                 placeholder="انقر لكتابة ملاحظات"
                             />
                         </div>
-                        <div className="w-full md:w-32 flex flex-col gap-1">
+                        <div className="w-full md:w-32 flex flex-col gap-1 h-[80px]">
                             <label className="block text-sm font-bold text-primary mb-1">صورة الفاتورة</label>
-                            <div
-                                onClick={handleImageUpload}
-                                className="flex-1 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors relative overflow-hidden group min-h-[80px]"
-                            >
-                                {formData.receipt_image ? (
-                                    <>
-                                        <img src={formData.receipt_image} className="w-full h-full object-cover absolute inset-0" alt="Preview" />
-                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-white text-xs font-bold">
-                                            تغيير
-                                        </div>
-                                    </>
-                                ) : (
-                                    <div className="text-center p-2 text-gray-400">
-                                        <ImageIcon size={24} className="mx-auto mb-1 opacity-50" />
-                                        <span className="text-[10px]">اضغط للرفع</span>
-                                    </div>
-                                )}
-                            </div>
+                            <ImagePicker
+                                value={formData.receipt_image}
+                                onChange={(val) => setFormData({ ...formData, receipt_image: val })}
+                                className="w-full flex-1 flex"
+                            />
                         </div>
                     </div>
 

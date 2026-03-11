@@ -191,6 +191,38 @@ async function ensureSchema(db) {
             }
         }
 
+        // Image Center Setup and Migration
+        await db.execute(`
+            CREATE TABLE IF NOT EXISTS "image_center" (
+                "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                "name" TEXT NOT NULL,
+                "data" TEXT NOT NULL,
+                "size" INTEGER NOT NULL,
+                "width" INTEGER DEFAULT NULL,
+                "height" INTEGER DEFAULT NULL,
+                "created_at" TEXT DEFAULT (datetime('now'))
+            );
+        `);
+
+        // Migrate existing base64 strings from transaction to image_center
+        try {
+            const oldImages = await db.select("SELECT id, receipt_image FROM \`transaction\` WHERE receipt_image LIKE 'data:image%'");
+            for (const tx of oldImages) {
+                if (tx.receipt_image && tx.receipt_image.startsWith('data:image')) {
+                    const sizeBytes = Math.round(tx.receipt_image.length * 0.75);
+                    await db.execute("INSERT INTO image_center (name, data, size) VALUES ($1, $2, $3)",
+                        ['صورة مؤرشفة (' + tx.id + ')', tx.receipt_image, sizeBytes]);
+                    const lastInsert = await db.select("SELECT id FROM image_center ORDER BY id DESC LIMIT 1");
+                    if (lastInsert.length > 0) {
+                        await db.execute("UPDATE \`transaction\` SET receipt_image = $1 WHERE id = $2",
+                            [lastInsert[0].id.toString(), tx.id]);
+                    }
+                }
+            }
+        } catch (e) {
+            console.error("Image migration error:", e);
+        }
+
     } catch (e) {
         console.error("Schema check/migration error:", e);
     }

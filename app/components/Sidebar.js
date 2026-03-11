@@ -12,7 +12,8 @@ import {
     Settings,
     Menu,
     Layers,
-    Building2
+    Building2,
+    Image as ImageIcon
 } from "lucide-react";
 import { cn } from "../lib/utils";
 import { Button } from "./ui/Base";
@@ -28,6 +29,7 @@ const navItems = [
     { name: "الكتب", href: "/books", icon: Library },
     { name: "مخازن أخرى", href: "/stores", icon: Layers },
     { name: "فروع أخرى", href: "/branches", icon: Building2 },
+    { name: "مركز الصور", href: "/image-center", icon: ImageIcon },
     { name: "الإعدادات", href: "/settings", icon: Settings },
 ];
 
@@ -143,7 +145,7 @@ export default function Sidebar() {
                         isOpen ? "opacity-100 max-w-[200px]" : "opacity-0 max-w-0"
                     )}>
                         <h1 className="text-lg font-extrabold tracking-tight text-foreground leading-tight">نظام إدارة الكتب</h1>
-                        <p className="text-[10px] text-primary/60 font-black">1.2.0</p>
+                        <p className="text-[10px] text-primary/60 font-black">1.3.0</p>
                     </div>
                 </div>
             </div>
