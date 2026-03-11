@@ -716,7 +716,7 @@ export default function BooksPage() {
                 isLoading={isFetching}
             />
 
-            {/* --- Stats Detail Modal --- */}
+            {/* --- Details Modal --- */}
             {
                 detailsBook && (
                     <div onClick={() => setDetailsBook(null)} className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200 cursor-pointer !m-0">
@@ -739,22 +739,24 @@ export default function BooksPage() {
                                 <h2 className="text-xl font-black text-foreground mb-2 leading-tight">{detailsBook.title}</h2>
                                 <p className="text-gray-500 text-sm mb-6 max-w-xs mx-auto">{detailsBook.notes || "لا توجد ملاحظات إضافية"}</p>
 
-                                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 w-full">
+                                <div className="grid items-center justify-center lg:grid-cols-2 gap-4 w-full">
                                     <div className="flex flex-col justify-center gap-2 bg-card p-3 rounded-xl shadow-sm border border-border">
-                                        <div className="my-auto text-xs text-muted-foreground font-bold mb-1">سنة الطبع</div>
-                                        <div className="text-xl font-black text-primary">{detailsBook.print_year || "-"}</div>
+                                        <div className="flex justify-between items-center gap-2 border-b border-border/50 pb-1.5">
+                                            <div className="my-auto text-xs text-muted-foreground font-bold">العدد المطبوع</div>
+                                            <div className="text-lg font-black text-primary">{detailsBook.total_printed}</div>
+                                        </div>
+                                        <div className="flex justify-between items-center gap-2">
+                                            <div className="my-auto text-xs text-muted-foreground font-bold">سنة الطبع</div>
+                                            <div className="text-lg font-black text-primary">{detailsBook.print_year || "-"}</div>
+                                        </div>
                                     </div>
                                     <div className="flex flex-col justify-center gap-2 bg-card p-3 rounded-xl shadow-sm border border-border">
-                                        <div className="my-auto text-xs text-muted-foreground font-bold mb-1">العدد المطبوع</div>
-                                        <div className="text-xl font-black text-primary">{detailsBook.total_printed}</div>
-                                    </div>
-                                    <div className="bg-card p-3 rounded-xl shadow-sm border border-border flex flex-col justify-between">
-                                        <div className="flex justify-between items-center border-b border-border/50 pb-1 mb-1">
-                                            <div className="text-xs text-gray-400 font-bold">سعر المفرد</div>
+                                        <div className="flex justify-between items-center gap-2 border-b border-border/50 pb-1.5">
+                                            <div className="text-xs text-muted-foreground font-bold">سعر المفرد</div>
                                             <div className="text-lg font-black text-emerald-600">{Number(detailsBook.retail_price || detailsBook.unit_price || 0).toLocaleString()}</div>
                                         </div>
-                                        <div className="flex justify-between items-center pt-1">
-                                            <div className="text-xs text-gray-400 font-bold">سعر الجملة</div>
+                                        <div className="flex justify-between items-center gap-2">
+                                            <div className="text-xs text-muted-foreground font-bold">سعر الجملة</div>
                                             <div className="text-lg font-black text-blue-600">{Number(detailsBook.wholesale_price || 0).toLocaleString()}</div>
                                         </div>
                                     </div>

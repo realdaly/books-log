@@ -48,7 +48,7 @@ export function Modal({ isOpen, onClose, title, children, maxWidth = "max-w-lg",
                     className={`w-full ${maxWidth} ${maxHeight} transform rounded-2xl bg-background p-0 text-right shadow-2xl border border-border transition duration-300 ease-out data-[closed]:scale-95 data-[closed]:opacity-0 flex flex-col`}
                     dir="rtl"
                 >
-                    <div className="flex justify-between items-center p-6 border-b bg-muted/20 shrink-0">
+                    <div className="flex justify-between items-center p-5 border-b bg-muted/20 shrink-0">
                         <DialogTitle
                             as="h3"
                             className="text-xl font-bold text-foreground leading-6"

@@ -265,6 +265,18 @@ export default function SalesPage() {
 
             handleQtyPriceChange('unit_price', price);
         }
+
+        // Also update multi-mode books if any
+        if (selectedMultiBooks.length > 0) {
+            const updated = selectedMultiBooks.map(item => {
+                const book = item.book;
+                const price = type === 'wholesale'
+                    ? (book.wholesale_price || 0)
+                    : (book.retail_price || book.unit_price || 0);
+                return { ...item, unit_price: price };
+            });
+            setSelectedMultiBooks(updated);
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -439,7 +451,10 @@ export default function SalesPage() {
         if (exists) {
             setSelectedMultiBooks(selectedMultiBooks.filter(b => b.book.id !== book.id));
         } else {
-            setSelectedMultiBooks([...selectedMultiBooks, { book, qty: 1, unit_price: book.retail_price || book.unit_price || 0 }]);
+            const price = priceType === 'wholesale'
+                ? (book.wholesale_price || 0)
+                : (book.retail_price || book.unit_price || 0);
+            setSelectedMultiBooks([...selectedMultiBooks, { book, qty: 1, unit_price: price }]);
         }
     };
 
@@ -453,7 +468,12 @@ export default function SalesPage() {
         if (selectedMultiBooks.length === books.length) {
             setSelectedMultiBooks([]);
         } else {
-            setSelectedMultiBooks(books.map(b => ({ book: b, qty: 1, unit_price: b.retail_price || b.unit_price || 0 })));
+            setSelectedMultiBooks(books.map(b => {
+                const price = priceType === 'wholesale'
+                    ? (b.wholesale_price || 0)
+                    : (b.retail_price || b.unit_price || 0);
+                return { book: b, qty: 1, unit_price: price };
+            }));
         }
     };
 
@@ -772,11 +792,29 @@ export default function SalesPage() {
                         </div>
                     ) : (
                         <div className="space-y-3">
-                            <div className="flex justify-between items-center bg-muted/30 p-1 px-3 rounded-lg border border-dashed border-border/50">
+                            <div className="flex justify-between items-center bg-muted/30 p-3 rounded-lg border border-dashed border-border/50">
                                 <span className="text-sm font-bold">اختر الكتب المراد بيعها ({selectedMultiBooks.length}):</span>
-                                <Button className="h-5 px-1 md:h-7 md:px-2" type="button" variant="outline" size="sm" onClick={selectAllBooks}>
-                                    {selectedMultiBooks.length === books.length ? "إلغاء تحديد الكل" : "تحديد الكل"}
-                                </Button>
+                                <div className="flex items-center gap-4">
+                                    <div className="flex gap-1 bg-background/50 p-0.5 rounded-lg border">
+                                        <button
+                                            type="button"
+                                            onClick={() => handlePriceTypeChange('retail')}
+                                            className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${priceType === 'retail' ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-400 shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                                        >
+                                            مفرد
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => handlePriceTypeChange('wholesale')}
+                                            className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${priceType === 'wholesale' ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-400 shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                                        >
+                                            جملة
+                                        </button>
+                                    </div>
+                                    <Button className="h-5 px-1 md:h-7 md:px-2" type="button" variant="outline" size="sm" onClick={selectAllBooks}>
+                                        {selectedMultiBooks.length === books.length ? "إلغاء تحديد الكل" : "تحديد الكل"}
+                                    </Button>
+                                </div>
                             </div>
 
                             <div className="relative">
@@ -816,22 +854,34 @@ export default function SalesPage() {
                                         {selectedMultiBooks.find(b => b.book.id === book.id) && (
                                             <div className="flex gap-2 items-center" onClick={(e) => e.stopPropagation()}>
                                                 <div className="flex flex-col">
-                                                    <label className="text-[10px] text-muted-foreground">العدد</label>
+                                                    <label className="text-xs text-muted-foreground">العدد</label>
                                                     <Input
-                                                        type="number"
-                                                        className="w-16 h-8 p-1 text-xs text-center"
+                                                        type="text"
+                                                        inputMode="numeric"
+                                                        onInput={(e) => e.target.value = e.target.value.replace(/[^0-9]/g, '')}
+                                                        pattern="[0-9]*"
+                                                        className="w-16 h-7 text-sm text-center"
                                                         value={selectedMultiBooks.find(b => b.book.id === book.id).qty}
                                                         onChange={(e) => updateMultiBook(book.id, 'qty', e.target.value)}
                                                     />
                                                 </div>
                                                 <div className="flex flex-col">
-                                                    <label className="text-[10px] text-muted-foreground">السعر</label>
+                                                    <label className="text-xs text-muted-foreground">السعر</label>
                                                     <Input
-                                                        type="number"
-                                                        className="w-24 h-8 p-1 text-xs text-center"
+                                                        type="text"
+                                                        inputMode="numeric"
+                                                        onInput={(e) => e.target.value = e.target.value.replace(/[^0-9]/g, '')}
+                                                        pattern="[0-9]*"
+                                                        className="w-24 h-7 text-sm text-center"
                                                         value={selectedMultiBooks.find(b => b.book.id === book.id).unit_price}
                                                         onChange={(e) => updateMultiBook(book.id, 'unit_price', e.target.value)}
                                                     />
+                                                </div>
+                                                <div className="flex flex-col">
+                                                    <label className="text-xs pb-0.5 text-muted-foreground">المبلغ الكلي</label>
+                                                    <div className="w-24 h-10 flex items-center justify-center bg-primary/10 rounded-md text-sm font-black text-primary border border-primary/20">
+                                                        {((parseFloat(selectedMultiBooks.find(b => b.book.id === book.id).qty) || 0) * (parseFloat(selectedMultiBooks.find(b => b.book.id === book.id).unit_price) || 0)).toLocaleString()}
+                                                    </div>
                                                 </div>
                                             </div>
                                         )}
