@@ -553,7 +553,7 @@ export default function PartiesPage() {
 
                 {/* Categories Filter Bar */}
                 <div className="flex items-center gap-2 pb-2 w-full">
-                    <div className="flex items-center gap-2 py-1.5 px-3 bg-muted/30 rounded-full border">
+                    <div className="flex items-center gap-2 py-1.5 px-3 bg-muted/30 rounded-full border border-secondary">
                         <Filter size={16} className="text-muted-foreground" />
                         <span className="text-xs font-bold text-muted-foreground whitespace-nowrap">تصفية:</span>
                     </div>
@@ -673,7 +673,7 @@ export default function PartiesPage() {
             >
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label className="block text-sm font-bold mb-1">اسم الجهة</label>
+                        <label className="block text-sm font-bold mb-1 text-primary">اسم الجهة</label>
                         <Textarea
                             required
                             placeholder={editId ? "اسم الجهة" : "أدخل اسم الجهة (أدخل كل اسم في سطر جديد للإضافة المتعددة)"}
@@ -683,21 +683,34 @@ export default function PartiesPage() {
                         />
                     </div>
                     <div>
-                        <label className="block text-sm mb-1">الهاتف</label>
-                        <Input value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} />
+                        <label className="block text-sm font-bold mb-1 text-primary">الهاتف</label>
+                        <Input
+                            value={formData.phone}
+                            onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                            placeholder="انقر لكتابة رقم الهاتف"
+                        />
                     </div>
                     <div>
-                        <label className="block text-sm mb-1">العنوان</label>
-                        <Input value={formData.address} onChange={e => setFormData({ ...formData, address: e.target.value })} />
+                        <label className="block text-sm font-bold mb-1 text-primary">العنوان</label>
+                        <Input
+                            value={formData.address}
+                            onChange={e => setFormData({ ...formData, address: e.target.value })}
+                            placeholder="انقر لكتابة عنوان"
+                        />
                     </div>
                     <div>
-                        <label className="block text-sm mb-1">ملاحظات</label>
-                        <Textarea rows={3} value={formData.notes} onChange={e => setFormData({ ...formData, notes: e.target.value })} />
+                        <label className="block text-sm font-bold mb-1 text-primary">ملاحظات</label>
+                        <Textarea
+                            rows={3}
+                            value={formData.notes}
+                            onChange={e => setFormData({ ...formData, notes: e.target.value })}
+                            placeholder="انقر لكتابة ملاحظات"
+                        />
                     </div>
 
                     {/* Category Management */}
-                    <div className="pt-2 border-t mt-4">
-                        <label className="text-sm font-bold mb-2 flex items-center gap-2">
+                    <div className="pt-2 mt-4">
+                        <label className="text-sm font-bold mb-1 text-primary flex items-center gap-2">
                             <Tag size={16} /> التصنيفات
                         </label>
 
@@ -711,9 +724,9 @@ export default function PartiesPage() {
                                 >
                                     {({ open }) => (
                                         <div className="relative mt-1">
-                                            <div className="py-1 relative w-full cursor-default overflow-hidden rounded-lg bg-popover text-left shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm border">
+                                            <div className="py-1 relative w-full cursor-default overflow-hidden rounded-lg bg-background text-left border-2 border-input focus-within:border-primary transition-all sm:text-sm">
                                                 <ComboboxInput
-                                                    className="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-foreground bg-popover focus:ring-0 text-right font-bold"
+                                                    className="w-full border-none py-1.5 pl-3 pr-10 text-sm leading-5 text-foreground bg-background focus:ring-0 outline-none text-right"
                                                     displayValue={() => ""}
                                                     onChange={(event) => setCategoryQuery(event.target.value)}
                                                     onClick={() => !open && comboBtnRef.current?.click()}
@@ -733,17 +746,17 @@ export default function PartiesPage() {
                                                 leaveTo="opacity-0"
                                                 afterLeave={() => setCategoryQuery('')}
                                             >
-                                                <ComboboxOptions className="absolute mt-1 max-h-24 w-full overflow-auto rounded-md bg-popover py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-50 custom-scrollbar">
+                                                <ComboboxOptions className="absolute mt-1 max-h-24 w-full overflow-auto rounded-md bg-popover dark:bg-secondary py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-50 custom-scrollbar">
                                                     {filteredComboboxCategories.length === 0 && categoryQuery !== '' ? (
                                                         <div className="relative cursor-default select-none py-2 px-4 text-muted-foreground">
-                                                            لا توجد نتائج.
+                                                            لا توجد نتائج
                                                         </div>
                                                     ) : (
                                                         filteredComboboxCategories.map((cat) => (
                                                             <ComboboxOption
                                                                 key={cat.id}
                                                                 className={({ active }) =>
-                                                                    `relative cursor-default select-none py-2 pl-4 pr-10 ${active ? 'bg-primary text-white' : 'text-foreground'
+                                                                    `relative cursor-pointer select-none py-2 pl-4 pr-10 ${active ? 'bg-primary text-white' : 'text-foreground'
                                                                     }`
                                                                 }
                                                                 value={cat.id}
@@ -779,19 +792,19 @@ export default function PartiesPage() {
                                 type="button"
                                 onClick={() => setManageCategoriesOpen(true)}
                                 className="px-3 mt-1"
-                                title="إدارة التصنيفات"
+                                title="إضافة تصنيف جديد"
                             >
                                 <Plus size={18} />
                             </Button>
                         </div>
 
                         {/* Selected Categories Chips */}
-                        <div className="flex flex-wrap gap-2 mt-2">
+                        <div className="flex flex-wrap gap-2 mt-2 h-5">
                             {formCategoryIds.length > 0 ? (
                                 categories
                                     .filter(cat => formCategoryIds.includes(cat.id))
                                     .map(cat => (
-                                        <span key={cat.id} className="bg-emerald-50 text-emerald-700 text-xs px-2 py-1 rounded-md border border-emerald-100 font-bold flex items-center gap-1">
+                                        <span key={cat.id} className="bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 text-xs px-2 py-1 rounded-md border border-emerald-100 dark:border-emerald-800/50 font-bold flex items-center gap-1">
                                             {cat.name}
                                             <button
                                                 type="button"
@@ -937,7 +950,7 @@ export default function PartiesPage() {
                         </Button>
                     </form>
 
-                    <div className="bg-muted/20 p-4 rounded-xl border">
+                    <div className="bg-muted/20 p-4 rounded-xl border-2 border-secondary">
                         <div className="space-y-2 max-h-[60vh] overflow-y-auto custom-scrollbar">
                             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleCategoryDragEnd}>
                                 <SortableContext items={categories.map(c => c.id)} strategy={verticalListSortingStrategy}>

@@ -474,7 +474,7 @@ VALUES('loan', 'final', $1, $2, $3, $4, $5)
                 setItemsPerPage={setItemsPerPage}
             />
 
-            {/* Modal */}
+            {/* Add/Edit Modal */}
             <Modal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
@@ -490,21 +490,21 @@ VALUES('loan', 'final', $1, $2, $3, $4, $5)
                                 onClick={() => setIsMultiMode(!isMultiMode)}
                                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ring-2 ring-primary ring-offset-2 ${isMultiMode ? 'bg-primary' : 'bg-muted'}`}
                             >
-                                <span className={`${isMultiMode ? '-translate-x-6' : '-translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
+                                <span className={`${isMultiMode ? '-translate-x-6' : '-translate-x-1 dark:bg-white/50'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
                             </button>
                         </div>
                     )}
 
                     {!isMultiMode ? (
                         <div>
-                            <label className="block text-sm font-medium mb-1 text-primary">الكتاب</label>
+                            <label className="block text-sm font-bold mb-1 text-primary">الكتاب</label>
                             <div className="relative w-full">
                                 <Combobox value={formData.book_id} onChange={(val) => setFormData({ ...formData, book_id: val })} onClose={() => setBookQuery('')}>
                                     {({ open }) => (
                                         <div className="relative mt-1">
-                                            <div className="relative w-full cursor-default overflow-hidden rounded-lg bg-popover text-right shadow-md border focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm py-1">
+                                            <div className="relative w-full cursor-default overflow-hidden rounded-lg bg-background text-right border-2 border-input focus-within:border-primary transition-all sm:text-sm py-1">
                                                 <ComboboxInput
-                                                    className="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-foreground bg-popover focus:ring-0 text-right"
+                                                    className="w-full border-none py-1.5 pl-3 pr-10 text-sm leading-5 text-foreground bg-background focus:ring-0 outline-none text-right"
                                                     displayValue={(book) => book?.title || ''}
                                                     onFocus={(e) => e.target.select()}
                                                     onClick={() => !open && bookComboRef.current?.click()}
@@ -518,17 +518,17 @@ VALUES('loan', 'final', $1, $2, $3, $4, $5)
                                                     />
                                                 </ComboboxButton>
                                             </div>
-                                            <ComboboxOptions className="absolute mt-1 max-h-60 w-full overflow-auto rounded-md bg-popover py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-50">
+                                            <ComboboxOptions className="absolute mt-1 max-h-60 w-full overflow-auto rounded-md bg-popover dark:bg-secondary py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-50">
                                                 {filteredBooks.length === 0 && bookQuery !== '' ? (
-                                                    <div className="relative cursor-default select-none px-4 py-2 text-muted-foreground font-bold">
-                                                        لا توجد بيانات.
+                                                    <div className="relative cursor-default select-none px-4 py-2 text-muted-foreground">
+                                                        لا توجد نتائج
                                                     </div>
                                                 ) : (
                                                     filteredBooks.map((book) => (
                                                         <ComboboxOption
                                                             key={book.id}
                                                             className={({ active }) =>
-                                                                `relative cursor-default select-none py-2 pl-10 pr-4 ${active ? 'bg-primary text-primary-foreground' : 'text-foreground'
+                                                                `relative cursor-pointer select-none py-2 pl-10 pr-4 ${active ? 'bg-primary text-primary-foreground' : 'text-foreground'
                                                                 }`
                                                             }
                                                             value={book}
@@ -573,7 +573,7 @@ VALUES('loan', 'final', $1, $2, $3, $4, $5)
                                 <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
                                 <Input
                                     ref={multiBookRef}
-                                    placeholder="بحث في القائمة..."
+                                    placeholder="ابحث في القائمة..."
                                     value={multiBookQuery}
                                     onChange={e => setMultiBookQuery(e.target.value)}
                                     className="pr-9 pl-9"
@@ -589,9 +589,9 @@ VALUES('loan', 'final', $1, $2, $3, $4, $5)
                                 )}
                             </div>
 
-                            <div className="max-h-[150px] overflow-y-auto border rounded-xl divide-y bg-popover custom-scrollbar">
+                            <div className="max-h-[150px] overflow-y-auto border-2 border-input rounded-xl divide-y bg-popover custom-scrollbar">
                                 {filteredMultiBooks.map(book => (
-                                    <div key={book.id} className="p-3 flex items-center justify-between hover:bg-muted cursor-pointer" onClick={() => toggleMultiBook(book)}>
+                                    <div key={book.id} className="p-3 flex items-center justify-between border-input hover:bg-muted cursor-pointer" onClick={() => toggleMultiBook(book)}>
                                         <div className="flex items-center gap-3">
                                             <input
                                                 type="checkbox"
@@ -599,7 +599,7 @@ VALUES('loan', 'final', $1, $2, $3, $4, $5)
                                                 checked={selectedMultiBooks.some(b => b.id === book.id)}
                                                 readOnly
                                             />
-                                            <span className="font-bold text-sm">{book.title}</span>
+                                            <span className="text-sm">{book.title}</span>
                                         </div>
                                     </div>
                                 ))}
@@ -608,15 +608,15 @@ VALUES('loan', 'final', $1, $2, $3, $4, $5)
                     )}
 
                     <div>
-                        <label className="block text-sm font-medium mb-1">الجهة المستعيرة</label>
+                        <label className="block text-sm font-bold mb-1 text-primary">الجهة المستعيرة</label>
                         <div className="flex items-center gap-2">
                             <div className="relative w-full">
                                 <Combobox value={formData.party_id} onChange={(val) => setFormData({ ...formData, party_id: val })} onClose={() => setQuery('')}>
                                     {({ open }) => (
                                         <div className="relative mt-1">
-                                            <div className="relative w-full cursor-default overflow-hidden rounded-lg bg-popover text-right shadow-md border focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm py-1">
+                                            <div className="relative w-full cursor-default overflow-hidden rounded-lg bg-background text-right border-2 border-input focus-within:border-primary transition-all sm:text-sm py-1">
                                                 <ComboboxInput
-                                                    className="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-foreground bg-popover focus:ring-0 text-right"
+                                                    className="w-full border-none py-1.5 pl-3 pr-10 text-sm leading-5 text-foreground bg-background focus:ring-0 outline-none text-right"
                                                     displayValue={(party) => party?.name || ''}
                                                     onFocus={(e) => e.target.select()}
                                                     onClick={() => !open && partyComboRef.current?.click()}
@@ -630,10 +630,10 @@ VALUES('loan', 'final', $1, $2, $3, $4, $5)
                                                     />
                                                 </ComboboxButton>
                                             </div>
-                                            <ComboboxOptions className="absolute mt-1 max-h-60 w-full overflow-auto rounded-md bg-popover py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-50">
+                                            <ComboboxOptions className="absolute mt-1 max-h-60 w-full overflow-auto rounded-md bg-popover dark:bg-secondary py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-50">
                                                 {filteredParties.length === 0 && query !== '' ? (
                                                     <div className="relative cursor-default select-none px-4 py-2 text-muted-foreground">
-                                                        لا توجد نتائج.
+                                                        لا توجد نتائج
                                                     </div>
                                                 ) : (
 
@@ -642,7 +642,7 @@ VALUES('loan', 'final', $1, $2, $3, $4, $5)
                                                             <ComboboxOption
                                                                 key={party.id}
                                                                 className={({ active }) =>
-                                                                    `relative cursor-default select-none py-2 pl-10 pr-4 ${active ? 'bg-primary text-primary-foreground' : 'text-foreground'
+                                                                    `relative cursor-pointer select-none py-2 pl-10 pr-4 ${active ? 'bg-primary text-primary-foreground' : 'text-foreground'
                                                                     }`
                                                                 }
                                                                 value={party}
@@ -671,7 +671,7 @@ VALUES('loan', 'final', $1, $2, $3, $4, $5)
                                                             <div className="p-1">
                                                                 <button
                                                                     type="button"
-                                                                    className="w-full text-center py-2 text-sm text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-md font-bold"
+                                                                    className="w-full text-center py-2 text-sm text-blue-600 dark:text-white/90 bg-blue-50 dark:bg-blue-600/50 hover:bg-blue-100 rounded-md"
                                                                     onClick={(e) => {
                                                                         e.preventDefault();
                                                                         e.stopPropagation();
@@ -697,7 +697,7 @@ VALUES('loan', 'final', $1, $2, $3, $4, $5)
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium mb-1">العدد</label>
+                            <label className="block text-sm font-bold text-primary mb-1">العدد</label>
                             <Input
                                 type="number" min="1" required
                                 value={formData.qty}
@@ -705,7 +705,7 @@ VALUES('loan', 'final', $1, $2, $3, $4, $5)
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium mb-1">التاريخ</label>
+                            <label className="block text-sm font-bold text-primary mb-1">التاريخ</label>
                             <DateInput
                                 value={formData.tx_date}
                                 onChange={val => setFormData({ ...formData, tx_date: val })}
@@ -714,11 +714,12 @@ VALUES('loan', 'final', $1, $2, $3, $4, $5)
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium mb-1">ملاحظات</label>
+                        <label className="block text-sm font-bold text-primary mb-1">ملاحظات</label>
                         <Textarea
                             rows={3}
                             value={formData.notes}
                             onChange={e => setFormData({ ...formData, notes: e.target.value })}
+                            placeholder="انقر لكتابة ملاحظات"
                         />
                     </div>
 

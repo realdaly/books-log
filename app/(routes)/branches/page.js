@@ -476,7 +476,7 @@ export default function OtherStoresPage() {
 
                 {/* Categories Filter Bar */}
                 <div className="flex items-center gap-2 pb-2 w-full">
-                    <div className="flex items-center gap-2 py-1.5 px-3 bg-muted/20 rounded-full border">
+                    <div className="flex items-center gap-2 py-1.5 px-3 bg-muted/20 rounded-full border border-secondary">
                         <Filter size={16} className="text-muted-foreground" />
                         <span className="text-xs font-bold text-muted-foreground whitespace-nowrap">تصفية:</span>
                     </div>
@@ -595,7 +595,7 @@ export default function OtherStoresPage() {
                                 onClick={() => setIsMultiMode(!isMultiMode)}
                                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ring-2 ring-primary ring-offset-2 ${isMultiMode ? 'bg-primary' : 'bg-muted'}`}
                             >
-                                <span className={`${isMultiMode ? '-translate-x-6' : '-translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
+                                <span className={`${isMultiMode ? '-translate-x-6' : '-translate-x-1 dark:bg-white/50'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
                             </button>
                         </div>
                     )}
@@ -608,14 +608,14 @@ export default function OtherStoresPage() {
                                     <Combobox value={formData.book_id} onChange={(val) => setFormData({ ...formData, book_id: val })} onClose={() => setBookQuery('')}>
                                         {({ open }) => (
                                             <div className="relative mt-1">
-                                                <div className="relative w-full cursor-default overflow-hidden rounded-lg bg-popover text-right shadow-md border focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm py-1">
+                                                <div className="relative w-full cursor-default overflow-hidden rounded-lg bg-background text-right border-2 border-input focus-within:border-primary transition-all sm:text-sm py-1">
                                                     <ComboboxInput
-                                                        className="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-foreground bg-popover focus:ring-0 text-right"
+                                                        className="w-full border-none py-1.5 pl-3 pr-10 text-sm leading-5 text-foreground bg-background focus:ring-0 focus:outline-none text-right"
                                                         displayValue={b => b?.title || ''}
                                                         onFocus={(e) => e.target.select()}
                                                         onClick={() => !open && bookComboRef.current?.click()}
                                                         onChange={e => setBookQuery(e.target.value)}
-                                                        placeholder="اختر كتاباً..."
+                                                        placeholder="ابحث عن كتاب..."
                                                     />
                                                     <ComboboxButton ref={bookComboRef} className="absolute inset-y-0 right-0 flex items-center pr-2">
                                                         <ChevronsUpDown
@@ -624,17 +624,17 @@ export default function OtherStoresPage() {
                                                         />
                                                     </ComboboxButton>
                                                 </div>
-                                                <ComboboxOptions className="absolute mt-1 max-h-56 w-full overflow-auto rounded-md bg-popover py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-50">
+                                                <ComboboxOptions className="absolute mt-1 max-h-56 w-full overflow-auto rounded-md bg-popover dark:bg-secondary py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-50">
                                                     {filteredBooks.length === 0 && bookQuery !== '' ? (
-                                                        <div className="relative cursor-default select-none px-4 py-2 text-muted-foreground font-bold">
-                                                            لا توجد بيانات.
+                                                        <div className="relative cursor-default select-none px-4 py-2 text-muted-foreground">
+                                                            لا توجد نتائج
                                                         </div>
                                                     ) : (
                                                         filteredBooks.map((book) => (
                                                             <ComboboxOption
                                                                 key={book.id}
                                                                 className={({ active }) =>
-                                                                    `relative cursor-default select-none py-2 pl-10 pr-4 ${active ? 'bg-primary text-primary-foreground' : 'text-foreground'
+                                                                    `relative cursor-pointer select-none py-2 pl-10 pr-4 ${active ? 'bg-primary text-primary-foreground' : 'text-foreground'
                                                                     }`
                                                                 }
                                                                 value={book}
@@ -669,7 +669,7 @@ export default function OtherStoresPage() {
                         ) : (
                             <div className="space-y-2">
                                 <div className="flex justify-between items-center bg-muted/30 p-3 rounded-lg border border-dashed border-border">
-                                    <span className="text-sm font-bold text-primary">اختر الكتب المراد اهداؤها:</span>
+                                    <span className="text-sm font-bold text-primary">اختر الكتب المطلوبة:</span>
                                     <Button type="button" variant="outline" size="sm" onClick={selectAllBooks}>
                                         {selectedMultiBooks.length === books.length ? "إلغاء تحديد الكل" : "تحديد الكل"}
                                     </Button>
@@ -678,7 +678,7 @@ export default function OtherStoresPage() {
                                     <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
                                     <Input
                                         ref={multiBookRef}
-                                        placeholder="بحث في القائمة..."
+                                        placeholder="ابحث في القائمة..."
                                         value={multiBookQuery}
                                         onChange={e => setMultiBookQuery(e.target.value)}
                                         className="pr-9 pl-9"
@@ -693,9 +693,9 @@ export default function OtherStoresPage() {
                                         </button>
                                     )}
                                 </div>
-                                <div className="max-h-[120px] overflow-y-auto border rounded-xl divide-y bg-popover custom-scrollbar">
+                                <div className="max-h-[120px] overflow-y-auto border-2 border-input rounded-xl divide-y bg-popover custom-scrollbar">
                                     {filteredMultiBooks.map(book => (
-                                        <div key={book.id} className="p-3 flex items-center justify-between hover:bg-muted cursor-pointer" onClick={() => toggleMultiBook(book)}>
+                                        <div key={book.id} className="p-3 flex border-input items-center justify-between hover:bg-muted cursor-pointer" onClick={() => toggleMultiBook(book)}>
                                             <div className="flex items-center gap-3">
                                                 <input
                                                     type="checkbox"
@@ -703,7 +703,7 @@ export default function OtherStoresPage() {
                                                     checked={selectedMultiBooks.some(b => b.id === book.id)}
                                                     readOnly
                                                 />
-                                                <span className="font-bold text-sm">{book.title}</span>
+                                                <span className="text-sm">{book.title}</span>
                                             </div>
                                         </div>
                                     ))}
@@ -714,16 +714,16 @@ export default function OtherStoresPage() {
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-bold mb-1">العدد</label>
+                            <label className="block text-sm font-bold mb-1 text-primary">العدد</label>
                             <Input type="number" min="1" required value={formData.qty} onChange={e => setFormData({ ...formData, qty: e.target.value })} />
                         </div>
                         <div>
-                            <label className="block text-sm font-bold mb-1">التاريخ</label>
+                            <label className="block text-sm font-bold mb-1 text-primary">التاريخ</label>
                             <DateInput value={formData.tx_date} onChange={val => setFormData({ ...formData, tx_date: val })} />
                         </div>
                     </div>
 
-                    <div className="pt-2 border-t">
+                    <div className="pt-2">
                         <label className="text-sm font-bold mb-2 flex items-center gap-2 text-primary">
                             <Tag size={16} /> التصنيفات
                         </label>
@@ -738,14 +738,14 @@ export default function OtherStoresPage() {
                                 >
                                     {({ open }) => (
                                         <div className="relative mt-1">
-                                            <div className="py-1 relative w-full cursor-default overflow-hidden rounded-lg bg-popover text-left shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm border">
+                                            <div className="py-1 relative w-full cursor-default overflow-hidden rounded-lg bg-background text-left border-2 border-input focus-within:border-primary transition-all sm:text-sm">
                                                 <ComboboxInput
-                                                    className="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-foreground bg-popover focus:ring-0 text-right font-bold"
+                                                    className="w-full border-none py-1.5 pl-3 pr-10 text-sm leading-5 text-foreground bg-background focus:ring-0 focus:outline-none text-right"
                                                     displayValue={() => ""}
                                                     onFocus={(e) => e.target.select()}
                                                     onClick={() => !open && categoryComboRef.current?.click()}
                                                     onChange={(event) => setCategoryQuery(event.target.value)}
-                                                    placeholder="اختر التصنيفات..."
+                                                    placeholder="حدد التصنيفات..."
                                                 />
                                                 <ComboboxButton ref={categoryComboRef} className="absolute inset-y-0 right-0 flex items-center pr-2">
                                                     <ChevronsUpDown
@@ -761,7 +761,7 @@ export default function OtherStoresPage() {
                                                 leaveTo="opacity-0"
                                                 afterLeave={() => setCategoryQuery('')}
                                             >
-                                                <ComboboxOptions className="absolute mt-1 max-h-52 w-full overflow-auto rounded-md bg-popover py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-50 custom-scrollbar">
+                                                <ComboboxOptions className="absolute mt-1 max-h-52 w-full overflow-auto rounded-md bg-popover dark:bg-secondary py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-50 custom-scrollbar">
                                                     {filteredComboboxCategories.length === 0 && categoryQuery !== '' ? (
                                                         <div className="relative cursor-default select-none py-2 px-4 text-muted-foreground">
                                                             لا توجد نتائج.
@@ -771,7 +771,7 @@ export default function OtherStoresPage() {
                                                             <ComboboxOption
                                                                 key={cat.id}
                                                                 className={({ active }) =>
-                                                                    `relative cursor-default select-none py-2 pl-4 pr-10 ${active ? 'bg-primary text-white' : 'text-foreground'
+                                                                    `relative cursor-pointer select-none py-2 pl-4 pr-10 ${active ? 'bg-primary text-primary-foreground' : 'text-foreground'
                                                                     }`
                                                                 }
                                                                 value={cat.id}
@@ -807,19 +807,19 @@ export default function OtherStoresPage() {
                                 type="button"
                                 onClick={() => setManageCategoriesOpen(true)}
                                 className="px-3 mt-1"
-                                title="إدارة التصنيفات"
+                                title="إضافة تصنيف جديد"
                             >
                                 <Plus size={18} />
                             </Button>
                         </div>
 
                         {/* Selected Categories Chips */}
-                        <div className="flex flex-wrap gap-2 mt-2">
+                        <div className="flex flex-wrap gap-2 mt-2 h-5">
                             {formData.categoryIds.length > 0 ? (
                                 categories
                                     .filter(cat => formData.categoryIds.includes(cat.id))
                                     .map(cat => (
-                                        <span key={cat.id} className="bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-xs px-2 py-1 rounded-md border border-emerald-100 dark:border-emerald-800 font-bold flex items-center gap-1">
+                                        <span key={cat.id} className="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-xs px-2 py-1 rounded-md border border-emerald-100 dark:border-emerald-800 font-bold flex items-center gap-1">
                                             {cat.name}
                                             <button
                                                 type="button"
@@ -839,8 +839,13 @@ export default function OtherStoresPage() {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-bold mb-1 text-muted-foreground">ملاحظات</label>
-                        <Textarea rows={3} value={formData.notes} onChange={e => setFormData({ ...formData, notes: e.target.value })} />
+                        <label className="block text-sm font-bold mb-1 text-primary">ملاحظات</label>
+                        <Textarea
+                            rows={3}
+                            value={formData.notes}
+                            onChange={e => setFormData({ ...formData, notes: e.target.value })}
+                            placeholder="انقر لكتابة ملاحظات"
+                        />
                     </div>
 
                     <Button type="submit" className="w-full h-12 text-lg font-bold bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20">حفظ</Button>
@@ -848,7 +853,7 @@ export default function OtherStoresPage() {
             </Modal >
 
             {/* Category Management Modal */}
-            < Modal isOpen={manageCategoriesOpen} onClose={() => setManageCategoriesOpen(false)} title="إدارة التصنيفات" >
+            <Modal isOpen={manageCategoriesOpen} onClose={() => setManageCategoriesOpen(false)} title="إدارة التصنيفات" >
                 <div className="space-y-4">
                     <form onSubmit={handleAddCategory} className="flex gap-2">
                         <Input className="h-10" placeholder="تصنيف جديد..." value={newCategoryName} onChange={e => setNewCategoryName(e.target.value)} />
@@ -857,7 +862,7 @@ export default function OtherStoresPage() {
                             إضافة
                         </Button>
                     </form>
-                    <div className="space-y-2 max-h-60 overflow-y-auto border rounded-xl p-2 bg-muted/20 custom-scrollbar">
+                    <div className="space-y-2 max-h-60 overflow-y-auto border-2 border-secondary rounded-xl p-2 bg-muted/20 custom-scrollbar">
                         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleCategoryDragEnd}>
                             <SortableContext items={categories.map(c => c.id)} strategy={verticalListSortingStrategy}>
                                 {categories.map(cat => (

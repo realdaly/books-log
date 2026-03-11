@@ -619,7 +619,7 @@ export default function BooksPage() {
             {/* Filter & Selection Bar */}
             <div className="flex items-center gap-2 px-2 pb-2 w-full">
                 {/* Selection Controls */}
-                <div className="flex items-center gap-2 pl-2 border-l">
+                <div className="flex items-center gap-2 pl-2 border-l border-secondary">
                     <input
                         type="checkbox"
                         className="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer accent-emerald-600"
@@ -630,7 +630,7 @@ export default function BooksPage() {
                 </div>
 
                 {/* Filter Label */}
-                <div className="flex items-center gap-2 py-1.5 px-3 bg-muted/30 rounded-full border">
+                <div className="flex items-center gap-2 py-1.5 px-3 bg-muted/30 rounded-full border border-secondary">
                     <Filter size={16} className="text-gray-400" />
                     <span className="text-xs font-bold text-gray-500 whitespace-nowrap">تصفية:</span>
                 </div>
@@ -890,7 +890,7 @@ export default function BooksPage() {
                     <div className="flex flex-col md:flex-row gap-6">
                         {/* Image Uploader */}
                         <div className="w-full md:w-1/3 flex flex-col gap-2">
-                            <label className="text-sm font-bold text-gray-700">صورة الغلاف</label>
+                            <label className="text-sm font-bold text-primary">صورة الغلاف</label>
                             <div
                                 onClick={handleImageUpload}
                                 className="flex-1 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-primary transition-colors relative overflow-hidden group"
@@ -915,7 +915,7 @@ export default function BooksPage() {
                         <div className="flex-1 space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="col-span-2">
-                                    <label className="block text-sm font-bold mb-1 border-primary pr-2">اسم الكتاب</label>
+                                    <label className="block text-sm font-bold mb-1 text-primary pr-2">اسم الكتاب</label>
                                     <Textarea
                                         required
                                         placeholder={editId ? "اسم الكتاب" : "أدخل اسم الكتاب (أدخل كل اسم في سطر جديد للإضافة المتعددة)"}
@@ -927,37 +927,37 @@ export default function BooksPage() {
                                 </div>
                                 <div className="col-span-2 md:col-span-1 flex gap-2">
                                     <div className="flex-1">
-                                        <label className="block text-sm font-bold mb-1 border-primary pr-2">العدد الكلي المطبوع</label>
+                                        <label className="block text-sm font-bold mb-1 text-primary pr-2">العدد الكلي المطبوع</label>
                                         <Input type="number" min={0} required value={formData.total_printed} onChange={e => setFormData({ ...formData, total_printed: e.target.value })} />
                                     </div>
                                     <div className="flex-1">
-                                        <label className="block text-sm font-bold mb-1 border-primary pr-2">سنة الطبع</label>
-                                        <Input type="number" min={0} placeholder="سنـة الطبع (اختياري)" value={formData.print_year} onChange={e => setFormData({ ...formData, print_year: e.target.value })} />
+                                        <label className="block text-sm font-bold mb-1 text-primary pr-2">سنة الطبع</label>
+                                        <Input type="number" min={0} placeholder="مثال: 2026" value={formData.print_year} onChange={e => setFormData({ ...formData, print_year: e.target.value })} />
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-bold mb-1 border-primary pr-2">الواصل للمؤسسة</label>
+                                    <label className="block text-sm font-bold mb-1 text-primary pr-2">الواصل للمؤسسة</label>
                                     <Input type="number" min={0} value={formData.sent_to_institution} onChange={e => setFormData({ ...formData, sent_to_institution: e.target.value })} />
                                 </div>
                                 <div className="col-span-2 md:col-span-1 flex gap-2">
                                     <div className="flex-1">
-                                        <label className="block text-sm font-bold mb-1 border-primary pr-2">سعر المفرد</label>
+                                        <label className="block text-sm font-bold mb-1 text-primary pr-2">سعر المفرد</label>
                                         <Input type="number" min={0} className="h-11" step="0.01" required value={formData.retail_price} onChange={e => setFormData({ ...formData, retail_price: e.target.value })} />
                                     </div>
                                     <div className="flex-1">
-                                        <label className="block text-sm font-bold mb-1 border-primary pr-2">سعر الجملة</label>
+                                        <label className="block text-sm font-bold mb-1 text-primary pr-2">سعر الجملة</label>
                                         <Input type="number" min={0} className="h-11" step="0.01" required value={formData.wholesale_price} onChange={e => setFormData({ ...formData, wholesale_price: e.target.value })} />
                                     </div>
                                 </div>
                                 <div className="col-span-2 md:col-span-1">
-                                    <label className="block text-sm font-bold mb-1 border-primary pr-2">مفقود (يدوي)</label>
+                                    <label className="block text-sm font-bold mb-1 text-primary pr-2">مفقود (يدوي)</label>
                                     <Input type="number" min={0} className="h-11" value={formData.loss_manual} onChange={e => setFormData({ ...formData, loss_manual: e.target.value })} />
                                 </div>
                             </div>
 
 
                             {/* Categories Section */}
-                            <div className="pt-2 border-t">
+                            <div className="pt-2">
                                 <label className="text-sm font-bold mb-2 flex items-center gap-2 text-primary">
                                     <Tag size={16} /> التصنيفات
                                 </label>
@@ -972,13 +972,13 @@ export default function BooksPage() {
                                         >
                                             {({ open }) => (
                                                 <div className="relative mt-1">
-                                                    <div className="py-1 relative w-full cursor-default overflow-hidden rounded-lg bg-popover text-left shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm border">
+                                                    <div className="py-1 relative w-full cursor-default overflow-hidden rounded-lg bg-background text-left border-2 border-input focus-within:border-primary transition-all sm:text-sm">
                                                         <ComboboxInput
-                                                            className="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-foreground bg-popover focus:ring-0 text-right font-bold"
+                                                            className="w-full border-none py-1.5 pl-3 pr-10 text-sm leading-5 text-foreground bg-background focus:ring-0 focus:outline-none text-right"
                                                             displayValue={() => ""}
                                                             onChange={(event) => setCategoryQuery(event.target.value)}
                                                             onClick={() => !open && comboBtnRef.current?.click()}
-                                                            placeholder="اختر التصنيفات..."
+                                                            placeholder="حدد التصنيفات..."
                                                         />
                                                         <ComboboxButton ref={comboBtnRef} className="absolute inset-y-0 right-0 flex items-center pr-2">
                                                             <ChevronsUpDown
@@ -994,17 +994,17 @@ export default function BooksPage() {
                                                         leaveTo="opacity-0"
                                                         afterLeave={() => setCategoryQuery('')}
                                                     >
-                                                        <ComboboxOptions className="absolute mt-1 max-h-60 w-full overflow-auto rounded-md bg-popover py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-50 custom-scrollbar">
+                                                        <ComboboxOptions className="absolute mt-1 max-h-60 w-full overflow-auto rounded-md bg-popover dark:bg-secondary py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-50 custom-scrollbar">
                                                             {filteredComboboxCategories.length === 0 && categoryQuery !== '' ? (
                                                                 <div className="relative cursor-default select-none py-2 px-4 text-muted-foreground">
-                                                                    لا توجد نتائج.
+                                                                    لا توجد نتائج
                                                                 </div>
                                                             ) : (
                                                                 filteredComboboxCategories.map((cat) => (
                                                                     <ComboboxOption
                                                                         key={cat.id}
                                                                         className={({ active }) =>
-                                                                            `relative cursor-default select-none py-2 pl-4 pr-10 ${active ? 'bg-primary text-primary-foreground' : 'text-foreground'
+                                                                            `relative cursor-pointer select-none py-2 pl-4 pr-10 ${active ? 'bg-primary text-primary-foreground' : 'text-foreground'
                                                                             }`
                                                                         }
                                                                         value={cat.id}
@@ -1047,12 +1047,12 @@ export default function BooksPage() {
                                 </div>
 
                                 {/* Selected Categories Chips */}
-                                <div className="flex flex-wrap gap-2 mt-2">
+                                <div className="flex flex-wrap gap-2 mt-2 h-5">
                                     {formData.categoryIds.length > 0 ? (
                                         categories
                                             .filter(cat => formData.categoryIds.includes(cat.id))
                                             .map(cat => (
-                                                <span key={cat.id} className="bg-emerald-50 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 text-xs px-2 py-1 rounded-md border border-emerald-100 dark:border-emerald-800/50 font-bold flex items-center gap-1">
+                                                <span key={cat.id} className="bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 text-xs px-2 py-1 rounded-md border border-emerald-100 dark:border-emerald-800/50 font-bold flex items-center gap-1">
                                                     {cat.name}
                                                     <button
                                                         type="button"
@@ -1072,7 +1072,7 @@ export default function BooksPage() {
                             </div>
 
                             <div>
-                                <label className="block text-sm mb-1 font-bold border-primary pr-2">ملاحظات</label>
+                                <label className="block text-sm mb-1 font-bold text-primary pr-2">ملاحظات</label>
                                 <Textarea placeholder="ملاحظات إضافية..." rows={editId ? 5 : 2} value={formData.notes} onChange={e => setFormData({ ...formData, notes: e.target.value })} />
                             </div>
                         </div>
@@ -1092,7 +1092,7 @@ export default function BooksPage() {
                             إضافة
                         </Button>
                     </form>
-                    <div className="space-y-2 max-h-96 overflow-y-auto border rounded-xl p-2 bg-muted/20 custom-scrollbar">
+                    <div className="space-y-2 max-h-96 overflow-y-auto border-2 border-secondary rounded-xl p-2 bg-muted/20 custom-scrollbar">
                         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleCategoryDragEnd}>
                             <SortableContext items={categories.map(c => c.id)} strategy={verticalListSortingStrategy}>
                                 {categories.map((cat) => (

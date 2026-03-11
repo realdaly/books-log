@@ -19,7 +19,7 @@ export function SortableCategoryItem({ cat, editingCategory, setEditingCategory,
         <div
             ref={setNodeRef}
             style={style}
-            className={`flex items-center gap-2 bg-card p-2 rounded-lg border shadow-sm group transition-colors ${isDragging ? 'shadow-lg bg-card/90 ring-1 ring-primary/50' : 'hover:bg-primary/5'}`}
+            className={`flex items-center gap-2 bg-card p-2 rounded-lg border border-secondary shadow-sm group transition-colors ${isDragging ? 'shadow-lg bg-card/90 ring-1 ring-primary/50' : ''}`}
         >
             {editingCategory?.id === cat.id ? (
                 <form onSubmit={handleUpdateCategory} className="flex-1 flex gap-2">
@@ -37,7 +37,7 @@ export function SortableCategoryItem({ cat, editingCategory, setEditingCategory,
                         <GripVertical size={16} />
                     </div>
 
-                    <span className="flex-1 text-sm font-bold text-foreground">{cat.name}</span>
+                    <span className="flex-1 text-sm font-medium text-foreground">{cat.name}</span>
                     <button onClick={() => setEditingCategory(cat)} className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors" title="تعديل"><Edit2 size={16} /></button>
                     <button onClick={() => handleDeleteCategory(cat.id)} className="p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors" title="حذف"><Trash2 size={16} /></button>
                 </>

@@ -98,15 +98,13 @@ export default function Sidebar() {
                     const targetPath = item.href?.replace(/\/$/, "") || "";
                     const isActive = currentPath === targetPath;
 
-                    // Force <a> for Books and Settings to ensure clean navigation in production
-                    const isHardLink = item.href === "/books" || item.href === "/settings";
-                    const LinkComponent = isHardLink ? "a" : Link;
+                    const LinkComponent = Link;
 
                     return (
                         <LinkComponent
                             key={item.href}
                             href={item.href}
-                            {...(isHardLink ? {} : { prefetch: false })}
+                            prefetch={false}
                             className={cn(
                                 "flex items-center py-3 rounded-l-lg transition-all duration-200 group relative overflow-hidden whitespace-nowrap text-sm font-medium",
                                 isActive

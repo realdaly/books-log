@@ -250,7 +250,9 @@ export default function SettingsPage() {
             <h1 className="text-3xl font-bold text-primary text-center">الإعدادات</h1>
             <Card className="p-8 space-y-6 shadow-xl border-0 dark:border dark:border-white/10 dark:bg-card/50">
                 <div className="space-y-2">
-                    <label className="block text-sm font-black text-primary/60 uppercase tracking-wider">اسم المؤسسة</label>
+                    <label className="block text-sm font-black text-primary/60 uppercase tracking-wider">
+                        عنوان التطبيق (في صفحة الجرد العام)
+                    </label>
                     <Input
                         value={config.publisher_name}
                         onChange={e => setConfig({ ...config, publisher_name: e.target.value })}

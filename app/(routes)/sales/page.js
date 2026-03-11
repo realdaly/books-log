@@ -553,7 +553,7 @@ export default function SalesPage() {
 
                 {/* Status Filter Bar */}
                 <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                    <div className="flex items-center gap-2 py-1.5 px-3 bg-muted/30 rounded-lg border">
+                    <div className="flex items-center gap-2 py-1.5 px-3 bg-muted/30 rounded-lg border border-secondary">
                         <Filter size={16} className="text-muted-foreground" />
                         <span className="text-xs font-bold text-muted-foreground whitespace-nowrap">تصفية:</span>
                     </div>
@@ -720,21 +720,21 @@ export default function SalesPage() {
                                 onClick={() => setIsMultiMode(!isMultiMode)}
                                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ring-2 ring-primary ring-offset-2 ${isMultiMode ? 'bg-primary' : 'bg-muted'}`}
                             >
-                                <span className={`${isMultiMode ? '-translate-x-6' : '-translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
+                                <span className={`${isMultiMode ? '-translate-x-6' : '-translate-x-1 dark:bg-white/50'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
                             </button>
                         </div>
                     )}
 
                     {!isMultiMode ? (
                         <div>
-                            <label className="block text-sm font-medium mb-1 text-primary">الكتاب</label>
+                            <label className="block text-sm font-bold mb-1 text-primary">الكتاب</label>
                             <div className="relative w-full">
                                 <Combobox value={formData.book_id} onChange={handleBookChange} onClose={() => setBookQuery('')}>
                                     {({ open }) => (
                                         <div className="relative mt-1">
-                                            <div className="relative w-full cursor-default overflow-hidden rounded-lg bg-popover text-right shadow-md border focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm py-1">
+                                            <div className="relative w-full cursor-default overflow-hidden rounded-lg bg-background text-right border-2 border-input focus-within:border-primary transition-all sm:text-sm py-1">
                                                 <ComboboxInput
-                                                    className="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-foreground bg-popover focus:ring-0 text-right"
+                                                    className="w-full border-none py-1.5 pl-3 pr-10 text-sm leading-5 text-foreground bg-background focus:ring-0 outline-none text-right"
                                                     displayValue={(book) => book?.title || ''}
                                                     onFocus={(e) => e.target.select()}
                                                     onClick={() => !open && bookComboRef.current?.click()}
@@ -748,17 +748,17 @@ export default function SalesPage() {
                                                     />
                                                 </ComboboxButton>
                                             </div>
-                                            <ComboboxOptions className="absolute mt-1 max-h-60 w-full overflow-auto rounded-md bg-popover py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-50">
+                                            <ComboboxOptions className="absolute mt-1 max-h-60 w-full overflow-auto rounded-md bg-popover dark:bg-secondary py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-50">
                                                 {filteredBooks.length === 0 && bookQuery !== '' ? (
-                                                    <div className="relative cursor-default select-none px-4 py-2 text-muted-foreground font-bold">
-                                                        لا توجد بيانات.
+                                                    <div className="relative cursor-default select-none px-4 py-2 text-muted-foreground">
+                                                        لا توجد نتائج
                                                     </div>
                                                 ) : (
                                                     filteredBooks.map((book) => (
                                                         <ComboboxOption
                                                             key={book.id}
                                                             className={({ active }) =>
-                                                                `relative cursor-default select-none py-2 pl-10 pr-4 ${active ? 'bg-primary text-primary-foreground' : 'text-foreground'
+                                                                `relative cursor-pointer select-none py-2 pl-10 pr-4 ${active ? 'bg-primary text-primary-foreground' : 'text-foreground'
                                                                 }`
                                                             }
                                                             value={book}
@@ -795,7 +795,7 @@ export default function SalesPage() {
                             <div className="flex justify-between items-center bg-muted/30 p-3 rounded-lg border border-dashed border-border/50">
                                 <span className="text-sm font-bold">اختر الكتب المراد بيعها ({selectedMultiBooks.length}):</span>
                                 <div className="flex items-center gap-4">
-                                    <div className="flex gap-1 bg-background/50 p-0.5 rounded-lg border">
+                                    <div className="flex gap-1 bg-background/50 p-0.5 rounded-lg border border-input">
                                         <button
                                             type="button"
                                             onClick={() => handlePriceTypeChange('retail')}
@@ -821,7 +821,7 @@ export default function SalesPage() {
                                 <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
                                 <Input
                                     ref={multiBookRef}
-                                    placeholder="بحث في القائمة..."
+                                    placeholder="ابحث في القائمة..."
                                     value={multiBookQuery}
                                     onChange={e => setMultiBookQuery(e.target.value)}
                                     className="pr-9 pl-9"
@@ -837,11 +837,13 @@ export default function SalesPage() {
                                 )}
                             </div>
 
-                            <div className="max-h-[110px] overflow-y-auto border rounded-xl divide-y bg-popover">
+                            <div className="max-h-[110px] overflow-y-auto border-2 border-input rounded-xl divide-y bg-popover">
                                 {filteredMultiBooks.map(book => (
                                     <div
                                         key={book.id}
-                                        onClick={() => toggleMultiBook(book)} className="p-3 flex items-center justify-between hover:bg-muted cursor-pointer">
+                                        onClick={() => toggleMultiBook(book)}
+                                        className="p-3 flex items-center justify-between border-input hover:bg-muted cursor-pointer"
+                                    >
                                         <div className="flex items-center gap-3">
                                             <input
                                                 type="checkbox"
@@ -849,7 +851,7 @@ export default function SalesPage() {
                                                 checked={selectedMultiBooks.some(b => b.book.id === book.id)}
                                                 readOnly
                                             />
-                                            <span className="font-bold text-sm">{book.title}</span>
+                                            <span className="text-sm">{book.title}</span>
                                         </div>
                                         {selectedMultiBooks.find(b => b.book.id === book.id) && (
                                             <div className="flex gap-2 items-center" onClick={(e) => e.stopPropagation()}>
@@ -877,7 +879,7 @@ export default function SalesPage() {
                                                         onChange={(e) => updateMultiBook(book.id, 'unit_price', e.target.value)}
                                                     />
                                                 </div>
-                                                <div className="flex flex-col">
+                                                <div className="flex flex-col cursor-default">
                                                     <label className="text-xs pb-0.5 text-muted-foreground">المبلغ الكلي</label>
                                                     <div className="w-24 h-10 flex items-center justify-center bg-primary/10 rounded-md text-sm font-black text-primary border border-primary/20">
                                                         {((parseFloat(selectedMultiBooks.find(b => b.book.id === book.id).qty) || 0) * (parseFloat(selectedMultiBooks.find(b => b.book.id === book.id).unit_price) || 0)).toLocaleString()}
@@ -891,7 +893,7 @@ export default function SalesPage() {
                         </div>
                     )}
 
-                    <div className="flex items-center gap-2 bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg border border-amber-100 dark:border-amber-800/50">
+                    <div className="flex items-center gap-2 bg-amber-100 dark:bg-amber-900/20 p-3 rounded-lg border border-amber-300 dark:border-amber-800/50">
                         <input
                             id="is_pending"
                             type="checkbox"
@@ -899,21 +901,21 @@ export default function SalesPage() {
                             checked={formData.is_pending}
                             onChange={e => setFormData({ ...formData, is_pending: e.target.checked })}
                         />
-                        <label htmlFor="is_pending" className="text-sm font-bold text-amber-900 dark:text-amber-400 cursor-pointer">
+                        <label htmlFor="is_pending" className="text-sm font-medium text-amber-900 dark:text-amber-400 cursor-pointer">
                             في طور البيع (لم يتم استلام المبلغ بعد)
                         </label>
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium mb-1 text-primary">الجهة (المشتري)</label>
+                        <label className="block text-sm font-bold mb-1 text-primary">الجهة (المشتري)</label>
                         <div className="flex items-center gap-2">
                             <div className="relative w-full">
                                 <Combobox value={formData.party_id} onChange={(val) => setFormData({ ...formData, party_id: val })} onClose={() => setQuery('')}>
                                     {({ open }) => (
                                         <div className="relative">
-                                            <div className="relative w-full cursor-default overflow-hidden rounded-lg bg-popover text-right shadow-md border focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm">
+                                            <div className="relative w-full cursor-default overflow-hidden rounded-lg bg-background text-right border-2 border-input focus-within:border-primary transition-all sm:text-sm">
                                                 <ComboboxInput
-                                                    className="w-full border-none py-3 pl-3 pr-10 text-sm leading-5 text-foreground bg-popover focus:ring-0 text-right"
+                                                    className="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-foreground bg-background focus:ring-0 text-right"
                                                     displayValue={(party) => party?.name || ''}
                                                     onFocus={(e) => e.target.select()}
                                                     onClick={() => !open && partyComboRef.current?.click()}
@@ -927,10 +929,10 @@ export default function SalesPage() {
                                                     />
                                                 </ComboboxButton>
                                             </div>
-                                            <ComboboxOptions className="absolute mt-1 max-h-72 w-full overflow-auto rounded-md bg-popover py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-50">
+                                            <ComboboxOptions className="absolute mt-1 max-h-72 w-full overflow-auto rounded-md bg-popover dark:bg-secondary py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-50">
                                                 {filteredParties.length === 0 && query !== '' ? (
-                                                    <div className="relative cursor-default select-none px-4 py-2 text-muted-foreground font-bold">
-                                                        لا توجد بيانات.
+                                                    <div className="relative cursor-default select-none px-4 py-2 text-muted-foreground">
+                                                        لا توجد نتائج
                                                     </div>
                                                 ) : (
                                                     <>
@@ -938,7 +940,7 @@ export default function SalesPage() {
                                                             <ComboboxOption
                                                                 key={party.id}
                                                                 className={({ active }) =>
-                                                                    `relative cursor-default select-none py-2 pl-10 pr-4 ${active ? 'bg-primary text-primary-foreground' : 'text-foreground'
+                                                                    `relative cursor-pointer select-none py-2 pl-10 pr-4 ${active ? 'bg-primary text-primary-foreground' : 'text-foreground'
                                                                     }`
                                                                 }
                                                                 value={party}
@@ -967,7 +969,7 @@ export default function SalesPage() {
                                                             <div className="p-1">
                                                                 <button
                                                                     type="button"
-                                                                    className="w-full text-center py-2 text-sm text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-md font-bold"
+                                                                    className="w-full text-center py-2 text-sm text-blue-600 dark:text-white/90 bg-blue-50 dark:bg-blue-600/50 hover:bg-blue-100 rounded-md font-bold"
                                                                     onClick={(e) => {
                                                                         e.preventDefault();
                                                                         e.stopPropagation();
@@ -985,7 +987,7 @@ export default function SalesPage() {
                                     )}
                                 </Combobox>
                             </div>
-                            <Button type="button" onClick={() => setIsAddPartyOpen(true)} className="px-3">
+                            <Button type="button" onClick={() => setIsAddPartyOpen(true)} className="max-h-fit max-w-fit">
                                 <Plus size={18} />
                             </Button>
                         </div>
@@ -993,9 +995,9 @@ export default function SalesPage() {
 
                     {!isMultiMode && (
                         <>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
                                 <div>
-                                    <label className="block text-sm font-medium mb-1">العدد</label>
+                                    <label className="block text-sm font-bold text-primary mb-2.5">العدد</label>
                                     <Input
                                         type="number" min="1" required
                                         value={formData.qty}
@@ -1004,19 +1006,19 @@ export default function SalesPage() {
                                 </div>
                                 <div>
                                     <div className="flex justify-between items-center mb-1">
-                                        <label className="block text-sm font-medium">سعر النسخة</label>
-                                        <div className="flex gap-1 bg-muted/40 p-0.5 rounded-lg">
+                                        <label className="block text-sm font-bold text-primary">سعر النسخة</label>
+                                        <div className="flex gap-1 bg-muted/40 p-0.5 rounded-lg border border-input">
                                             <button
                                                 type="button"
                                                 onClick={() => handlePriceTypeChange('retail')}
-                                                className={`px-2 py-0.5 text-[10px] font-bold rounded-md transition-all ${priceType === 'retail' ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-400 shadow-sm border border-indigo-200 dark:border-indigo-800/50' : 'text-muted-foreground hover:text-foreground'}`}
+                                                className={`px-2 py-0.5 text-[10px] font-bold rounded-md transition-all ${priceType === 'retail' ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-400 shadow-sm dark:border-indigo-800/50' : 'text-muted-foreground hover:text-foreground'}`}
                                             >
                                                 مفرد
                                             </button>
                                             <button
                                                 type="button"
                                                 onClick={() => handlePriceTypeChange('wholesale')}
-                                                className={`px-2 py-0.5 text-[10px] font-bold rounded-md transition-all ${priceType === 'wholesale' ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-400 shadow-sm border border-indigo-200 dark:border-indigo-800/50' : 'text-muted-foreground hover:text-foreground'}`}
+                                                className={`px-2 py-0.5 text-[10px] font-bold rounded-md transition-all ${priceType === 'wholesale' ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-400 shadow-sm dark:border-indigo-800/50' : 'text-muted-foreground hover:text-foreground'}`}
                                             >
                                                 جملة
                                             </button>
@@ -1032,19 +1034,16 @@ export default function SalesPage() {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium mb-1">المبلغ الكلي</label>
-                                    <p className="text-sm font-bold">{formData.total_price} دينار عراقي</p>
-                                </div>
-                                <div />
+                            <div>
+                                <label className="text-sm mb-1 text-muted-foreground">المبلغ الكلي: &nbsp;</label>
+                                <p className="text-sm font-bold inline text-muted-foreground">{formData.total_price} دينار عراقي</p>
                             </div>
                         </>
                     )}
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium mb-1">رقم الوصل</label>
+                            <label className="block text-sm font-bold text-primary mb-1">رقم الوصل</label>
                             <Input
                                 type="text"
                                 value={formData.receipt_no}
@@ -1052,7 +1051,7 @@ export default function SalesPage() {
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium mb-1">تاريخ البيع</label>
+                            <label className="block text-sm font-bold text-primary mb-1">تاريخ البيع</label>
                             <DateInput
                                 value={formData.tx_date}
                                 onChange={val => setFormData({ ...formData, tx_date: val })}
@@ -1062,15 +1061,16 @@ export default function SalesPage() {
 
                     <div className="flex flex-col md:flex-row gap-4">
                         <div className="flex-1">
-                            <label className="block text-sm font-medium mb-1">ملاحظات</label>
+                            <label className="block text-sm font-bold text-primary mb-1">ملاحظات</label>
                             <Textarea
                                 rows={3}
                                 value={formData.notes}
                                 onChange={e => setFormData({ ...formData, notes: e.target.value })}
+                                placeholder="انقر لكتابة ملاحظات"
                             />
                         </div>
                         <div className="w-full md:w-32 flex flex-col gap-1">
-                            <label className="block text-sm font-medium mb-1">صورة الفاتورة</label>
+                            <label className="block text-sm font-bold text-primary mb-1">صورة الفاتورة</label>
                             <div
                                 onClick={handleImageUpload}
                                 className="flex-1 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors relative overflow-hidden group min-h-[80px]"

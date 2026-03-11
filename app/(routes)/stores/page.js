@@ -469,7 +469,7 @@ export default function StoresPage() {
 
             {/* Categories Filter Bar */}
             <div className="flex items-center gap-2 pb-2 w-full">
-                <div className="flex items-center gap-2 py-1.5 px-3 bg-muted/20 rounded-full border">
+                <div className="flex items-center gap-2 py-1.5 px-3 bg-muted/20 rounded-full border border-secondary">
                     <Filter size={16} className="text-muted-foreground" />
                     <span className="text-xs font-bold text-muted-foreground whitespace-nowrap">تصفية:</span>
                 </div>
@@ -547,47 +547,74 @@ export default function StoresPage() {
                 </div>
             </Card>
 
-            <PaginationControls page={page} totalPages={totalPages} setPage={setPage} isLoading={isFetching} itemsPerPage={itemsPerPage} setItemsPerPage={setItemsPerPage} />
+            {/* Pagination Controls */}
+            <PaginationControls
+                page={page}
+                totalPages={totalPages}
+                setPage={setPage}
+                isLoading={isFetching}
+                itemsPerPage={itemsPerPage}
+                setItemsPerPage={setItemsPerPage}
+            />
 
+            {/* Add/Edit Modal */}
             <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editId ? "تعديل حركة مخزنية" : "إضافة حركة مخزنية"} maxWidth={isMultiMode ? "max-w-4xl" : "max-w-lg"}>
                 <form onSubmit={handleSubmit} className="space-y-3">
                     {!editId && (
                         <div className="flex items-center justify-between bg-secondary/20 p-2 rounded-lg mb-4">
                             <span className="text-sm font-bold text-primary">إضافة عدة كتب؟</span>
                             <button type="button" onClick={() => setIsMultiMode(!isMultiMode)} className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ring-2 ring-primary ring-offset-2 ${isMultiMode ? 'bg-primary' : 'bg-muted'}`}>
-                                <span className={`${isMultiMode ? '-translate-x-6' : '-translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
+                                <span className={`${isMultiMode ? '-translate-x-6' : '-translate-x-1 dark:bg-white/50'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
                             </button>
                         </div>
                     )}
 
                     {!isMultiMode ? (
                         <div>
-                            <label className="block text-sm font-medium mb-1 text-primary">الكتاب</label>
+                            <label className="block text-sm font-bold mb-1 text-primary">الكتاب</label>
                             <Combobox value={formData.book_id} onChange={(val) => setFormData({ ...formData, book_id: val })} onClose={() => setBookQuery('')}>
                                 {({ open }) => (
                                     <div className="relative mt-1">
-                                        <div className="relative w-full cursor-default overflow-hidden rounded-lg bg-popover text-right shadow-md border focus:outline-none sm:text-sm py-1">
+                                        <div className="relative w-full cursor-default overflow-hidden rounded-lg bg-background text-right border-2 border-input focus-within:border-primary transition-all sm:text-sm py-1">
                                             <ComboboxInput
-                                                className="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-foreground bg-popover focus:ring-0 text-right"
+                                                className="w-full border-none py-1.5 pl-3 pr-10 text-sm leading-5 text-foreground bg-background focus:ring-0 focus:outline-none text-right"
                                                 displayValue={(book) => book?.title || ''}
                                                 onChange={(event) => setBookQuery(event.target.value)}
                                                 onFocus={(e) => e.target.select()}
                                                 onClick={() => !open && bookComboRef.current?.click()}
                                                 placeholder="ابحث عن كتاب..."
                                             />
-                                            <ComboboxButton ref={bookComboRef} className="absolute inset-y-0 right-0 flex items-center pr-2"><ChevronsUpDown className="h-5 w-5 text-gray-400" aria-hidden="true" /></ComboboxButton>
+                                            <ComboboxButton ref={bookComboRef} className="absolute inset-y-0 right-0 flex items-center pr-2">
+                                                <ChevronsUpDown
+                                                    className="h-5 w-5 text-gray-400"
+                                                    aria-hidden="true"
+                                                />
+                                            </ComboboxButton>
                                         </div>
-                                        <ComboboxOptions className="absolute mt-1 max-h-48 w-full overflow-auto rounded-md bg-popover py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-50">
-                                            {filteredBooks.map((book) => (
-                                                <ComboboxOption key={book.id} className={({ active }) => `relative cursor-default select-none py-2 pl-10 pr-4 ${active ? 'bg-primary text-primary-foreground' : 'text-foreground'}`} value={book}>
-                                                    {({ selected, active }) => (
-                                                        <>
-                                                            <span className={`block truncate ${selected ? 'font-medium' : 'font-normal'}`}>{book.title}</span>
-                                                            {selected ? <span className={`absolute inset-y-0 left-0 flex items-center pl-3 ${active ? 'text-white' : 'text-primary'}`}><Check className="h-5 w-5" aria-hidden="true" /></span> : null}
-                                                        </>
-                                                    )}
-                                                </ComboboxOption>
-                                            ))}
+                                        <ComboboxOptions className="absolute mt-1 max-h-48 w-full overflow-auto rounded-md bg-popover dark:bg-secondary py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-50">
+                                            {filteredBooks.length === 0 && bookQuery !== '' ? (
+                                                <div className="relative cursor-default select-none px-4 py-2 text-muted-foreground">
+                                                    لا توجد نتائج
+                                                </div>
+                                            ) : (
+                                                filteredBooks.map((book) => (
+                                                    <ComboboxOption
+                                                        key={book.id}
+                                                        className={({ active }) =>
+                                                            `relative cursor-pointer select-none py-2 pl-10 pr-4 ${active ? 'bg-primary text-primary-foreground' : 'text-foreground'
+                                                            }`
+                                                        }
+                                                        value={book}
+                                                    >
+                                                        {({ selected, active }) => (
+                                                            <>
+                                                                <span className={`block truncate ${selected ? 'font-medium' : 'font-normal'}`}>{book.title}</span>
+                                                                {selected ? <span className={`absolute inset-y-0 left-0 flex items-center pl-3 ${active ? 'text-white' : 'text-primary'}`}><Check className="h-5 w-5" aria-hidden="true" /></span> : null}
+                                                            </>
+                                                        )}
+                                                    </ComboboxOption>
+                                                ))
+                                            )}
                                         </ComboboxOptions>
                                     </div>
                                 )}
@@ -602,7 +629,7 @@ export default function StoresPage() {
                             <div className="relative">
                                 <Input
                                     ref={multiBookRef}
-                                    placeholder="بحث في القائمة..."
+                                    placeholder="ابحث في القائمة..."
                                     value={multiBookQuery}
                                     onChange={e => setMultiBookQuery(e.target.value)}
                                     className="pl-10"
@@ -617,12 +644,12 @@ export default function StoresPage() {
                                     </button>
                                 )}
                             </div>
-                            <div className="max-h-[120px] overflow-y-auto border rounded-xl divide-y bg-popover custom-scrollbar">
+                            <div className="max-h-[120px] overflow-y-auto border-2 border-input rounded-xl divide-y bg-popover custom-scrollbar">
                                 {filteredMultiBooks.map(book => (
-                                    <div key={book.id} className="p-3 flex items-center justify-between hover:bg-muted cursor-pointer" onClick={() => toggleMultiBook(book)}>
+                                    <div key={book.id} className="p-3 flex items-center justify-between border-input hover:bg-muted cursor-pointer" onClick={() => toggleMultiBook(book)}>
                                         <div className="flex items-center gap-3">
                                             <input type="checkbox" className="w-5 h-5 rounded border-gray-300 text-primary pointer-events-none" checked={selectedMultiBooks.some(b => b.id === book.id)} readOnly />
-                                            <span className="font-bold text-sm">{book.title}</span>
+                                            <span className="text-sm">{book.title}</span>
                                         </div>
                                     </div>
                                 ))}
@@ -631,11 +658,11 @@ export default function StoresPage() {
                     )}
 
                     <div className="grid grid-cols-2 gap-4">
-                        <div><label className="block text-sm font-medium mb-1">العدد</label><Input type="number" min="1" required value={formData.qty} onChange={e => setFormData({ ...formData, qty: e.target.value })} /></div>
-                        <div><label className="block text-sm font-medium mb-1">التاريخ</label><DateInput value={formData.tx_date} onChange={val => setFormData({ ...formData, tx_date: val })} /></div>
+                        <div><label className="block text-sm font-bold mb-1 text-primary">العدد</label><Input type="number" min="1" required value={formData.qty} onChange={e => setFormData({ ...formData, qty: e.target.value })} /></div>
+                        <div><label className="block text-sm font-bold mb-1 text-primary">التاريخ</label><DateInput value={formData.tx_date} onChange={val => setFormData({ ...formData, tx_date: val })} /></div>
                     </div>
 
-                    <div className="pt-2 border-t">
+                    <div className="pt-2">
                         <label className="text-sm font-bold mb-2 flex items-center gap-2 text-primary">
                             <Tag size={16} /> التصنيفات
                         </label>
@@ -650,14 +677,14 @@ export default function StoresPage() {
                                 >
                                     {({ open }) => (
                                         <div className="relative mt-1">
-                                            <div className="py-1 relative w-full cursor-default overflow-hidden rounded-lg bg-popover text-left shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm border">
+                                            <div className="py-1 relative w-full cursor-default overflow-hidden rounded-lg bg-background text-left border-2 border-input focus-within:border-primary transition-all sm:text-sm">
                                                 <ComboboxInput
-                                                    className="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-foreground bg-popover focus:ring-0 text-right font-bold"
+                                                    className="w-full border-none py-1.5 pl-3 pr-10 text-sm leading-5 text-foreground bg-background focus:ring-0 focus:outline-none text-right"
                                                     displayValue={() => ""}
                                                     onFocus={(e) => e.target.select()}
                                                     onClick={() => !open && categoryComboRef.current?.click()}
                                                     onChange={(event) => setCategoryQuery(event.target.value)}
-                                                    placeholder="اختر التصنيفات..."
+                                                    placeholder="حدد التصنيفات..."
                                                 />
                                                 <ComboboxButton ref={categoryComboRef} className="absolute inset-y-0 right-0 flex items-center pr-2">
                                                     <ChevronsUpDown
@@ -666,17 +693,17 @@ export default function StoresPage() {
                                                     />
                                                 </ComboboxButton>
                                             </div>
-                                            <ComboboxOptions className="absolute mt-1 max-h-48 w-full overflow-auto rounded-md bg-popover py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-50 custom-scrollbar">
+                                            <ComboboxOptions className="absolute mt-1 max-h-48 w-full overflow-auto rounded-md bg-popover dark:bg-secondary py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-50 custom-scrollbar">
                                                 {filteredComboboxCategories.length === 0 && categoryQuery !== '' ? (
                                                     <div className="relative cursor-default select-none py-2 px-4 text-muted-foreground">
-                                                        لا توجد نتائج.
+                                                        لا توجد نتائج
                                                     </div>
                                                 ) : (
                                                     filteredComboboxCategories.map((cat) => (
                                                         <ComboboxOption
                                                             key={cat.id}
                                                             className={({ active }) =>
-                                                                `relative cursor-default select-none py-2 pl-4 pr-10 ${active ? 'bg-primary text-white' : 'text-foreground'
+                                                                `relative cursor-pointer select-none py-2 pl-4 pr-10 ${active ? 'bg-primary text-primary-foreground' : 'text-foreground'
                                                                 }`
                                                             }
                                                             value={cat.id}
@@ -711,19 +738,19 @@ export default function StoresPage() {
                                 type="button"
                                 onClick={() => setManageCategoriesOpen(true)}
                                 className="px-3 mt-1"
-                                title="إدارة التصنيفات"
+                                title="إضافة تصنيف جديد"
                             >
                                 <Plus size={18} />
                             </Button>
                         </div>
 
                         {/* Selected Categories Chips */}
-                        <div className="flex flex-wrap gap-2 mt-2">
+                        <div className="flex flex-wrap gap-2 mt-2 h-5">
                             {formData.categoryIds.length > 0 ? (
                                 categories
                                     .filter(cat => formData.categoryIds.includes(cat.id))
                                     .map(cat => (
-                                        <span key={cat.id} className="bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-xs px-2 py-1 rounded-md border border-emerald-100 dark:border-emerald-800 font-bold flex items-center gap-1">
+                                        <span key={cat.id} className="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-xs px-2 py-1 rounded-md border border-emerald-100 dark:border-emerald-800 font-bold flex items-center gap-1">
                                             {cat.name}
                                             <button
                                                 type="button"
@@ -742,7 +769,15 @@ export default function StoresPage() {
 
 
 
-                    <div><label className="block text-sm font-medium mb-1">ملاحظات</label><Textarea rows={3} value={formData.notes} onChange={e => setFormData({ ...formData, notes: e.target.value })} /></div>
+                    <div>
+                        <label className="block text-sm font-bold mb-1 text-primary">ملاحظات</label>
+                        <Textarea
+                            rows={3}
+                            value={formData.notes}
+                            onChange={e => setFormData({ ...formData, notes: e.target.value })}
+                            placeholder="انقر لكتابة ملاحظات"
+                        />
+                    </div>
                     <Button type="submit" className="w-full">حفظ</Button>
                 </form>
             </Modal>
@@ -759,7 +794,7 @@ export default function StoresPage() {
                             إضافة
                         </Button>
                     </form>
-                    <div className="space-y-2 max-h-60 overflow-y-auto border rounded-xl p-2 bg-muted/20 custom-scrollbar">
+                    <div className="space-y-2 max-h-60 overflow-y-auto border-2 border-secondary rounded-xl p-2 bg-muted/20 custom-scrollbar">
                         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleCategoryDragEnd}>
                             <SortableContext items={categories.map(c => c.id)} strategy={verticalListSortingStrategy}>
                                 {categories.map(cat => (
