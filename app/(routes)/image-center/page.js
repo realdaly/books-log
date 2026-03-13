@@ -7,9 +7,13 @@ import { Search, Trash2, Eye, Upload, Image as ImageIcon, X } from "lucide-react
 import { ask, open, message } from '@tauri-apps/plugin-dialog';
 import { readFile } from '@tauri-apps/plugin-fs';
 import { ImageZoomModal } from "../../components/ui/ImageZoomModal";
+import { PaginationControls } from "../../components/ui/PaginationControls";
 
 export default function ImageCenterPage() {
     const [images, setImages] = useState([]);
+    const [itemsPerPage, setItemsPerPage] = useState(50);
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
     const [searchQuery, setSearchQuery] = useState("");
     const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
     const [loading, setLoading] = useState(true);
@@ -24,6 +28,7 @@ export default function ImageCenterPage() {
     useEffect(() => {
         const handler = setTimeout(() => {
             setDebouncedSearchQuery(searchQuery);
+            setPage(1);
         }, 500);
         return () => clearTimeout(handler);
     }, [searchQuery]);
@@ -33,15 +38,22 @@ export default function ImageCenterPage() {
             setLoading(true);
             const db = await getDb();
 
-            let query = "SELECT id, name, data, size, width, height, created_at FROM image_center";
+            let whereClause = "";
             let params = [];
 
             if (debouncedSearchQuery) {
-                query += " WHERE name LIKE '%' || $1 || '%'";
+                whereClause = " WHERE name LIKE '%' || $1 || '%'";
                 params.push(debouncedSearchQuery);
             }
 
-            query += " ORDER BY id DESC";
+            const countQuery = `SELECT COUNT(*) as count FROM image_center${whereClause}`;
+            const countResult = await db.select(countQuery, params);
+            const totalItems = countResult[0]?.count || 0;
+            setTotalPages(Math.ceil(totalItems / itemsPerPage) || 1);
+
+            const offset = (page - 1) * itemsPerPage;
+
+            let query = `SELECT id, name, data, size, width, height, created_at FROM image_center${whereClause} ORDER BY id DESC LIMIT ${itemsPerPage} OFFSET ${offset}`;
 
             const rows = await db.select(query, params);
             setImages(rows);
@@ -50,7 +62,7 @@ export default function ImageCenterPage() {
             console.error("Failed to fetch images:", err);
             setLoading(false);
         }
-    }, [debouncedSearchQuery]);
+    }, [debouncedSearchQuery, page, itemsPerPage]);
 
     useEffect(() => {
         fetchData();
@@ -67,32 +79,40 @@ export default function ImageCenterPage() {
 
     const handleUpload = async () => {
         try {
-            const selected = await open({
-                multiple: false,
+            const selectedItems = await open({
+                multiple: true,
                 filters: [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'webp'] }]
             });
 
-            if (selected) {
-                const contents = await readFile(selected);
-                const base64 = typeof window !== 'undefined' ?
-                    btoa(new Uint8Array(contents).reduce((data, byte) => data + String.fromCharCode(byte), '')) : '';
+            if (selectedItems) {
+                const items = Array.isArray(selectedItems) ? selectedItems : [selectedItems];
+                const db = await getDb();
 
-                const mimeType = selected.toLowerCase().endsWith('.png') ? 'image/png' :
-                    selected.toLowerCase().endsWith('.webp') ? 'image/webp' : 'image/jpeg';
+                for (const selected of items) {
+                    const contents = await readFile(selected);
+                    const base64 = typeof window !== 'undefined' ?
+                        btoa(new Uint8Array(contents).reduce((data, byte) => data + String.fromCharCode(byte), '')) : '';
 
-                const dataString = `data:${mimeType};base64,${base64}`;
-                const sizeBytes = contents.length;
+                    const mimeType = selected.toLowerCase().endsWith('.png') ? 'image/png' :
+                        selected.toLowerCase().endsWith('.webp') ? 'image/webp' : 'image/jpeg';
 
-                // Get name from path
-                const name = selected.split(/[\/\\]/).pop() || "صورة جديدة";
+                    const dataString = `data:${mimeType};base64,${base64}`;
+                    const sizeBytes = contents.length;
 
-                const img = new window.Image();
-                img.onload = async () => {
-                    const db = await getDb();
-                    await db.execute("INSERT INTO image_center (name, data, size, width, height) VALUES ($1, $2, $3, $4, $5)", [name, dataString, sizeBytes, img.width, img.height]);
-                    fetchData();
-                };
-                img.src = dataString;
+                    // Get name from path
+                    const name = selected.split(/[\/\\]/).pop() || "صورة جديدة";
+
+                    await new Promise((resolve) => {
+                        const img = new window.Image();
+                        img.onload = async () => {
+                            await db.execute("INSERT INTO image_center (name, data, size, width, height) VALUES ($1, $2, $3, $4, $5)", [name, dataString, sizeBytes, img.width, img.height]);
+                            resolve();
+                        };
+                        img.onerror = () => resolve();
+                        img.src = dataString;
+                    });
+                }
+                fetchData();
             }
         } catch (err) {
             console.error("Image upload failed", err);
@@ -176,7 +196,7 @@ export default function ImageCenterPage() {
                         )}
                     </div>
                     <Button onClick={handleUpload}>
-                        <Upload className="ml-2" size={18} /> رفع صورة
+                        <Upload className="ml-2" size={18} /> رفع صور
                     </Button>
                 </div>
             </div>
@@ -263,6 +283,15 @@ export default function ImageCenterPage() {
                     </table>
                 </div>
             </Card>
+
+            <PaginationControls
+                page={page}
+                totalPages={totalPages}
+                setPage={setPage}
+                isLoading={loading}
+                itemsPerPage={itemsPerPage}
+                setItemsPerPage={setItemsPerPage}
+            />
 
             <ImageZoomModal
                 isOpen={viewImageModalOpen}
