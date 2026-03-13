@@ -835,12 +835,12 @@ export default function PartiesPage() {
                 maxWidth="max-w-3xl"
             >
                 <div className="space-y-4">
-                    <div className="flex justify-between items-center bg-primary/5 dark:bg-muted/10 p-2 rounded-xl border">
+                    <div className="flex justify-between items-center bg-primary/5 dark:bg-muted/10 p-2 rounded-xl border-2 border-input">
                         <div className="flex gap-2">
-                            <button onClick={() => setFilterType("all")} className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${filterType === 'all' ? 'bg-primary text-white shadow-md' : 'bg-card text-muted-foreground hover:bg-muted border'}`}>الكل</button>
-                            <button onClick={() => setFilterType("sale")} className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${filterType === 'sale' ? 'bg-primary text-white shadow-md' : 'bg-card text-muted-foreground hover:bg-muted border'}`}>بيع</button>
-                            <button onClick={() => setFilterType("gift")} className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${filterType === 'gift' ? 'bg-primary text-white shadow-md' : 'bg-card text-muted-foreground hover:bg-muted border'}`}>إهداء</button>
-                            <button onClick={() => setFilterType("loan")} className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${filterType === 'loan' ? 'bg-primary text-white shadow-md' : 'bg-card text-muted-foreground hover:bg-muted border'}`}>استعارة</button>
+                            <button onClick={() => setFilterType("all")} className={`px-4 py-2 rounded-lg text-sm font-bold transition-all border border-input ${filterType === 'all' ? 'bg-primary text-white shadow-md' : 'bg-card text-muted-foreground hover:bg-muted'}`}>الكل</button>
+                            <button onClick={() => setFilterType("sale")} className={`px-4 py-2 rounded-lg text-sm font-bold transition-all border border-input ${filterType === 'sale' ? 'bg-primary text-white shadow-md' : 'bg-card text-muted-foreground hover:bg-muted'}`}>بيع</button>
+                            <button onClick={() => setFilterType("gift")} className={`px-4 py-2 rounded-lg text-sm font-bold transition-all border border-input ${filterType === 'gift' ? 'bg-primary text-white shadow-md' : 'bg-card text-muted-foreground hover:bg-muted'}`}>إهداء</button>
+                            <button onClick={() => setFilterType("loan")} className={`px-4 py-2 rounded-lg text-sm font-bold transition-all border border-input ${filterType === 'loan' ? 'bg-primary text-white shadow-md' : 'bg-card text-muted-foreground hover:bg-muted'}`}>استعارة</button>
                         </div>
                         <Button
                             onClick={exportAsImage}
@@ -881,14 +881,14 @@ export default function PartiesPage() {
 
                     <div id="pdf-export-content" className="p-1">
                         {/* Hidden title for Export only */}
-                        <div className="hidden export-only flex flex-col items-center pb-6">
+                        <div className="hidden export-only flex-col items-center pb-6">
                             <h2 className="text-3xl font-bold text-primary mb-2">{prefixMap[filterType] || 'سجل'} {selectedParty?.name}</h2>
                             <div className="flex gap-8 text-lg font-bold text-gray-700 italic">
                                 <span>التاريخ: {new Date().toLocaleDateString('ar-EG')}</span>
                             </div>
                         </div>
 
-                        <div className="max-h-[60vh] overflow-y-auto border rounded-2xl shadow-lg bg-card custom-scrollbar transition-all duration-300">
+                        <div className="max-h-[60vh] overflow-y-auto border-2 border-input rounded-2xl shadow-lg bg-card custom-scrollbar transition-all duration-300">
                             <table className="w-full text-right text-sm border-collapse">
                                 <thead className="bg-primary text-primary-foreground sticky top-0 z-10">
                                     <tr>

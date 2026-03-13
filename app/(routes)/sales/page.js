@@ -16,6 +16,7 @@ import { NotesCell } from "../../components/ui/NotesCell";
 import { useColumnSelection } from "../../lib/useColumnSelection";
 import { ColumnActions } from "../../components/ui/ColumnActions";
 import { ImagePicker } from "../../components/ImagePicker";
+import { ImageZoomModal } from "../../components/ui/ImageZoomModal";
 
 export default function SalesPage() {
     const [transactions, setTransactions] = useState([]);
@@ -643,7 +644,7 @@ export default function SalesPage() {
                                     <td className={`p-4 text-muted-foreground border-l border-border/50 text-center ${selectedCols.has(7) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>{t.receipt_no}</td>
                                     <td className={`p-4 text-center border-l border-border/50`}>
                                         {t.receipt_image && (
-                                            <Button variant="outline" size="sm" type="button" onClick={(e) => { e.stopPropagation(); handleViewImage(t.receipt_image); }} className="h-8 text-xs font-bold text-blue-600 border-blue-200 hover:bg-blue-50">
+                                            <Button variant="outline" size="sm" type="button" onClick={(e) => { e.stopPropagation(); handleViewImage(t.receipt_image); }} className="h-8 text-xs font-bold text-blue-600 border-blue-200 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-900/20 hover:bg-blue-50">
                                                 <ImageIcon size={14} className="ml-1" />
                                                 عرض الصورة
                                             </Button>
@@ -672,7 +673,7 @@ export default function SalesPage() {
                     </table>
                 </div>
                 {!loading && showTotalSum && transactions.length > 0 && (
-                    <div className="p-3 border-t bg-primary/5 flex justify-center items-center">
+                    <div className="p-3 border-t dark:border-primary bg-primary/5 flex justify-center items-center">
                         <div className="text-center space-y-1">
                             <div className="text-xl md:text-2xl font-black text-primary flex items-center gap-3">
                                 <span className="text-sm font-bold text-muted-foreground">المجموع الكلي:</span>
@@ -914,7 +915,7 @@ export default function SalesPage() {
                                         <div className="relative">
                                             <div className="relative w-full cursor-default overflow-hidden rounded-lg bg-background text-right border-2 border-input focus-within:border-primary transition-all sm:text-sm">
                                                 <ComboboxInput
-                                                    className="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-foreground bg-background focus:ring-0 text-right"
+                                                    className="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-foreground bg-background focus:ring-0 outline-none text-right"
                                                     displayValue={(party) => party?.name || ''}
                                                     onFocus={(e) => e.target.select()}
                                                     onClick={() => !open && partyComboRef.current?.click()}
@@ -1108,16 +1109,12 @@ export default function SalesPage() {
                 title="سجل البيع"
             />
 
-            {/* View Image Modal */}
-            <Modal isOpen={viewImageModalOpen} onClose={() => setViewImageModalOpen(false)} title="عرض صورة الفاتورة" maxWidth="max-w-3xl">
-                <div className="flex items-center justify-center bg-muted/10 rounded-xl overflow-hidden min-h-[300px]">
-                    {currentViewImage ? (
-                        <img src={currentViewImage} alt="Receipt" className="max-w-full max-h-[70vh] object-contain rounded-lg shadow-sm" />
-                    ) : (
-                        <p className="text-muted-foreground">الصورة غير متوفرة</p>
-                    )}
-                </div>
-            </Modal>
+            <ImageZoomModal
+                isOpen={viewImageModalOpen}
+                src={currentViewImage}
+                alt="صورة الفاتورة"
+                onClose={() => setViewImageModalOpen(false)}
+            />
         </div >
     );
 }

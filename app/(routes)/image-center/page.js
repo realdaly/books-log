@@ -6,6 +6,7 @@ import { Modal } from "../../components/ui/Modal";
 import { Search, Trash2, Eye, Upload, Image as ImageIcon, X } from "lucide-react";
 import { ask, open, message } from '@tauri-apps/plugin-dialog';
 import { readFile } from '@tauri-apps/plugin-fs';
+import { ImageZoomModal } from "../../components/ui/ImageZoomModal";
 
 export default function ImageCenterPage() {
     const [images, setImages] = useState([]);
@@ -263,25 +264,11 @@ export default function ImageCenterPage() {
                 </div>
             </Card>
 
-            {/* View Full Image Modal */}
-            {viewImageModalOpen && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm" onClick={() => setViewImageModalOpen(false)}>
-                    <div className="relative max-w-[100vw] max-h-[100vh] p-4 flex items-center justify-center">
-                        <img
-                            src={currentViewImage}
-                            alt="View"
-                            className="max-w-full max-h-[90vh] object-contain shadow-2xl rounded-sm"
-                            onClick={(e) => e.stopPropagation()}
-                        />
-                        <button
-                            className="absolute top-4 right-4 text-white bg-black/50 hover:bg-black/80 rounded-full p-2 transition-colors"
-                            onClick={() => setViewImageModalOpen(false)}
-                        >
-                            <X size={24} />
-                        </button>
-                    </div>
-                </div>
-            )}
+            <ImageZoomModal
+                isOpen={viewImageModalOpen}
+                src={currentViewImage}
+                onClose={() => setViewImageModalOpen(false)}
+            />
         </div>
     );
 }

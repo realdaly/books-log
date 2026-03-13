@@ -16,6 +16,7 @@ import { NotesCell } from "../../components/ui/NotesCell";
 import { useColumnSelection } from "../../lib/useColumnSelection";
 import { ColumnActions } from "../../components/ui/ColumnActions";
 import { ImagePicker } from "../../components/ImagePicker";
+import { ImageZoomModal } from "../../components/ui/ImageZoomModal";
 
 export default function GiftsPage() {
     const [itemsPerPage, setItemsPerPage] = useState(50);
@@ -476,7 +477,7 @@ export default function GiftsPage() {
                                     <td className={`p-4 font-bold text-foreground border-l border-border/50 ${selectedCols.has(5) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>{t.book_title}</td>
                                     <td className={`p-4 text-center border-l border-border/50`}>
                                         {t.receipt_image && (
-                                            <Button variant="outline" size="sm" type="button" onClick={(e) => { e.stopPropagation(); handleViewImage(t.receipt_image); }} className="h-8 text-xs font-bold text-blue-600 border-blue-200 hover:bg-blue-50">
+                                            <Button variant="outline" size="sm" type="button" onClick={(e) => { e.stopPropagation(); handleViewImage(t.receipt_image); }} className="h-8 text-xs font-bold text-blue-600 border-blue-200 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-900/20 hover:bg-blue-50">
                                                 <ImageIcon size={14} className="ml-1" />
                                                 عرض الصورة
                                             </Button>
@@ -800,16 +801,12 @@ export default function GiftsPage() {
                 title="سجل الإهداءات"
             />
 
-            {/* View Image Modal */}
-            <Modal isOpen={viewImageModalOpen} onClose={() => setViewImageModalOpen(false)} title="عرض صورة الطلب" maxWidth="max-w-3xl">
-                <div className="flex items-center justify-center bg-muted/10 rounded-xl overflow-hidden min-h-[300px]">
-                    {currentViewImage ? (
-                        <img src={currentViewImage} alt="Receipt" className="max-w-full max-h-[70vh] object-contain rounded-lg shadow-sm" />
-                    ) : (
-                        <p className="text-muted-foreground">الصورة غير متوفرة</p>
-                    )}
-                </div>
-            </Modal>
+            <ImageZoomModal
+                isOpen={viewImageModalOpen}
+                src={currentViewImage}
+                alt="صورة الطلب"
+                onClose={() => setViewImageModalOpen(false)}
+            />
         </div>
     );
 }
