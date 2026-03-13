@@ -14,6 +14,7 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { SortableBookCard } from "../../components/SortableBookCard";
 import { SortableCategoryItem } from "../../components/SortableCategoryItem";
+import { ImagePicker } from "../../components/ImagePicker";
 
 // Modern Color Palette for Charts
 const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#6b7280', '#8b5cf6']; // Emerald, Blue, Amber, Red, Gray, Purple
@@ -180,7 +181,8 @@ export default function BooksPage() {
             // Fetch books
             const rows = await db.select(`
                 SELECT 
-                    b.id, b.title, b.cover_image, b.notes, b.total_printed, b.print_year, b.sent_to_institution, b.loss_manual, b.unit_price, b.retail_price, b.wholesale_price, b.created_at, b.updated_at, b.display_order,
+                    b.id, b.title, b.notes, b.total_printed, b.print_year, b.sent_to_institution, b.loss_manual, b.unit_price, b.retail_price, b.wholesale_price, b.created_at, b.updated_at, b.display_order,
+                    CASE WHEN CAST(b.cover_image AS TEXT) LIKE 'data:%' THEN b.cover_image ELSE ic.data END as cover_image,
                     COALESCE(ot.other_qty, 0) as other_stores_total,
                     
                     COALESCE(sales.sold_qty, 0) as sold_inst,
@@ -194,6 +196,7 @@ export default function BooksPage() {
                     COALESCE(MIN(cat.display_order), 999999) as min_cat_order
 
                 FROM book b
+                LEFT JOIN image_center ic ON CAST(b.cover_image AS TEXT) = CAST(ic.id AS TEXT)
                 LEFT JOIN vw_other_stores_total ot ON ot.book_id = b.id
                 LEFT JOIN vw_book_sales_qty sales ON sales.book_id = b.id
                 LEFT JOIN vw_book_gifts_qty gifts ON gifts.book_id = b.id
@@ -232,32 +235,6 @@ export default function BooksPage() {
         fetchData();
     }, [fetchData]);
 
-    // --- Image Handling ---
-    const handleImageUpload = async () => {
-        try {
-            const selected = await open({
-                multiple: false,
-                filters: [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'webp'] }]
-            });
-
-            if (selected) {
-                // Read file as binary
-                const contents = await readFile(selected);
-                // Convert to Base64
-                const base64 = typeof window !== 'undefined' ?
-                    btoa(new Uint8Array(contents).reduce((data, byte) => data + String.fromCharCode(byte), '')) : '';
-
-                const mimeType = selected.toLowerCase().endsWith('.png') ? 'image/png' :
-                    selected.toLowerCase().endsWith('.webp') ? 'image/webp' : 'image/jpeg';
-
-                setFormData({ ...formData, cover_image: `data:${mimeType}; base64, ${base64} ` });
-            }
-        } catch (err) {
-            console.error("Image upload failed", err);
-            await ask("فشل تحميل الصورة. الرجاء المحاولة مرة أخرى.", { title: "خطأ", kind: "error" });
-        }
-    };
-
     // --- Stats & Details ---
     const openDetails = async (book) => {
         setDetailsBook(book);
@@ -265,7 +242,13 @@ export default function BooksPage() {
         try {
             const db = await getDb();
             // Fetch full book details (for image and print_year)
-            const bookRes = await db.select("SELECT * FROM book WHERE id=$1", [book.id]);
+            const bookRes = await db.select(`
+                SELECT b.*, 
+                CASE WHEN CAST(b.cover_image AS TEXT) LIKE 'data:%' THEN b.cover_image ELSE ic.data END as cover_image
+                FROM book b 
+                LEFT JOIN image_center ic ON CAST(b.cover_image AS TEXT) = CAST(ic.id AS TEXT)
+                WHERE b.id=$1
+            `, [book.id]);
             if (bookRes[0]) {
                 setDetailsBook(prev => ({ ...prev, ...bookRes[0] }));
             }
@@ -889,26 +872,13 @@ export default function BooksPage() {
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="flex flex-col md:flex-row gap-6">
                         {/* Image Uploader */}
-                        <div className="w-full md:w-1/3 flex flex-col gap-2">
+                        <div className="w-full md:w-1/3 flex flex-col gap-2 relative z-50">
                             <label className="text-sm font-bold text-primary">صورة الغلاف</label>
-                            <div
-                                onClick={handleImageUpload}
-                                className="flex-1 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-primary transition-colors relative overflow-hidden group"
-                            >
-                                {formData.cover_image ? (
-                                    <>
-                                        <img src={formData.cover_image} className="w-full h-full object-cover absolute inset-0 text-transparent" alt="Preview" />
-                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-white font-bold">
-                                            تغيير الصورة
-                                        </div>
-                                    </>
-                                ) : (
-                                    <div className="text-center p-4 text-gray-400">
-                                        <ImageIcon size={40} className="mx-auto mb-2 opacity-50" />
-                                        <span className="text-xs">اضغط لرفع صورة</span>
-                                    </div>
-                                )}
-                            </div>
+                            <ImagePicker
+                                value={formData.cover_image}
+                                onChange={(val) => setFormData({ ...formData, cover_image: val })}
+                                className="w-full flex-1 flex"
+                            />
                         </div>
 
                         {/* Fields */}

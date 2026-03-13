@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { getDb } from "../../app/lib/db";
 import { Button, Input } from "./ui/Base";
 import { Modal } from "./ui/Modal";
-import { Search, Image as ImageIcon, Upload, Check, Trash2, X } from "lucide-react";
+import { Search, Image as ImageIcon, Upload, Check, Trash2, X, Loader2 } from "lucide-react";
 import { open, message } from '@tauri-apps/plugin-dialog';
 import { readFile } from '@tauri-apps/plugin-fs';
 
@@ -12,34 +12,64 @@ export function ImagePicker({ value, onChange, label = "اختر صورة", clas
     const [images, setImages] = useState([]);
     const [search, setSearch] = useState("");
     const [previewTarget, setPreviewTarget] = useState(null);
+    const [limit, setLimit] = useState(15);
+    const [isLoading, setIsLoading] = useState(false);
+    const [debouncedSearch, setDebouncedSearch] = useState("");
+
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedSearch(search);
+        }, 500);
+        return () => clearTimeout(handler);
+    }, [search]);
 
     // Initial load: view image
     useEffect(() => {
         if (value) {
-            getDb().then(db => {
-                db.select("SELECT data FROM image_center WHERE id = $1", [parseInt(value)]).then(res => {
-                    if (res.length > 0) setPreviewTarget(res[0].data);
+            const strVal = String(value);
+            if (strVal.startsWith('data:')) {
+                setPreviewTarget(strVal);
+            } else {
+                getDb().then(db => {
+                    db.select("SELECT data FROM image_center WHERE id = $1", [parseInt(strVal)]).then(res => {
+                        if (res.length > 0) setPreviewTarget(res[0].data);
+                    });
                 });
-            });
+            }
         } else {
             setPreviewTarget(null);
         }
     }, [value]);
 
-    const loadImages = async () => {
+    const loadImages = async (query = "") => {
         try {
+            setIsLoading(true);
             const db = await getDb();
-            const res = await db.select("SELECT id, name, data, size FROM image_center ORDER BY id DESC");
+            let res;
+            if (query) {
+                res = await db.select("SELECT id, name, data, size FROM image_center WHERE name LIKE '%' || $1 || '%' ORDER BY id DESC", [query]);
+            } else {
+                res = await db.select("SELECT id, name, data, size FROM image_center ORDER BY id DESC");
+            }
             setImages(res);
         } catch (err) {
             console.error(err);
+        } finally {
+            setIsLoading(false);
         }
     };
 
     const handleOpen = () => {
         setIsOpen(true);
-        loadImages();
+        setLimit(15);
+        loadImages(debouncedSearch);
     };
+
+    useEffect(() => {
+        if (isOpen) {
+            loadImages(debouncedSearch);
+        }
+    }, [debouncedSearch]);
 
     const handleUpload = async () => {
         try {
@@ -122,8 +152,8 @@ export function ImagePicker({ value, onChange, label = "اختر صورة", clas
                 )}
             </div>
 
-            <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} title="مكتبة الصور" className="max-w-4xl h-[80vh] flex flex-col" maxWidth="max-w-4xl">
-                <div className="flex flex-col h-full space-y-4">
+            <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} title="مكتبة الصور" className="max-w-4xl flex flex-col" maxWidth="max-w-4xl">
+                <div className="flex flex-col space-y-4">
                     <div className="flex gap-2">
                         <div className="relative flex-1">
                             <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
@@ -147,33 +177,54 @@ export function ImagePicker({ value, onChange, label = "اختر صورة", clas
                         </Button>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 p-1 custom-scrollbar">
-                        {images.filter(img => img.name.includes(search)).map(img => (
-                            <div
-                                key={img.id}
-                                className={`relative cursor-pointer rounded-lg border-2 overflow-hidden aspect-square group transition-all duration-200 ${value === img.id.toString() ? 'border-primary ring-2 ring-primary/20' : 'border-transparent hover:border-primary/50 bg-muted/50'}`}
-                                onClick={() => handleSelect(img.id)}
-                            >
-                                <img src={img.data} alt={img.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
-                                <div className="absolute inset-x-0 bottom-0 bg-black/60 text-white text-xs p-1.5 truncate text-center backdrop-blur-sm">
-                                    {img.name}
-                                </div>
-                                {value === img.id.toString() && (
-                                    <div className="absolute top-2 right-2 bg-primary text-white rounded-full p-1 shadow-md">
-                                        <Check size={14} />
+                    <div className="h-[500px] overflow-y-auto p-2 custom-scrollbar border-2 border-input rounded-xl bg-card/30">
+                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                            {images.slice(0, limit).map(img => (
+                                <div
+                                    key={img.id}
+                                    className={`relative cursor-pointer rounded-lg border-2 overflow-hidden aspect-square group transition-all duration-200 ${value === img.id.toString() ? 'border-primary ring-2 ring-primary/20' : 'border-transparent hover:border-primary/50 bg-muted/50'}`}
+                                    onClick={() => handleSelect(img.id)}
+                                >
+                                    <img src={img.data} alt={img.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
+                                    <div className="absolute inset-x-0 bottom-0 bg-black/60 text-white text-xs p-1.5 truncate text-center backdrop-blur-sm">
+                                        {img.name}
                                     </div>
-                                )}
-                            </div>
-                        ))}
-                        {images.length === 0 && (
-                            <div className="col-span-full h-40 flex flex-col items-center justify-center text-muted-foreground">
-                                <ImageIcon size={48} className="mb-4 opacity-50" />
-                                <p>لا توجد صور في المكتبة</p>
-                            </div>
-                        )}
-                        {images.length > 0 && images.filter(img => img.name.includes(search)).length === 0 && (
-                            <div className="col-span-full h-40 flex items-center justify-center text-muted-foreground">
-                                لا توجد نتائج للبحث
+                                    {value === img.id.toString() && (
+                                        <div className="absolute top-2 right-2 bg-primary text-white rounded-full p-1 shadow-md">
+                                            <Check size={14} />
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                            {isLoading && (
+                                <div className="col-span-full h-40 flex flex-col items-center justify-center text-primary">
+                                    <Loader2 size={32} className="animate-spin mb-2" />
+                                    <p className="text-sm font-medium">جاري التحميل...</p>
+                                </div>
+                            )}
+                            {!isLoading && images.length === 0 && search === "" && (
+                                <div className="col-span-full h-40 flex flex-col items-center justify-center text-muted-foreground">
+                                    <ImageIcon size={48} className="mb-4 opacity-50" />
+                                    <p>لا توجد صور في المكتبة</p>
+                                </div>
+                            )}
+                            {!isLoading && images.length === 0 && search !== "" && (
+                                <div className="col-span-full h-40 flex items-center justify-center text-muted-foreground">
+                                    لا توجد نتائج للبحث
+                                </div>
+                            )}
+                        </div>
+
+                        {!isLoading && images.length > limit && (
+                            <div className="mt-4 flex justify-center">
+                                <Button
+                                    onClick={() => setLimit(prev => prev + 15)}
+                                    variant="outline"
+                                    className="w-1/2 md:w-1/3 border-primary/50 hover:bg-primary/10 font-bold"
+                                    type="button"
+                                >
+                                    تحميل المزيد من الصور...
+                                </Button>
                             </div>
                         )}
                     </div>
