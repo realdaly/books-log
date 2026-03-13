@@ -79,6 +79,36 @@ export default function SalesPage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
 
+    const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+    const [advancedFilters, setAdvancedFilters] = useState({
+        book_title: "",
+        party_name: "",
+        receipt_no: "",
+        date_from: "",
+        date_to: ""
+    });
+    const [appliedAdvancedFilters, setAppliedAdvancedFilters] = useState({
+        book_title: "",
+        party_name: "",
+        receipt_no: "",
+        date_from: "",
+        date_to: ""
+    });
+
+    const applyAdvancedFilters = () => {
+        setAppliedAdvancedFilters(advancedFilters);
+        setPage(1);
+        setShowAdvancedFilters(false);
+    };
+
+    const clearAdvancedFilters = () => {
+        const emptyFilters = { book_title: "", party_name: "", receipt_no: "", date_from: "", date_to: "" };
+        setAdvancedFilters(emptyFilters);
+        setAppliedAdvancedFilters(emptyFilters);
+        setPage(1);
+        setShowAdvancedFilters(false);
+    };
+
     // Debounce Query
     useEffect(() => {
         const handler = setTimeout(() => {
@@ -136,6 +166,27 @@ export default function SalesPage() {
                 // Normalize input: turn all alefs to 'ا'
                 const normalizedQuery = debouncedSearchQuery.replace(/[أإآ]/g, 'ا');
                 params.push(normalizedQuery);
+            }
+
+            if (appliedAdvancedFilters.book_title) {
+                params.push(appliedAdvancedFilters.book_title.replace(/[أإآ]/g, 'ا'));
+                whereClause += ` AND REPLACE(REPLACE(REPLACE(b.title, 'أ', 'ا'), 'إ', 'ا'), 'آ', 'ا') LIKE '%' || $${params.length} || '%'`;
+            }
+            if (appliedAdvancedFilters.party_name) {
+                params.push(appliedAdvancedFilters.party_name.replace(/[أإآ]/g, 'ا'));
+                whereClause += ` AND REPLACE(REPLACE(REPLACE(p.name, 'أ', 'ا'), 'إ', 'ا'), 'آ', 'ا') LIKE '%' || $${params.length} || '%'`;
+            }
+            if (appliedAdvancedFilters.receipt_no) {
+                params.push(appliedAdvancedFilters.receipt_no);
+                whereClause += ` AND t.receipt_no LIKE '%' || $${params.length} || '%'`;
+            }
+            if (appliedAdvancedFilters.date_from) {
+                params.push(appliedAdvancedFilters.date_from);
+                whereClause += ` AND t.tx_date >= $${params.length}`;
+            }
+            if (appliedAdvancedFilters.date_to) {
+                params.push(appliedAdvancedFilters.date_to);
+                whereClause += ` AND t.tx_date <= $${params.length}`;
             }
 
             if (filterStatus.length > 0) {
@@ -197,7 +248,7 @@ export default function SalesPage() {
             setLoading(false);
             setIsFetching(false);
         }
-    }, [page, debouncedSearchQuery, filterStatus, itemsPerPage]);
+    }, [page, debouncedSearchQuery, filterStatus, itemsPerPage, appliedAdvancedFilters]);
 
     useEffect(() => {
         fetchData();
@@ -544,6 +595,14 @@ export default function SalesPage() {
                                 </button>
                             )}
                         </div>
+
+                        <Button
+                            variant={showAdvancedFilters ? "default" : "outline"}
+                            onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                            className="transition-all border-input"
+                        >
+                            <Filter size={18} className="ml-2" /> بحث متقدم
+                        </Button>
 
                         <Button onClick={() => { resetForm(); setEditId(null); setIsModalOpen(true); }}>
                             <Plus className="ml-2" size={18} /> إضافة بيع
@@ -1108,6 +1167,46 @@ export default function SalesPage() {
                 data={transactions}
                 title="سجل البيع"
             />
+
+            {/* Advanced Search Modal */}
+            <Modal isOpen={showAdvancedFilters} onClose={() => setShowAdvancedFilters(false)} title="بحث متقدم" maxWidth="max-w-md">
+                <div className="space-y-4">
+                    <div>
+                        <label className="text-sm font-bold text-muted-foreground mb-1 block">اسم الكتاب</label>
+                        <Input value={advancedFilters.book_title} onChange={e => setAdvancedFilters({ ...advancedFilters, book_title: e.target.value })} placeholder="اسم الكتاب..." />
+                    </div>
+                    <div>
+                        <label className="text-sm font-bold text-muted-foreground mb-1 block">الجهة (المشتري)</label>
+                        <Input value={advancedFilters.party_name} onChange={e => setAdvancedFilters({ ...advancedFilters, party_name: e.target.value })} placeholder="اسم الجهة..." />
+                    </div>
+                    <div>
+                        <label className="text-sm font-bold text-muted-foreground mb-1 block">رقم الفاتورة</label>
+                        <Input value={advancedFilters.receipt_no} onChange={e => setAdvancedFilters({ ...advancedFilters, receipt_no: e.target.value })} placeholder="رقم الفاتورة..." />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="text-sm font-bold text-muted-foreground mb-1 block">من تاريخ</label>
+                            <DateInput value={advancedFilters.date_from} onChange={val => setAdvancedFilters({ ...advancedFilters, date_from: val })} />
+                        </div>
+                        <div>
+                            <label className="text-sm font-bold text-muted-foreground mb-1 block">إلى تاريخ</label>
+                            <DateInput value={advancedFilters.date_to} onChange={val => setAdvancedFilters({ ...advancedFilters, date_to: val })} />
+                        </div>
+                    </div>
+                    <div className="flex gap-2 pt-4">
+                        <Button className="flex-1" onClick={applyAdvancedFilters}>
+                            تطبيق البحث
+                        </Button>
+                        <Button
+                            variant="outline"
+                            onClick={clearAdvancedFilters}
+                            className="text-red-500 border-red-200 hover:text-red-600 hover:bg-red-50 dark:hover:text-red-400 dark:border-red-900/50 dark:hover:bg-red-950/40"
+                        >
+                            مسح الحقول
+                        </Button>
+                    </div>
+                </div>
+            </Modal>
 
             <ImageZoomModal
                 isOpen={viewImageModalOpen}
